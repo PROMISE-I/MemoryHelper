@@ -1963,7 +1963,7 @@
             },
             body: JSON.stringify({
               model: state.aiConfig.model.trim(),
-              temperature: 0.35,
+              temperature: 1,
               messages: [
                 { role: 'system', content: sys },
                 { role: 'user', content: userPrompt }
