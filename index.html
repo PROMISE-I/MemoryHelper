@@ -1,0 +1,3629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="内化" />
+  <meta name="theme-color" content="#F8F6F1" id="meta-theme-color" />
+  <title>内化 · 轻量认知助手</title>
+
+  <!-- Inline SVG Favicon (Zero external dependency) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%234E6E5D'/%3E%3Cpath d='M19 42C19 27 31 19 45 19C45 34 34 45 19 42Z' fill='%23F8F6F1' fill-opacity='0.94'/%3E%3Ccircle cx='28' cy='34' r='3.2' fill='%234E6E5D'/%3E%3C/svg%3E" />
+
+  <style>
+    /* =====================================================================
+       DESIGN TOKENS: Warm Paper Light Mode & Eye-Care Dark Mode
+       ===================================================================== */
+    :root {
+      --bg: #F8F6F1;
+      --surface: #FFFFFF;
+      --surface-soft: #F1EDE5;
+      --surface-subtle: #F5F2EB;
+      --border: #E6E0D5;
+      --border-soft: rgba(230, 224, 213, 0.65);
+      --ink: #262422;
+      --ink-secondary: #57524C;
+      --ink-muted: #847D74;
+      --sage: #4E6E5D;
+      --sage-hover: #3F5B4C;
+      --sage-soft: #EAF1ED;
+      --sage-border: rgba(78, 110, 93, 0.22);
+      --terra: #B57254;
+      --terra-soft: #F8EDE7;
+      --terra-border: rgba(181, 114, 84, 0.24);
+      --shadow-sm: 0 2px 10px rgba(38, 36, 34, 0.04);
+      --shadow-md: 0 10px 30px rgba(38, 36, 34, 0.08);
+      --backdrop: rgba(22, 21, 19, 0.42);
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 26px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    html.dark {
+      --bg: #161513;
+      --surface: #21201D;
+      --surface-soft: #2A2824;
+      --surface-subtle: #1C1B18;
+      --border: #33302B;
+      --border-soft: rgba(51, 48, 43, 0.72);
+      --ink: #EAE5DD;
+      --ink-secondary: #C4BEB4;
+      --ink-muted: #938C82;
+      --sage: #7BA68F;
+      --sage-hover: #8CB7A0;
+      --sage-soft: #213028;
+      --sage-border: rgba(123, 166, 143, 0.26);
+      --terra: #D49172;
+      --terra-soft: #33251E;
+      --terra-border: rgba(212, 145, 114, 0.28);
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 12px 34px rgba(0, 0, 0, 0.45);
+      --backdrop: rgba(0, 0, 0, 0.62);
+    }
+
+    /* =====================================================================
+       BASE RESET & LAYOUT SHELL
+       ===================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      overscroll-behavior-y: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    button, input, textarea, select {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      user-select: none;
+    }
+
+    button:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 520px) {
+      .shell {
+        border-left: 1px solid var(--border-soft);
+        border-right: 1px solid var(--border-soft);
+      }
+    }
+
+    /* =====================================================================
+       ANIMATIONS
+       ===================================================================== */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+
+    .anim-up {
+      animation: fadeUp 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .anim-pulse {
+      animation: pulseSoft 1.5s ease-in-out infinite;
+    }
+
+    /* =====================================================================
+       COMMON UI COMPONENTS
+       ===================================================================== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-soft {
+      background: var(--surface-soft);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+
+    .input, .textarea, .select {
+      width: 100%;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 13px;
+      font-size: 16px; /* Prevents iOS Safari auto-zoom */
+      line-height: 1.55;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .input:focus, .textarea:focus, .select:focus {
+      border-color: var(--sage);
+      background: var(--surface);
+    }
+
+    .textarea {
+      resize: none;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 46px;
+      padding: 11px 18px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 500;
+      transition: transform 0.14s ease, opacity 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .btn-sm {
+      min-height: 36px;
+      padding: 7px 13px;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-primary {
+      background: var(--sage);
+      color: #FFFFFF;
+    }
+
+    html.dark .btn-primary {
+      color: #161513;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--sage-hover);
+    }
+
+    .btn-ink {
+      background: var(--ink);
+      color: var(--bg);
+    }
+
+    .btn-ink:hover:not(:disabled) {
+      opacity: 0.92;
+    }
+
+    .btn-soft {
+      background: var(--surface-soft);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+
+    .btn-terra {
+      background: var(--terra-soft);
+      color: var(--terra);
+      border: 1px solid var(--terra-border);
+    }
+
+    .btn-sage-soft {
+      background: var(--sage-soft);
+      color: var(--sage);
+      border: 1px solid var(--sage-border);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-muted);
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--ink);
+      background: var(--surface-soft);
+    }
+
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--border);
+      transition: background-color 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .switch.on {
+      background: var(--sage);
+    }
+
+    .switch-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .switch.on .switch-knob {
+      transform: translateX(20px);
+    }
+
+    /* Range Slider */
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--sage);
+      cursor: pointer;
+    }
+
+    /* =====================================================================
+       AUTH WALL (PRIVATE GATE - ONLY RENDERED WHEN LOGGED OUT)
+       ===================================================================== */
+    #auth-wall {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: calc(var(--safe-top) + 24px) 22px calc(var(--safe-bottom) + 28px);
+    }
+
+    .brand-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 17px;
+      background: var(--sage);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      box-shadow: 0 8px 20px rgba(78, 110, 93, 0.22);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .auth-title {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .auth-subtitle {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    .auth-error {
+      margin-top: 12px;
+      padding: 10px 13px;
+      border-radius: var(--radius-sm);
+      background: var(--terra-soft);
+      border: 1px solid var(--terra-border);
+      color: var(--terra);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .db-config-details {
+      margin-top: 16px;
+      border-top: 1px solid var(--border-soft);
+      padding-top: 14px;
+    }
+
+    .db-config-summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--ink-muted);
+      padding: 4px 2px;
+    }
+
+    .db-config-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .db-status-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--ink-muted);
+    }
+
+    .db-status-tag.ready {
+      background: var(--sage-soft);
+      color: var(--sage);
+    }
+
+    /* =====================================================================
+       MAIN APP LAYOUT & BOTTOM NAVIGATION
+       ===================================================================== */
+    #app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 84px);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 0 2px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .page-sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    /* Ultra-thin progress bar */
+    .progress-track {
+      width: 100%;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--sage);
+      border-radius: 999px;
+      transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Sync indicator dot */
+    .sync-dot-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-muted);
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sage);
+      flex-shrink: 0;
+    }
+
+    .sync-dot.syncing {
+      background: var(--terra);
+      animation: pulseSoft 1s infinite;
+    }
+
+    .sync-dot.error {
+      background: #C45B4D;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      z-index: 30;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-top: 1px solid var(--border);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    html.dark .bottom-nav {
+      background: rgba(33, 32, 29, 0.92);
+    }
+
+    .bottom-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 62px;
+      padding: 0 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--ink-muted);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 14px;
+      transition: color 0.18s ease;
+    }
+
+    .nav-item.active {
+      color: var(--sage);
+    }
+
+    /* =====================================================================
+       REVIEW TAB SPECIFICS
+       ===================================================================== */
+    .review-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .front-card {
+      flex: 1;
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 26px 22px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
+
+    .clue-kicker {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      margin-bottom: 16px;
+    }
+
+    .clue-text {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.78;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .rating-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    /* 3 Fixed Capsule Slots for Evolution Layer */
+    .evo-slots-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .evo-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--sage-soft);
+      color: var(--sage);
+      border: 1px solid var(--sage-border);
+      transition: transform 0.14s ease, border-color 0.18s ease;
+    }
+
+    .evo-capsule:not(:disabled):active {
+      transform: scale(0.97);
+    }
+
+    .evo-slot-empty {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--ink-muted);
+      border: 1px dashed var(--border);
+      background: transparent;
+      transition: border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .evo-slot-empty:hover:not(:disabled) {
+      border-color: var(--sage);
+      color: var(--sage);
+    }
+
+    .cross-shimmer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 13px;
+      border-radius: var(--radius-md);
+      background: var(--terra-soft);
+      border: 1px solid var(--terra-border);
+      color: var(--terra);
+      font-size: 12px;
+      text-align: left;
+      transition: opacity 0.18s ease;
+    }
+
+    .cross-shimmer:hover {
+      opacity: 0.9;
+    }
+
+    .scaffold-panel {
+      margin-top: 12px;
+      padding: 13px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      border: 1px solid var(--border-soft);
+    }
+
+    .scaffold-list {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .scaffold-list li {
+      font-size: 13px;
+      color: var(--ink-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      line-height: 1.55;
+    }
+
+    .done-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 36px 20px;
+    }
+
+    .done-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 22px;
+      background: var(--sage-soft);
+      color: var(--sage);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    /* =====================================================================
+       LIBRARY TAB SPECIFICS
+       ===================================================================== */
+    .pills-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+
+    .pills-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill {
+      flex-shrink: 0;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--surface);
+      color: var(--ink-muted);
+      border: 1px solid var(--border);
+      transition: all 0.18s ease;
+    }
+
+    .pill.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+
+    .lib-card {
+      width: 100%;
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 15px 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.18s ease, transform 0.14s ease;
+    }
+
+    .lib-card:active {
+      transform: scale(0.99);
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Timeline in Detail Modal */
+    .timeline {
+      border-left: 1.5px solid var(--border);
+      padding-left: 14px;
+      margin-left: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      position: relative;
+      font-size: 12px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -19px;
+      top: 5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+    }
+
+    /* =====================================================================
+       SETTINGS TAB SPECIFICS
+       ===================================================================== */
+    .settings-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .preset-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .preset-chip {
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: var(--surface-soft);
+      color: var(--ink-secondary);
+      border: 1px solid var(--border);
+      transition: all 0.16s ease;
+    }
+
+    .preset-chip.active {
+      background: var(--sage-soft);
+      color: var(--sage);
+      border-color: var(--sage-border);
+      font-weight: 500;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .stat-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+
+    .pw-wrap {
+      position: relative;
+    }
+
+    .pw-wrap .input {
+      padding-right: 44px;
+    }
+
+    .pw-eye {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-muted);
+      border-radius: 8px;
+    }
+
+    /* =====================================================================
+       MODAL & TOAST
+       ===================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: var(--backdrop);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    @media (min-width: 520px) {
+      .modal-backdrop {
+        align-items: center;
+        padding: 16px;
+      }
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 480px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 20px 18px calc(var(--safe-bottom) + 20px);
+      box-shadow: var(--shadow-md);
+      border-top: 1px solid var(--border);
+    }
+
+    @media (min-width: 520px) {
+      .modal-sheet {
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        padding: 22px;
+      }
+    }
+
+    .toast-wrap {
+      position: fixed;
+      top: calc(var(--safe-top) + 16px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      width: 90%;
+      max-width: 380px;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .toast-wrap.show {
+      opacity: 1;
+    }
+
+    .toast-pill {
+      background: var(--ink);
+      color: var(--bg);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- ===============================================================
+         STRICT PRIVATE LOGIN WALL (Rendered exclusively while logged out)
+         =============================================================== -->
+    <section id="auth-wall" class="hidden">
+      <div class="auth-header anim-up">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+            <path d="M18 43C18 26 30 18 46 18C46 34 34 46 18 43Z" fill="#F8F6F1" fill-opacity="0.95"/>
+            <circle cx="28" cy="34" r="3.5" fill="#4E6E5D"/>
+          </svg>
+        </div>
+        <h1 class="auth-title">内化 · 轻量认知助手</h1>
+        <p class="auth-subtitle">私有认知空间 · 仅限本人安全登录</p>
+      </div>
+
+      <form id="auth-form" class="card anim-up" autocomplete="on">
+        <div style="margin-bottom: 14px;">
+          <label class="field-label" for="auth-email">邮箱</label>
+          <input id="auth-email" class="input" type="email" inputmode="email" autocomplete="username" placeholder="输入你的专属账号邮箱" required />
+        </div>
+
+        <div style="margin-bottom: 18px;">
+          <label class="field-label" for="auth-password">密码</label>
+          <div class="pw-wrap">
+            <input id="auth-password" class="input" type="password" autocomplete="current-password" placeholder="输入登录密码" required />
+            <button type="button" class="pw-eye" id="btn-toggle-auth-pw" aria-label="显示或隐藏密码"></button>
+          </div>
+        </div>
+
+        <button id="btn-auth-submit" type="submit" class="btn btn-primary btn-block">
+          安全登录
+        </button>
+
+        <div id="auth-error-box" class="auth-error hidden" role="alert"></div>
+
+        <!-- Collapsible Supabase Connection Configuration -->
+        <details id="supabase-config-details" class="db-config-details">
+          <summary class="db-config-summary">
+            <span>云端数据库配置 (Supabase)</span>
+            <span id="db-config-status" class="db-status-tag">未填写</span>
+          </summary>
+
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label class="field-label" for="cfg-sb-url">Supabase Project URL</label>
+              <input id="cfg-sb-url" class="input" type="url" placeholder="https://xxxxx.supabase.co" autocomplete="off" />
+            </div>
+            <div>
+              <label class="field-label" for="cfg-sb-anon">Anon Key (公开门牌号)</label>
+              <input id="cfg-sb-anon" class="input" type="text" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off" />
+            </div>
+            <p style="margin: 0; font-size: 12px; color: var(--ink-muted); line-height: 1.5;">
+              仅需在本机填写一次，登录成功后会自动记住并收起。无账号者无法通过本页注册或查看任何内容。
+            </p>
+          </div>
+        </details>
+      </form>
+    </section>
+
+    <!-- ===============================================================
+         MAIN APP MOUNT POINT (Strictly empty until authenticated)
+         =============================================================== -->
+    <div id="app-main" class="hidden"></div>
+
+    <!-- Modal Root -->
+    <div id="modal-root" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div id="modal-sheet" class="modal-sheet anim-up"></div>
+    </div>
+
+    <!-- Gentle Toast -->
+    <div id="toast-wrap" class="toast-wrap" aria-live="polite">
+      <div id="toast-pill" class="toast-pill"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =====================================================================
+      // 1. CONSTANTS, STORAGE KEYS & INLINE SVG ICONS
+      // =====================================================================
+      const DOMAINS = ['专业认知', '人情世故', '亲密关系', '自我觉察', '商业规律', '生活杂感'];
+      const MS_PER_DAY = 86400000;
+
+      const STORAGE_KEYS = {
+        SUPABASE: 'neihua_supabase_cfg_v1',
+        SESSION: 'neihua_auth_session_v1',
+        AI_LOCAL: 'neihua_ai_local_cfg_v1',
+        THEME: 'neihua_theme_v1'
+      };
+
+      const AI_PRESETS = [
+        { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+        { id: 'gemini', label: 'Gemini 兼容', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' },
+        { id: 'openai', label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+        { id: 'siliconflow', label: '硅基流动', baseUrl: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-7B-Instruct' },
+        { id: 'custom', label: '自定义', baseUrl: '', model: '' }
+      ];
+
+      // Crisp inline SVG icon library (Zero external icon CDN)
+      const ICONS = {
+        review: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 10h8M8 14h5"/></svg>',
+        capture: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+        library: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>',
+        settings: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+        lock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+        sparkle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.3L19 10.2l-5.1 1.9L12 17.4l-1.9-5.3L5 10.2l5.1-1.9L12 3z"/></svg>',
+        bulb: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
+        edit: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+        search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
+        eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+        eyeOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-5.94M9.9 4.24A10.8 10.8 0 0 1 12 4c7 0 11 7 11 7a21.8 21.8 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>',
+        sun: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+        close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        chevronRight: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>'
+      };
+
+      // =====================================================================
+      // 2. APPLICATION STATE
+      // =====================================================================
+      const state = {
+        sbConfig: loadJsonStorage(STORAGE_KEYS.SUPABASE, { url: '', anonKey: '' }),
+        session: loadJsonStorage(STORAGE_KEYS.SESSION, null),
+        aiConfig: loadJsonStorage(STORAGE_KEYS.AI_LOCAL, {
+          preset: 'deepseek',
+          baseUrl: 'https://api.deepseek.com/v1',
+          apiKey: '',
+          model: 'deepseek-chat'
+        }),
+        prefs: {
+          daily_limit: 50,
+          mix_backlog: true,
+          theme: loadJsonStorage(STORAGE_KEYS.THEME, 'light')
+        },
+        cards: [],
+        activityLogs: [],
+        activeTab: 'review',
+        syncStatus: 'idle', // 'idle' | 'syncing' | 'ok' | 'error'
+        appMounted: false,
+
+        // Review Session State
+        review: {
+          queue: [],
+          index: 0,
+          reviewedIds: new Set(),
+          sunkenShown: 0,
+          hasReservoir: false,
+          phase: 'front', // 'front' | 'back'
+          rating: null,
+          frontStartMs: 0,
+          backStartMs: 0,
+          frontDurationMs: 0,
+          editedThisReview: false,
+          scaffoldQuestions: null,
+          scaffoldLoading: false,
+          scaffoldTriggered: false,
+          submitting: false
+        },
+
+        // Capture State
+        capture: {
+          domainTag: '生活杂感',
+          aiSplitUsed: false
+        },
+
+        // Library Filter State
+        library: {
+          search: '',
+          domain: '全部'
+        }
+      };
+
+      // =====================================================================
+      // 3. PWA ICON & DYNAMIC MANIFEST GENERATOR (ZERO EXTERNAL ASSETS)
+      // =====================================================================
+      function initPwaAssets() {
+        try {
+          const drawIconPng = (size) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return '';
+
+            // Rounded sage square
+            const r = size * 0.24;
+            ctx.fillStyle = '#4E6E5D';
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Minimal organic leaf / insight glyph
+            ctx.fillStyle = 'rgba(248, 246, 241, 0.95)';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.29, size * 0.67);
+            ctx.bezierCurveTo(size * 0.29, size * 0.42, size * 0.47, size * 0.29, size * 0.71, size * 0.29);
+            ctx.bezierCurveTo(size * 0.71, size * 0.54, size * 0.54, size * 0.71, size * 0.29, size * 0.67);
+            ctx.closePath();
+            ctx.fill();
+
+            // Anchor dot
+            ctx.fillStyle = '#4E6E5D';
+            ctx.beginPath();
+            ctx.arc(size * 0.44, size * 0.53, size * 0.055, 0, Math.PI * 2);
+            ctx.fill();
+
+            return canvas.toDataURL('image/png');
+          };
+
+          const icon180 = drawIconPng(180);
+          const icon512 = drawIconPng(512);
+
+          if (icon180) {
+            const appleLink = document.createElement('link');
+            appleLink.rel = 'apple-touch-icon';
+            appleLink.sizes = '180x180';
+            appleLink.href = icon180;
+            document.head.appendChild(appleLink);
+          }
+
+          if (icon512) {
+            const manifest = {
+              name: '内化 · 轻量认知助手',
+              short_name: '内化',
+              description: '低认知负荷的遗忘曲线保鲜与认知螺旋内化工具',
+              start_url: './',
+              display: 'standalone',
+              background_color: '#F8F6F1',
+              theme_color: '#4E6E5D',
+              icons: [
+                { src: icon180, sizes: '180x180', type: 'image/png' },
+                { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+              ]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(blob);
+            const mLink = document.createElement('link');
+            mLink.rel = 'manifest';
+            mLink.href = manifestUrl;
+            document.head.appendChild(mLink);
+          }
+        } catch (_) {
+          // Safe fallback if canvas/blob is restricted
+        }
+      }
+
+      // =====================================================================
+      // 4. STORAGE, THEME, TOAST, MODAL & FORMATTING HELPERS
+      // =====================================================================
+      function loadJsonStorage(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (_) {
+          return fallback;
+        }
+      }
+
+      function saveJsonStorage(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (_) {
+          // Ignore quota errors
+        }
+      }
+
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        const metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) metaTheme.setAttribute('content', isDark ? '#161513' : '#F8F6F1');
+        saveJsonStorage(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+      }
+
+      let toastTimer = null;
+      function showToast(message, duration = 2600) {
+        const wrap = document.getElementById('toast-wrap');
+        const pill = document.getElementById('toast-pill');
+        pill.textContent = message;
+        wrap.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => wrap.classList.remove('show'), duration);
+      }
+
+      function openModal(html) {
+        const root = document.getElementById('modal-root');
+        const sheet = document.getElementById('modal-sheet');
+        sheet.innerHTML = html;
+        root.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        const root = document.getElementById('modal-root');
+        root.classList.add('hidden');
+        document.getElementById('modal-sheet').innerHTML = '';
+      }
+
+      function esc(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function copyText(text) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (ok) {
+            showToast('已复制到剪贴板');
+            return true;
+          }
+        } catch (_) {}
+        showToast('复制受限，请长按文本框手动复制');
+        return false;
+      }
+
+      function downloadFile(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function startOfTodayMs() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      }
+
+      function endOfTodayMs() {
+        const d = new Date();
+        d.setHours(23, 59, 59, 999);
+        return d.getTime();
+      }
+
+      function formatTime(isoOrMs) {
+        if (!isoOrMs) return '-';
+        const d = new Date(isoOrMs);
+        if (Number.isNaN(d.getTime())) return '-';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function setSyncStatus(status) {
+        state.syncStatus = status;
+        const dot = document.getElementById('sync-dot');
+        const txt = document.getElementById('sync-dot-text');
+        if (!dot || !txt) return;
+        dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
+        txt.textContent = status === 'syncing' ? '同步中' : status === 'error' ? '待重试' : '云端已同步';
+      }
+
+      // =====================================================================
+      // 5. FSRS-4.5 FORGETTING CURVE & 4-TIER ANTI-AVALANCHE SCHEDULER
+      // =====================================================================
+      // Standard FSRS-4.5 weights
+      const FSRS_W = [
+        0.4072, 1.1829, 3.1262, 15.4722,
+        7.2102, 0.5316, 1.0651, 0.0234,
+        1.616, 0.1544, 1.0824, 1.9813,
+        0.0953, 0.2975, 2.2042, 0.2407, 2.9466
+      ];
+      const FSRS_FACTOR = 19 / 81;
+      const FSRS_DECAY = -0.5;
+
+      function clamp(val, min, max) {
+        return Math.max(min, Math.min(max, val));
+      }
+
+      /**
+       * FSRS-4.5 Retrievability: R(t, S) = (1 + (19/81) * (t / S))^(-0.5)
+       */
+      function computeRetrievability(fsrsState, nowMs = Date.now()) {
+        if (!fsrsState || !fsrsState.last_review) return 0.9;
+        const lastMs = new Date(fsrsState.last_review).getTime();
+        if (Number.isNaN(lastMs)) return 0.9;
+        const elapsedDays = Math.max(0, (nowMs - lastMs) / MS_PER_DAY);
+        const S = Math.max(0.15, Number(fsrsState.stability) || 1.0);
+        return Math.pow(1 + FSRS_FACTOR * (elapsedDays / S), FSRS_DECAY);
+      }
+
+      /**
+       * Create initial FSRS state for a newly captured card (first review tomorrow)
+       */
+      function createInitialFsrsState(nowMs = Date.now()) {
+        const dueIso = new Date(startOfTodayMs() + MS_PER_DAY).toISOString();
+        return {
+          stability: 1.0,
+          difficulty: 5.0,
+          elapsed_days: 0,
+          scheduled_days: 1,
+          reps: 0,
+          lapses: 0,
+          state: 0, // 0=New, 1=Learning, 2=Review, 3=Relearning
+          last_review: new Date(nowMs).toISOString(),
+          due: dueIso
+        };
+      }
+
+      /**
+       * Compute next FSRS-4.5 state for binary rating:
+       * 'good' -> Rating 3 (想起来了)
+       * 'again' -> Rating 1 (有点模糊)
+       */
+      function scheduleFsrsCard(prev, ratingKey, nowMs = Date.now()) {
+        const G = ratingKey === 'good' ? 3 : 1;
+        const base = prev && typeof prev === 'object' ? prev : createInitialFsrsState(nowMs - MS_PER_DAY);
+
+        const lastMs = base.last_review ? new Date(base.last_review).getTime() : (nowMs - MS_PER_DAY);
+        const elapsedDays = Number(Math.max(0, (nowMs - lastMs) / MS_PER_DAY).toFixed(2));
+        const prevReps = Number(base.reps) || 0;
+        const prevLapses = Number(base.lapses) || 0;
+
+        let S, D, scheduledDays, nextState;
+        const D0Good = clamp(FSRS_W[4] - (3 - 3) * FSRS_W[5], 1, 10);
+
+        if (prevReps === 0 || base.state === 0) {
+          // First active recall review
+          S = FSRS_W[G - 1];
+          D = clamp(FSRS_W[4] - (G - 3) * FSRS_W[5], 1, 10);
+          if (G === 3) {
+            scheduledDays = Math.max(1, Math.round(S));
+            nextState = 2;
+          } else {
+            scheduledDays = 1;
+            nextState = 1;
+          }
+        } else {
+          const prevS = Math.max(0.2, Number(base.stability) || 1.0);
+          const prevD = clamp(Number(base.difficulty) || 5.0, 1, 10);
+          const R = Math.pow(1 + FSRS_FACTOR * (elapsedDays / prevS), FSRS_DECAY);
+
+          // Mean reversion difficulty update
+          D = clamp(FSRS_W[7] * D0Good + (1 - FSRS_W[7]) * (prevD - FSRS_W[6] * (G - 3)), 1, 10);
+
+          if (G === 3) {
+            // Successful recall (Good)
+            const inc = Math.exp(FSRS_W[8]) *
+              (11 - D) *
+              Math.pow(prevS, -FSRS_W[9]) *
+              (Math.exp(FSRS_W[10] * (1 - R)) - 1);
+            S = clamp(prevS * (1 + Math.max(0.15, inc)), 0.5, 365);
+            scheduledDays = clamp(Math.round(S), 1, 365);
+            nextState = 2;
+          } else {
+            // Lapsed recall (Again)
+            const sf = FSRS_W[11] *
+              Math.pow(D, -FSRS_W[12]) *
+              (Math.pow(prevS + 1, FSRS_W[13]) - 1) *
+              Math.exp(FSRS_W[14] * (1 - R));
+            S = clamp(Math.min(prevS, sf), 0.25, 30);
+            scheduledDays = 1;
+            nextState = 3;
+          }
+        }
+
+        const dueIso = new Date(startOfTodayMs() + scheduledDays * MS_PER_DAY).toISOString();
+        return {
+          stability: Number(S.toFixed(2)),
+          difficulty: Number(D.toFixed(2)),
+          elapsed_days: elapsedDays,
+          scheduled_days: scheduledDays,
+          reps: prevReps + 1,
+          lapses: G === 1 ? prevLapses + 1 : prevLapses,
+          state: nextState,
+          last_review: new Date(nowMs).toISOString(),
+          due: dueIso
+        };
+      }
+
+      /**
+       * Partition cards into the 4 anti-avalanche priority tiers
+       */
+      function classifyTiers(excludeSet) {
+        const now = Date.now();
+        const todayStart = startOfTodayMs();
+        const todayEnd = endOfTodayMs();
+
+        const tier1 = []; // Due today & fresh (scheduled_days <= 7 or reps <= 2)
+        const tier2 = []; // Due today & stable
+        const tier3 = []; // Historical overdue reservoir, R >= 0.30 (semi-ripe)
+        const tier4 = []; // Historical overdue reservoir, R < 0.30 (sunken)
+
+        for (const card of state.cards) {
+          if (excludeSet.has(card.id)) continue;
+          const dueMs = card.due_at ? new Date(card.due_at).getTime() : todayStart;
+          if (dueMs > todayEnd) continue; // Future card, not due yet
+
+          const fsrs = card.fsrs_state || {};
+          const sched = Number(fsrs.scheduled_days) || 1;
+          const reps = Number(fsrs.reps) || 0;
+          const R = computeRetrievability(fsrs, now);
+
+          if (dueMs >= todayStart) {
+            if (sched <= 7 || reps <= 2) {
+              tier1.push({ card, sched, dueMs, R });
+            } else {
+              tier2.push({ card, sched, dueMs, R });
+            }
+          } else {
+            if (R >= 0.30) {
+              tier3.push({ card, R, dueMs });
+            } else {
+              tier4.push({ card, R, dueMs });
+            }
+          }
+        }
+
+        // Tier 1: shortest scheduled interval ASC
+        tier1.sort((a, b) => a.sched - b.sched || a.dueMs - b.dueMs);
+        // Tier 2: due time ASC
+        tier2.sort((a, b) => a.dueMs - b.dueMs);
+        // Tier 3 & 4: retrievability R DESC (save highest-R cards before total decay)
+        tier3.sort((a, b) => b.R - a.R);
+        tier4.sort((a, b) => b.R - a.R);
+
+        return {
+          tier1: tier1.map(x => x.card),
+          tier2: tier2.map(x => x.card),
+          tier3: tier3.map(x => x.card),
+          tier4: tier4.map(x => x.card)
+        };
+      }
+
+      /**
+       * Build today's clean queue with peak-shaving, valley-filling, and silent mixing
+       */
+      function buildTodayQueue() {
+        const cap = clamp(Number(state.prefs.daily_limit) || 50, 5, 150);
+        const mix = Boolean(state.prefs.mix_backlog);
+        const { tier1, tier2, tier3, tier4 } = classifyTiers(state.review.reviewedIds);
+
+        const todayDue = [...tier1, ...tier2];
+        const queue = [];
+        let t3Idx = 0;
+        let t4Idx = 0;
+        let todayCount = 0;
+
+        // 1. Add today-due cards (peak shaved at daily_limit), quietly mixing 1 Tier-3 every 4 cards
+        for (const c of todayDue) {
+          if (queue.length >= cap) break;
+          queue.push(c.id);
+          todayCount++;
+          if (mix && todayCount % 4 === 0 && t3Idx < tier3.length && queue.length < cap) {
+            queue.push(tier3[t3Idx++].id);
+          }
+        }
+
+        // 2. Valley-fill: if due today < 5 and reservoir non-empty, silently top up to 5
+        const minFloor = Math.min(5, cap);
+        while (queue.length < minFloor && t3Idx < tier3.length) {
+          queue.push(tier3[t3Idx++].id);
+        }
+        while (queue.length < minFloor && t4Idx < tier4.length && state.review.sunkenShown < 2) {
+          queue.push(tier4[t4Idx++].id);
+          state.review.sunkenShown++;
+        }
+
+        // Boolean-only reservoir check (STRICTLY never expose overdue counts!)
+        const leftover = (todayDue.length - todayCount) + (tier3.length - t3Idx) + (tier4.length - t4Idx);
+        state.review.hasReservoir = leftover > 0;
+
+        state.review.queue = queue;
+        state.review.index = 0;
+        resetCardTurnState();
+      }
+
+      /**
+       * Voluntary extra batch: "顺手再捞 10 张"
+       */
+      function pullExtraTenCards() {
+        const { tier1, tier2, tier3, tier4 } = classifyTiers(state.review.reviewedIds);
+        const batch = [];
+
+        for (const c of [...tier1, ...tier2, ...tier3]) {
+          if (batch.length >= 10) break;
+          batch.push(c.id);
+        }
+        for (const c of tier4) {
+          if (batch.length >= 10) break;
+          if (state.review.sunkenShown >= 2) break;
+          batch.push(c.id);
+          state.review.sunkenShown++;
+        }
+
+        if (batch.length === 0) {
+          state.review.hasReservoir = false;
+          showToast('蓄水池暂时已经清空啦');
+          renderReviewTab();
+          return;
+        }
+
+        const picked = new Set(batch);
+        state.review.hasReservoir = [...tier1, ...tier2, ...tier3, ...tier4].some(c => !picked.has(c.id));
+        state.review.queue = batch;
+        state.review.index = 0;
+        resetCardTurnState();
+        renderReviewTab();
+      }
+
+      function resetCardTurnState() {
+        state.review.phase = 'front';
+        state.review.rating = null;
+        state.review.frontStartMs = Date.now();
+        state.review.backStartMs = 0;
+        state.review.frontDurationMs = 0;
+        state.review.editedThisReview = false;
+        state.review.scaffoldQuestions = null;
+        state.review.scaffoldLoading = false;
+        state.review.scaffoldTriggered = false;
+        state.review.submitting = false;
+      }
+
+      // =====================================================================
+      // 6. NATIVE FETCH SUPABASE AUTH & POSTGREST CLIENT
+      // =====================================================================
+      function cleanBaseUrl(url) {
+        return String(url || '').trim().replace(/\/+$/, '');
+      }
+
+      function translateSupabaseError(status, bodyText) {
+        const msg = String(bodyText || '').toLowerCase();
+        if (msg.includes('invalid login credentials') || msg.includes('invalid_grant')) {
+          return '邮箱或密码不正确，请检查后再试。';
+        }
+        if (msg.includes('email not confirmed')) {
+          return '该邮箱尚未在 Supabase 后台确认（勾选 Auto Confirm User 即可）。';
+        }
+        if (msg.includes('invalid api key') || status === 401) {
+          return 'Supabase Anon Key 无效或登录已过期，请核对配置或重新登录。';
+        }
+        if (msg.includes('relation') && msg.includes('does not exist')) {
+          return '数据库尚未建表，请先在 Supabase SQL Editor 运行建表脚本。';
+        }
+        if (msg.includes('row-level security') || status === 403) {
+          return '没有权限操作数据，请检查 Supabase 的 RLS 安全策略是否已正确执行。';
+        }
+        if (status === 0) {
+          return '网络连接失败，请检查 Supabase Project URL 格式或当前手机网络。';
+        }
+        return `云端请求失败 (${status})，请稍后重试。`;
+      }
+
+      async function sbPasswordLogin(url, anonKey, email, password) {
+        const endpoint = `${cleanBaseUrl(url)}/auth/v1/token?grant_type=password`;
+        let resp;
+        try {
+          resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'apikey': anonKey.trim(),
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email.trim(), password })
+          });
+        } catch (_) {
+          throw new Error(translateSupabaseError(0, ''));
+        }
+
+        const text = await resp.text();
+        if (!resp.ok) {
+          throw new Error(translateSupabaseError(resp.status, text));
+        }
+
+        const data = JSON.parse(text);
+        const expiresAt = data.expires_at
+          ? data.expires_at * 1000
+          : Date.now() + (data.expires_in || 3600) * 1000;
+
+        return {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          expires_at: expiresAt,
+          user: {
+            id: data.user?.id || '',
+            email: data.user?.email || email.trim()
+          }
+        };
+      }
+
+      let refreshPromise = null;
+      async function ensureValidAccessToken(forceRefresh = false) {
+        if (!state.session || !state.sbConfig.url || !state.sbConfig.anonKey) {
+          throw new Error('会话未就绪');
+        }
+
+        const now = Date.now();
+        const needsRefresh = forceRefresh || !state.session.expires_at || (state.session.expires_at - now < 120000);
+        if (!needsRefresh) return state.session.access_token;
+
+        if (!state.session.refresh_token) {
+          handleSessionExpired();
+          throw new Error('登录已过期，请重新登录');
+        }
+
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            const endpoint = `${cleanBaseUrl(state.sbConfig.url)}/auth/v1/token?grant_type=refresh_token`;
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'apikey': state.sbConfig.anonKey,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ refresh_token: state.session.refresh_token })
+            });
+            if (!resp.ok) {
+              handleSessionExpired();
+              throw new Error('登录状态已失效，请重新登录');
+            }
+            const data = await resp.json();
+            const expiresAt = data.expires_at
+              ? data.expires_at * 1000
+              : Date.now() + (data.expires_in || 3600) * 1000;
+
+            state.session = {
+              access_token: data.access_token,
+              refresh_token: data.refresh_token || state.session.refresh_token,
+              expires_at: expiresAt,
+              user: {
+                id: data.user?.id || state.session.user?.id || '',
+                email: data.user?.email || state.session.user?.email || ''
+              }
+            };
+            saveJsonStorage(STORAGE_KEYS.SESSION, state.session);
+            return state.session.access_token;
+          })().finally(() => {
+            refreshPromise = null;
+          });
+        }
+
+        return refreshPromise;
+      }
+
+      function handleSessionExpired() {
+        state.session = null;
+        localStorage.removeItem(STORAGE_KEYS.SESSION);
+        state.cards = [];
+        state.activityLogs = [];
+        state.appMounted = false;
+        showAuthWall('登录状态已过期，请重新安全登录。');
+      }
+
+      async function sbLogout() {
+        try {
+          if (state.session?.access_token && state.sbConfig.url && state.sbConfig.anonKey) {
+            await fetch(`${cleanBaseUrl(state.sbConfig.url)}/auth/v1/logout`, {
+              method: 'POST',
+              headers: {
+                'apikey': state.sbConfig.anonKey,
+                'Authorization': `Bearer ${state.session.access_token}`
+              }
+            });
+          }
+        } catch (_) {}
+        state.session = null;
+        localStorage.removeItem(STORAGE_KEYS.SESSION);
+        state.cards = [];
+        state.activityLogs = [];
+        state.review.reviewedIds.clear();
+        state.appMounted = false;
+        showAuthWall();
+        showToast('已安全退出登录');
+      }
+
+      async function sbRest(path, options = {}, retried = false) {
+        const token = await ensureValidAccessToken(retried);
+        const url = `${cleanBaseUrl(state.sbConfig.url)}/rest/v1/${path}`;
+        const headers = {
+          'apikey': state.sbConfig.anonKey,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        };
+
+        let resp;
+        try {
+          resp = await fetch(url, {
+            method: options.method || 'GET',
+            headers,
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined
+          });
+        } catch (_) {
+          setSyncStatus('error');
+          throw new Error('网络不太顺畅，未能连接云端数据库');
+        }
+
+        if (resp.status === 401 && !retried) {
+          return sbRest(path, options, true);
+        }
+
+        const text = await resp.text();
+        if (!resp.ok) {
+          setSyncStatus('error');
+          throw new Error(translateSupabaseError(resp.status, text));
+        }
+
+        if (!text) return null;
+        try {
+          return JSON.parse(text);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      // --- Data Operations matching exact Supabase schema ---
+      async function fetchAllUserData() {
+        setSyncStatus('syncing');
+        const userId = state.session.user.id;
+        const [cardsData, prefsData, logsData] = await Promise.all([
+          sbRest('cards?select=*&order=created_at.desc'),
+          sbRest(`user_prefs?user_id=eq.${encodeURIComponent(userId)}&select=*`),
+          sbRest('activity_logs?select=*&order=created_at.desc&limit=500')
+        ]);
+
+        state.cards = Array.isArray(cardsData) ? cardsData : [];
+        state.activityLogs = Array.isArray(logsData) ? logsData : [];
+
+        if (Array.isArray(prefsData) && prefsData.length > 0) {
+          const p = prefsData[0];
+          state.prefs = {
+            daily_limit: Number(p.daily_limit) || 50,
+            mix_backlog: p.mix_backlog !== undefined ? Boolean(p.mix_backlog) : true,
+            theme: p.theme === 'dark' ? 'dark' : 'light'
+          };
+          applyTheme(state.prefs.theme);
+        } else {
+          // Initialize user_prefs row silently
+          saveUserPrefsToCloud().catch(() => {});
+        }
+        setSyncStatus('ok');
+      }
+
+      async function saveUserPrefsToCloud() {
+        setSyncStatus('syncing');
+        await sbRest('user_prefs?on_conflict=user_id', {
+          method: 'POST',
+          headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+          body: {
+            user_id: state.session.user.id,
+            daily_limit: Number(state.prefs.daily_limit) || 50,
+            mix_backlog: Boolean(state.prefs.mix_backlog),
+            theme: state.prefs.theme
+          }
+        });
+        setSyncStatus('ok');
+      }
+
+      async function insertCardToCloud(cardPayload) {
+        setSyncStatus('syncing');
+        const rows = await sbRest('cards', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: {
+            user_id: state.session.user.id,
+            ...cardPayload
+          }
+        });
+        const created = Array.isArray(rows) ? rows[0] : rows;
+        if (created) {
+          state.cards.unshift(created);
+        }
+        setSyncStatus('ok');
+        return created;
+      }
+
+      async function updateCardInCloud(cardId, patch) {
+        setSyncStatus('syncing');
+        const body = { ...patch, updated_at: new Date().toISOString() };
+        const rows = await sbRest(`cards?id=eq.${encodeURIComponent(cardId)}`, {
+          method: 'PATCH',
+          headers: { 'Prefer': 'return=representation' },
+          body
+        });
+        const updated = Array.isArray(rows) ? rows[0] : null;
+        const idx = state.cards.findIndex(c => c.id === cardId);
+        if (idx >= 0) {
+          state.cards[idx] = updated || { ...state.cards[idx], ...body };
+        }
+        setSyncStatus('ok');
+        return state.cards[idx];
+      }
+
+      async function deleteCardInCloud(cardId) {
+        setSyncStatus('syncing');
+        await sbRest(`cards?id=eq.${encodeURIComponent(cardId)}`, { method: 'DELETE' });
+        state.cards = state.cards.filter(c => c.id !== cardId);
+        setSyncStatus('ok');
+      }
+
+      // Fire-and-forget silent telemetry writer
+      function logActivitySilent(eventType, cardId, payload) {
+        if (!state.session?.user?.id) return;
+        const row = {
+          user_id: state.session.user.id,
+          event_type: eventType,
+          card_id: cardId || null,
+          payload: payload || {}
+        };
+        // Optimistic local append for instant lab counts
+        state.activityLogs.unshift({ ...row, created_at: new Date().toISOString() });
+        sbRest('activity_logs', { method: 'POST', body: row }).catch(() => {
+          // Never interrupt user flow for silent telemetry errors
+        });
+      }
+
+      // =====================================================================
+      // 7. OPENAI-COMPATIBLE AI CLIENT (LOCAL KEY ONLY, ZERO SERVER LEAK)
+      // =====================================================================
+      function isAiConfigured() {
+        return Boolean(
+          state.aiConfig.baseUrl &&
+          state.aiConfig.baseUrl.trim() &&
+          state.aiConfig.apiKey &&
+          state.aiConfig.apiKey.trim() &&
+          state.aiConfig.model &&
+          state.aiConfig.model.trim()
+        );
+      }
+
+      function promptConfigureAi() {
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="margin:0;font-size:16px;font-weight:600;">尚未配置本机 AI 接口</h3>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+            <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;">
+              为保护密钥安全，大模型 API Key 仅存放在你当前设备的浏览器本地，不会上传到任何托管平台。去「设置」页填一次即可开启智能拆解、思维脚手架与概念压缩。
+            </p>
+            <div style="display:flex;gap:10px;padding-top:4px;">
+              <button type="button" class="btn btn-soft" style="flex:1;" id="m-later">先手动使用</button>
+              <button type="button" class="btn btn-primary" style="flex:1;" id="m-go-settings">去设置填 Key</button>
+            </div>
+          </div>
+        `);
+        document.getElementById('m-close').onclick = closeModal;
+        document.getElementById('m-later').onclick = closeModal;
+        document.getElementById('m-go-settings').onclick = () => {
+          closeModal();
+          switchTab('settings');
+          setTimeout(() => document.getElementById('ai-api-key')?.focus(), 180);
+        };
+      }
+
+      function extractJsonObject(raw) {
+        const cleaned = String(raw || '')
+          .replace(/^```json\s*/i, '')
+          .replace(/^```\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim();
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+          return JSON.parse(cleaned.slice(start, end + 1));
+        }
+        return JSON.parse(cleaned);
+      }
+
+      async function callOpenAiCompatible(systemPrompt, userPrompt, expectJson = true) {
+        if (!isAiConfigured()) {
+          throw new Error('NO_AI_KEY');
+        }
+        const base = cleanBaseUrl(state.aiConfig.baseUrl);
+        const endpoint = base.endsWith('/chat/completions') ? base : `${base}/chat/completions`;
+
+        const sys = expectJson
+          ? `${systemPrompt}\n\n严格要求：只返回一个合法的纯 JSON 对象，不要包含 Markdown 代码块、前缀或任何多余解释。`
+          : systemPrompt;
+
+        let resp;
+        try {
+          resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${state.aiConfig.apiKey.trim()}`
+            },
+            body: JSON.stringify({
+              model: state.aiConfig.model.trim(),
+              temperature: 0.35,
+              messages: [
+                { role: 'system', content: sys },
+                { role: 'user', content: userPrompt }
+              ]
+            })
+          });
+        } catch (_) {
+          throw new Error('无法连接 AI 接口（可能是网络异常或该接口不支持浏览器直连跨域）');
+        }
+
+        const text = await resp.text();
+        if (!resp.ok) {
+          if (resp.status === 401) throw new Error('API Key 无效或余额不足，请检查设置');
+          if (resp.status === 404) throw new Error('接口地址或模型名称不存在，请检查设置');
+          if (resp.status === 429) throw new Error('请求频率受限，请稍等几秒再试');
+          throw new Error(`AI 接口返回异常 (${resp.status})`);
+        }
+
+        const data = JSON.parse(text);
+        const content = data?.choices?.[0]?.message?.content;
+        if (!content) throw new Error('AI 返回内容为空');
+        return expectJson ? extractJsonObject(content) : content.trim();
+      }
+
+      // AI 1: Quick Capture Split + Silent Domain Tag
+      async function aiSplitCapture(rawText) {
+        const sys = `你是“非结构化洞察内化系统”的克制录入助手。将用户输入拆分成如下 JSON 字段：
+{
+  "front_fact": "剥离出的客观事实、原话、对话或具体现象（精炼清晰）",
+  "back_anchor": "用户第一眼看到该现象时的直觉、情绪与感触。铁律：严格保留用户的原话大白话口吻，严禁润色成书面语、严禁说教、严禁替用户总结大道理",
+  "domain_tag": "从以下 6 个固定大类中严格单选其一：专业认知、人情世故、亲密关系、自我觉察、商业规律、生活杂感"
+}`;
+        const res = await callOpenAiCompatible(sys, `请拆解这段随手记录：\n${rawText}`, true);
+        return {
+          front_fact: String(res.front_fact || rawText).trim(),
+          back_anchor: String(res.back_anchor || '').trim(),
+          domain_tag: DOMAINS.includes(res.domain_tag) ? res.domain_tag : '生活杂感'
+        };
+      }
+
+      // AI 2: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
+      async function aiFetchScaffolding(card) {
+        const sys = `你是克制的思维脚手架出题人，只帮用户降低外在认知负荷。
+严格规则：
+1. 返回 JSON：{"questions": ["问题1", "问题2", "问题3"]}（2 到 3 个问题）。
+2. 每个问题不超过 20 个中文字，提供结构化切入角度（如本质机制、适用边界、反常识点、隐性成本等）。
+3. 严禁回答问题、严禁帮用户写出结论或关键词，把留白留给用户潜意识。`;
+        const tags = (card.evolution_tags || []).join('、') || '暂无';
+        const prompt = `事实线索：${card.front_fact}\n最初感受：${card.back_anchor}\n已有进化词条：${tags}`;
+        const res = await callOpenAiCompatible(sys, prompt, true);
+        const qs = Array.isArray(res.questions) ? res.questions.slice(0, 3) : [];
+        if (qs.length === 0) throw new Error('未能生成切入问题');
+        return qs;
+      }
+
+      // AI 3: Concept Compressor (Anti-Fan-Effect when 3 slots are full)
+      async function aiCompressTags(card, newIdea) {
+        const sys = `你是“概念压缩机”，用于对抗认知科学中的扇形效应。
+卡片的进化层已有 3 个词条（硬性上限），现在用户产生了 1 个新想法。
+请返回 JSON：
+{
+  "options": [
+    {"word": "2到8字凝练新词", "replace_index": 0, "reason": "12字内说明融合了哪两层意思"},
+    {"word": "另一凝练候选词", "replace_index": 1, "reason": "12字内说明"}
+  ]
+}
+其中 replace_index 必须是 0、1 或 2。`;
+        const tags = card.evolution_tags || [];
+        const prompt = `原事实：${card.front_fact}\n现有 3 个词条：\n[0] ${tags[0] || ''}\n[1] ${tags[1] || ''}\n[2] ${tags[2] || ''}\n新想法：${newIdea}`;
+        const res = await callOpenAiCompatible(sys, prompt, true);
+        return Array.isArray(res.options) ? res.options.slice(0, 2) : [];
+      }
+
+      // AI 4: Silent Background Cross-Domain Matcher
+      async function runSilentCrossDomainMatch(savedCard) {
+        if (!isAiConfigured() || !savedCard?.id) return;
+        const candidates = state.cards
+          .filter(c => c.id !== savedCard.id && c.domain_tag !== savedCard.domain_tag)
+          .slice(0, 35);
+        if (candidates.length === 0) return;
+
+        try {
+          const sys = `你是后台静默跨界碰瓷器。判断新卡片与不同领域的历史候选卡片中，是否存在底层结构或通用规律上的高度共振。
+规则：
+- 若存在令人惊喜的底层结构相似性，返回 {"match_id": "对应候选卡片id"}。
+- 若没有足够强的底层相似性，切勿硬凑，返回 {"match_id": ""}。
+- 严禁返回解释或剧透原因。`;
+          const listStr = candidates.map(c =>
+            `ID:${c.id} | 事实:${String(c.front_fact).slice(0, 55)} | 词条:${(c.evolution_tags || []).join('/')}`
+          ).join('\n');
+          const prompt = `新卡片（${savedCard.domain_tag}）：\n事实：${savedCard.front_fact}\n感受：${savedCard.back_anchor}\n\n不同领域候选：\n${listStr}`;
+
+          const res = await callOpenAiCompatible(sys, prompt, true);
+          const match = candidates.find(c => c.id === res.match_id);
+          if (match) {
+            await updateCardInCloud(savedCard.id, {
+              cross_link_id: match.id,
+              cross_link_hint: match.domain_tag
+            });
+            logActivitySilent('ai_usage', savedCard.id, { feature: 'cross_link', adopted: true });
+          }
+        } catch (_) {
+          // Silent background operation: never bother user
+        }
+      }
+
+      // =====================================================================
+      // 8. AUTH WALL VIEW & LOGIN FLOW
+      // =====================================================================
+      function showAuthWall(errorMsg = '') {
+        const authWall = document.getElementById('auth-wall');
+        const appMain = document.getElementById('app-main');
+        appMain.classList.add('hidden');
+        appMain.innerHTML = ''; // Strictly unmount all app UI when logged out
+        authWall.classList.remove('hidden');
+
+        // Pre-fill Supabase config from localStorage
+        const urlInput = document.getElementById('cfg-sb-url');
+        const anonInput = document.getElementById('cfg-sb-anon');
+        const details = document.getElementById('supabase-config-details');
+        const statusTag = document.getElementById('db-config-status');
+
+        urlInput.value = state.sbConfig.url || '';
+        anonInput.value = state.sbConfig.anonKey || '';
+
+        const configured = Boolean(state.sbConfig.url && state.sbConfig.anonKey);
+        details.open = !configured; // Expand on first visit; collapse once saved
+        statusTag.textContent = configured ? '已记住本机配置' : '首次需填写';
+        statusTag.className = 'db-status-tag' + (configured ? ' ready' : '');
+
+        const errBox = document.getElementById('auth-error-box');
+        if (errorMsg) {
+          errBox.textContent = errorMsg;
+          errBox.classList.remove('hidden');
+        } else {
+          errBox.classList.add('hidden');
+        }
+      }
+
+      function initAuthWallEvents() {
+        const pwInput = document.getElementById('auth-password');
+        const eyeBtn = document.getElementById('btn-toggle-auth-pw');
+        eyeBtn.innerHTML = ICONS.eye;
+        eyeBtn.addEventListener('click', () => {
+          const isPw = pwInput.type === 'password';
+          pwInput.type = isPw ? 'text' : 'password';
+          eyeBtn.innerHTML = isPw ? ICONS.eyeOff : ICONS.eye;
+        });
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('auth-email').value.trim();
+          const password = pwInput.value;
+          const sbUrl = cleanBaseUrl(document.getElementById('cfg-sb-url').value);
+          const sbAnon = document.getElementById('cfg-sb-anon').value.trim();
+          const errBox = document.getElementById('auth-error-box');
+          const submitBtn = document.getElementById('btn-auth-submit');
+
+          errBox.classList.add('hidden');
+
+          if (!sbUrl || !sbAnon) {
+            document.getElementById('supabase-config-details').open = true;
+            errBox.textContent = '请先展开并填写 Supabase Project URL 与 Anon Key。';
+            errBox.classList.remove('hidden');
+            return;
+          }
+          if (!/^https?:\/\//i.test(sbUrl)) {
+            document.getElementById('supabase-config-details').open = true;
+            errBox.textContent = 'Supabase Project URL 应以 https:// 开头。';
+            errBox.classList.remove('hidden');
+            return;
+          }
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = '正在验证身份...';
+
+          try {
+            const session = await sbPasswordLogin(sbUrl, sbAnon, email, password);
+            state.sbConfig = { url: sbUrl, anonKey: sbAnon };
+            state.session = session;
+            saveJsonStorage(STORAGE_KEYS.SUPABASE, state.sbConfig);
+            saveJsonStorage(STORAGE_KEYS.SESSION, state.session);
+            pwInput.value = '';
+            await enterAuthenticatedApp();
+          } catch (err) {
+            errBox.textContent = err.message || '登录失败，请检查账号密码与云端配置。';
+            errBox.classList.remove('hidden');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '安全登录';
+          }
+        });
+      }
+
+      // =====================================================================
+      // 9. AUTHENTICATED APP SHELL MOUNTING
+      // =====================================================================
+      async function enterAuthenticatedApp() {
+        document.getElementById('auth-wall').classList.add('hidden');
+        const appMain = document.getElementById('app-main');
+        appMain.classList.remove('hidden');
+
+        if (!state.appMounted) {
+          appMain.innerHTML = `
+            <main class="tab-container">
+              <section id="view-review" style="flex:1;display:flex;flex-direction:column;"></section>
+              <section id="view-capture" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
+              <section id="view-library" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
+              <section id="view-settings" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
+            </main>
+
+            <nav class="bottom-nav" aria-label="主导航">
+              <div class="bottom-nav-grid">
+                <button type="button" class="nav-item active" data-tab="review">${ICONS.review}<span>今日复习</span></button>
+                <button type="button" class="nav-item" data-tab="capture">${ICONS.capture}<span>速记录入</span></button>
+                <button type="button" class="nav-item" data-tab="library">${ICONS.library}<span>卡片库</span></button>
+                <button type="button" class="nav-item" data-tab="settings">${ICONS.settings}<span>设置</span></button>
+              </div>
+            </nav>
+          `;
+
+          appMain.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+          });
+
+          state.appMounted = true;
+        }
+
+        // Show calm initial loading placeholder inside review view
+        document.getElementById('view-review').innerHTML = `
+          <div class="done-stage">
+            <div class="done-icon anim-pulse">${ICONS.sun}</div>
+            <p style="font-size:13px;color:var(--ink-muted);margin:0;">正在同步你的私有记忆素材库...</p>
+          </div>
+        `;
+
+        try {
+          await fetchAllUserData();
+          buildTodayQueue();
+          renderReviewTab();
+          renderCaptureTab();
+          renderLibraryTab();
+          renderSettingsTab();
+          switchTab('review');
+        } catch (err) {
+          showToast(err.message || '云端数据加载失败');
+          document.getElementById('view-review').innerHTML = `
+            <div class="done-stage">
+              <p style="font-size:14px;color:var(--terra);margin:0 0 14px;">${esc(err.message || '云端连接异常')}</p>
+              <button type="button" class="btn btn-primary btn-sm" id="btn-retry-load">重新同步</button>
+            </div>
+          `;
+          document.getElementById('btn-retry-load').onclick = () => enterAuthenticatedApp();
+        }
+      }
+
+      function switchTab(tab) {
+        state.activeTab = tab;
+        ['review', 'capture', 'library', 'settings'].forEach(name => {
+          const el = document.getElementById(`view-${name}`);
+          if (el) el.classList.toggle('hidden', name !== tab);
+        });
+        document.querySelectorAll('.nav-item').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+        });
+        if (tab === 'review') renderReviewTab();
+        if (tab === 'library') renderLibraryTab();
+        if (tab === 'settings') renderSettingsTab();
+      }
+
+      // =====================================================================
+      // 10. TAB 1: 今日复习 (REVIEW)
+      // =====================================================================
+      function getCurrentReviewCard() {
+        const id = state.review.queue[state.review.index];
+        return id ? state.cards.find(c => c.id === id) || null : null;
+      }
+
+      function renderReviewHeader(currentNum, totalNum) {
+        const pct = totalNum > 0 ? Math.min(100, Math.round((currentNum / totalNum) * 100)) : 100;
+        const label = totalNum > 0
+          ? (currentNum <= totalNum ? `今日第 ${currentNum} / ${totalNum} 张` : `今日 ${totalNum} / ${totalNum} 已完成`)
+          : '今日暂无待保鲜卡片';
+        const dotClass = state.syncStatus === 'syncing' ? 'syncing' : state.syncStatus === 'error' ? 'error' : '';
+        const dotTxt = state.syncStatus === 'syncing' ? '同步中' : state.syncStatus === 'error' ? '待重试' : '云端已同步';
+
+        return `
+          <div class="page-header" style="margin-bottom:10px;">
+            <span style="font-size:13px;font-weight:500;color:var(--ink-secondary);font-variant-numeric:tabular-nums;">${label}</span>
+            <span class="sync-dot-wrap">
+              <span id="sync-dot" class="sync-dot ${dotClass}"></span>
+              <span id="sync-dot-text">${dotTxt}</span>
+            </span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${pct}%"></div>
+          </div>
+        `;
+      }
+
+      function renderReviewTab() {
+        const container = document.getElementById('view-review');
+        if (!container) return;
+
+        const total = state.review.queue.length;
+        const idx = state.review.index;
+
+        // Completed / Empty State
+        if (total === 0 || idx >= total) {
+          container.innerHTML = `
+            ${renderReviewHeader(total, total)}
+            <div class="done-stage anim-up">
+              <div class="done-icon">${ICONS.sun}</div>
+              <h2 style="margin:0 0 8px;font-size:18px;font-weight:600;">今日已保鲜，交给后台潜意识</h2>
+              <p style="margin:0 0 26px;font-size:13px;color:var(--ink-muted);max-width:290px;line-height:1.7;">
+                前台内存已留白。散步、洗澡或放空时，大脑默认模式网络会自动让已固化的素材发生跨界碰撞。
+              </p>
+              <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:220px;">
+                <button type="button" class="btn btn-primary btn-block" id="btn-done-capture">去记一条新洞察</button>
+                ${state.review.hasReservoir ? `
+                  <button type="button" class="btn btn-soft btn-sm btn-block" id="btn-pull-ten" style="color:var(--ink-muted);">
+                    状态正好 · 顺手再捞 10 张
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+          document.getElementById('btn-done-capture').onclick = () => switchTab('capture');
+          const pullBtn = document.getElementById('btn-pull-ten');
+          if (pullBtn) pullBtn.onclick = pullExtraTenCards;
+          return;
+        }
+
+        const card = getCurrentReviewCard();
+        if (!card) {
+          state.review.index++;
+          renderReviewTab();
+          return;
+        }
+
+        // ---------------- FRONT PHASE (Pure recall, NO domain tag) ----------------
+        if (state.review.phase === 'front') {
+          container.innerHTML = `
+            ${renderReviewHeader(idx + 1, total)}
+            <div class="review-stage anim-up">
+              <div class="front-card">
+                <div class="clue-kicker">测试线索 · 纯复述，零绩效</div>
+                <p class="clue-text">${esc(card.front_fact)}</p>
+              </div>
+              <div class="rating-grid">
+                <button type="button" class="btn btn-terra" id="btn-rate-again">有点模糊</button>
+                <button type="button" class="btn btn-primary" id="btn-rate-good">想起来了</button>
+              </div>
+            </div>
+          `;
+          document.getElementById('btn-rate-again').onclick = () => onFrontRated('again');
+          document.getElementById('btn-rate-good').onclick = () => onFrontRated('good');
+          return;
+        }
+
+        // ---------------- BACK PHASE (Anchor + 3 Evolution Slots + Gentle AI) ----------------
+        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
+        const isFull = tags.length >= 3;
+        const edited = state.review.editedThisReview;
+        const linkedCard = card.cross_link_id
+          ? state.cards.find(c => c.id === card.cross_link_id)
+          : null;
+
+        // Build 3 fixed visual capsule slots
+        let slotsHtml = '';
+        for (let i = 0; i < 3; i++) {
+          if (i < tags.length) {
+            slotsHtml += `
+              <button type="button" class="evo-capsule" data-slot="${i}" ${edited ? 'disabled' : ''}>
+                <span>${esc(tags[i])}</span>
+                ${edited ? '' : `<span style="opacity:0.65;display:inline-flex;">${ICONS.edit}</span>`}
+              </button>
+            `;
+          } else {
+            slotsHtml += `
+              <button type="button" class="evo-slot-empty" data-add-slot="1" ${edited ? 'disabled' : ''}>
+                <span>+ 空槽位 ${i + 1}</span>
+              </button>
+            `;
+          }
+        }
+
+        let scaffoldHtml = '';
+        if (state.review.scaffoldLoading) {
+          scaffoldHtml = `
+            <div class="scaffold-panel anim-pulse" style="font-size:12px;color:var(--ink-muted);">
+              正在生成轻量化切入角度...
+            </div>
+          `;
+        } else if (state.review.scaffoldQuestions && state.review.scaffoldQuestions.length > 0) {
+          scaffoldHtml = `
+            <div class="scaffold-panel anim-up">
+              <div style="font-size:11px;font-weight:500;color:var(--ink-muted);">思维脚手架 · 轻触任一角度即可停手</div>
+              <ul class="scaffold-list">
+                ${state.review.scaffoldQuestions.map(q => `<li><span style="color:var(--sage);">·</span><span>${esc(q)}</span></li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }
+
+        container.innerHTML = `
+          ${renderReviewHeader(idx + 1, total)}
+          <div class="review-stage anim-up">
+            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+              <!-- Dimmed Front Fact Reference -->
+              <div class="card-soft" style="padding:12px 14px;">
+                <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.65;white-space:pre-wrap;">${esc(card.front_fact)}</p>
+              </div>
+
+              <!-- Back Anchor Layer (Immutable) -->
+              <div class="card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">锚点层 · 最初感受</span>
+                  <span class="lock-badge">${ICONS.lock} 原境锁定</span>
+                </div>
+                <p style="margin:0;font-size:15px;line-height:1.72;color:var(--ink);white-space:pre-wrap;">${esc(card.back_anchor)}</p>
+              </div>
+
+              <!-- Evolution Layer (3 Fixed Capsule Slots) -->
+              <div class="card">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">进化层 · 最新认识（限 3 槽）</span>
+                  <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${tags.length} / 3</span>
+                </div>
+
+                <div class="evo-slots-grid">${slotsHtml}</div>
+
+                ${!edited && isFull ? `
+                  <div style="margin-top:10px;">
+                    <button type="button" class="btn btn-terra btn-sm" id="btn-open-compress">
+                      ${ICONS.sparkle} 槽位已满 · 压缩合并新感悟
+                    </button>
+                  </div>
+                ` : ''}
+
+                ${edited ? `
+                  <div style="margin-top:12px;padding:9px 12px;border-radius:12px;background:var(--sage-soft);color:var(--sage);font-size:12px;line-height:1.55;">
+                    微调已完成，留白给后台潜意识。
+                  </div>
+                ` : ''}
+
+                <!-- On-Demand Scaffolding Trigger -->
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <button type="button" class="btn-ghost" id="btn-scaffold" style="margin-left:-8px;" ${state.review.scaffoldLoading ? 'disabled' : ''}>
+                    ${ICONS.bulb} 要个脚手架
+                  </button>
+                  <span style="font-size:11px;color:var(--ink-muted);">无新感觉直接点下一张</span>
+                </div>
+
+                ${scaffoldHtml}
+
+                ${linkedCard ? `
+                  <button type="button" class="cross-shimmer" id="btn-cross-peek">
+                    <span>✦ 你曾在不同领域记过一张底层相似的卡片 · 点击查看</span>
+                    <span style="flex-shrink:0;display:inline-flex;">${ICONS.chevronRight}</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-ink btn-block" id="btn-next-card" ${state.review.submitting ? 'disabled' : ''}>
+              ${state.review.submitting ? '保存进度中...' : '下一张'}
+            </button>
+          </div>
+        `;
+
+        // Wire Back Phase Events
+        document.getElementById('btn-next-card').onclick = onNextCard;
+        document.getElementById('btn-scaffold').onclick = onRequestScaffold;
+
+        if (!edited) {
+          container.querySelectorAll('.evo-capsule').forEach(btn => {
+            btn.onclick = () => openEvolutionEditModal(card, Number(btn.getAttribute('data-slot')));
+          });
+          container.querySelectorAll('.evo-slot-empty').forEach(btn => {
+            btn.onclick = () => openEvolutionEditModal(card, null);
+          });
+          const compBtn = document.getElementById('btn-open-compress');
+          if (compBtn) compBtn.onclick = () => openCompressModal(card);
+        }
+
+        const peekBtn = document.getElementById('btn-cross-peek');
+        if (peekBtn && linkedCard) {
+          peekBtn.onclick = () => openCrossDomainModal(card, linkedCard);
+        }
+      }
+
+      function onFrontRated(ratingKey) {
+        if (state.review.phase !== 'front') return;
+        const now = Date.now();
+        state.review.frontDurationMs = Math.max(80, now - (state.review.frontStartMs || now));
+        state.review.backStartMs = now;
+        state.review.rating = ratingKey;
+        state.review.phase = 'back';
+        renderReviewTab();
+      }
+
+      async function onNextCard() {
+        const card = getCurrentReviewCard();
+        if (!card || state.review.submitting) return;
+
+        state.review.submitting = true;
+        renderReviewTab();
+
+        const now = Date.now();
+        const backDurationMs = Math.max(80, now - (state.review.backStartMs || now));
+        const R = Number(computeRetrievability(card.fsrs_state, now).toFixed(3));
+        const ratingKey = state.review.rating || 'good';
+        const nextFsrs = scheduleFsrsCard(card.fsrs_state, ratingKey, now);
+
+        try {
+          await updateCardInCloud(card.id, {
+            fsrs_state: nextFsrs,
+            due_at: nextFsrs.due
+          });
+
+          state.review.reviewedIds.add(card.id);
+
+          // Silent Review Telemetry
+          logActivitySilent('review', card.id, {
+            front_ms: state.review.frontDurationMs,
+            back_ms: backDurationMs,
+            rating: ratingKey === 'good' ? 'good' : 'again',
+            retrievability_r: R,
+            queue_index: state.review.index + 1,
+            edited_evolution: state.review.editedThisReview
+          });
+
+          if (state.review.scaffoldTriggered) {
+            logActivitySilent('ai_usage', card.id, {
+              feature: 'scaffold',
+              adopted: state.review.editedThisReview
+            });
+          }
+
+          state.review.index++;
+          resetCardTurnState();
+          renderReviewTab();
+        } catch (err) {
+          state.review.submitting = false;
+          showToast(err.message || '保存复习进度失败，请重试');
+          renderReviewTab();
+        }
+      }
+
+      async function onRequestScaffold() {
+        const card = getCurrentReviewCard();
+        if (!card || state.review.scaffoldLoading) return;
+        if (!isAiConfigured()) {
+          promptConfigureAi();
+          return;
+        }
+
+        state.review.scaffoldLoading = true;
+        state.review.scaffoldTriggered = true;
+        renderReviewTab();
+
+        try {
+          state.review.scaffoldQuestions = await aiFetchScaffolding(card);
+        } catch (err) {
+          showToast(err.message || '脚手架生成失败');
+          state.review.scaffoldQuestions = [
+            '这件事背后最反常识的支点是什么？',
+            '换一个完全不同的领域，它还成立吗？'
+          ];
+        } finally {
+          state.review.scaffoldLoading = false;
+          renderReviewTab();
+        }
+      }
+
+      // --- Evolution Micro-Edit Modal (Max 1 edit per review) ---
+      function openEvolutionEditModal(card, slotIndex) {
+        if (state.review.editedThisReview) return;
+        const isEdit = slotIndex !== null && slotIndex !== undefined;
+        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
+        const currentText = isEdit ? (tags[slotIndex] || '') : '';
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="margin:0;font-size:16px;font-weight:600;">${isEdit ? '替换或微调词条' : '填入一个进化词条'}</h3>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+            <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.55;">
+              像搬砖一样沉淀 1 个精炼短词或短句（建议 2–12 字），本次复习改完即止。
+            </p>
+            <input id="m-evo-input" class="input" type="text" maxlength="24" value="${esc(currentText)}" placeholder="例如：隐性摩擦成本" />
+            <div style="display:flex;gap:10px;">
+              ${isEdit ? `<button type="button" class="btn btn-soft btn-sm" id="m-evo-del" style="color:var(--ink-muted);">清空此槽</button>` : ''}
+              <button type="button" class="btn btn-primary" style="flex:1;" id="m-evo-save">保存微调</button>
+            </div>
+          </div>
+        `);
+
+        const input = document.getElementById('m-evo-input');
+        setTimeout(() => input?.focus(), 60);
+        document.getElementById('m-close').onclick = closeModal;
+
+        document.getElementById('m-evo-save').onclick = async () => {
+          const val = input.value.trim();
+          if (!val) {
+            showToast('请输入简短词条');
+            return;
+          }
+          const before = [...tags];
+          const after = [...tags];
+          if (isEdit) {
+            if (after[slotIndex] === val) {
+              closeModal();
+              return;
+            }
+            after[slotIndex] = val;
+          } else {
+            if (after.length >= 3) {
+              closeModal();
+              return;
+            }
+            after.push(val);
+          }
+          await commitEvolution(card, isEdit ? 'replace' : 'add', before, after);
+          closeModal();
+        };
+
+        const delBtn = document.getElementById('m-evo-del');
+        if (delBtn) {
+          delBtn.onclick = async () => {
+            const before = [...tags];
+            const after = before.filter((_, i) => i !== slotIndex);
+            await commitEvolution(card, 'remove', before, after);
+            closeModal();
+          };
+        }
+      }
+
+      // --- AI Concept Compressor Modal ---
+      function openCompressModal(card) {
+        if (state.review.editedThisReview) return;
+        if (!isAiConfigured()) {
+          promptConfigureAi();
+          return;
+        }
+        const tags = card.evolution_tags || [];
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h3 style="margin:0;font-size:16px;font-weight:600;">AI 概念压缩机</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:var(--ink-muted);">对抗扇形效应 · 合并提炼新词并替换旧槽位</p>
+              </div>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <div class="card-soft" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;">
+              ${tags.map((w, i) => `<span style="font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);">${i + 1}. ${esc(w)}</span>`).join('')}
+            </div>
+
+            <div>
+              <label class="field-label" for="m-comp-idea">写下刚冒出的新感悟</label>
+              <input id="m-comp-idea" class="input" type="text" maxlength="60" placeholder="例如：把规则定在前面比事后争吵省力..." />
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" id="m-comp-run">${ICONS.sparkle} 提炼 2 个压缩替代词</button>
+            <div id="m-comp-results" class="hidden" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+        `);
+
+        document.getElementById('m-close').onclick = closeModal;
+        const ideaInput = document.getElementById('m-comp-idea');
+        const runBtn = document.getElementById('m-comp-run');
+        const resBox = document.getElementById('m-comp-results');
+        setTimeout(() => ideaInput?.focus(), 60);
+
+        runBtn.onclick = async () => {
+          const idea = ideaInput.value.trim();
+          if (!idea) {
+            showToast('请先写一句你的新想法');
+            return;
+          }
+          runBtn.disabled = true;
+          runBtn.textContent = '正在凝练语义...';
+          resBox.classList.add('hidden');
+
+          try {
+            const options = await aiCompressTags(card, idea);
+            if (!options.length) throw new Error('未返回压缩方案');
+
+            resBox.innerHTML = options.map((opt, idx) => {
+              const targetIdx = clamp(Number(opt.replace_index) || 0, 0, 2);
+              const oldW = tags[targetIdx] || '';
+              return `
+                <button type="button" class="btn-sage-soft" data-opt="${idx}" style="width:100%;text-align:left;padding:12px 14px;border-radius:14px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <strong style="font-size:14px;">${esc(opt.word)}</strong>
+                    <span style="font-size:11px;opacity:0.8;">替换「${esc(oldW)}」</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--ink-secondary);">${esc(opt.reason || '')}</div>
+                </button>
+              `;
+            }).join('');
+            resBox.classList.remove('hidden');
+
+            resBox.querySelectorAll('button[data-opt]').forEach(btn => {
+              btn.onclick = async () => {
+                const opt = options[Number(btn.getAttribute('data-opt'))];
+                const targetIdx = clamp(Number(opt.replace_index) || 0, 0, 2);
+                const before = [...tags];
+                const after = [...tags];
+                after[targetIdx] = String(opt.word || '').trim();
+                await commitEvolution(card, 'compress', before, after);
+                logActivitySilent('ai_usage', card.id, { feature: 'compress', adopted: true });
+                closeModal();
+              };
+            });
+          } catch (err) {
+            showToast(err.message || '概念压缩失败');
+            logActivitySilent('ai_usage', card.id, { feature: 'compress', adopted: false });
+          } finally {
+            runBtn.disabled = false;
+            runBtn.innerHTML = `${ICONS.sparkle} 重新提炼压缩词`;
+          }
+        };
+      }
+
+      async function commitEvolution(card, action, before, after) {
+        const reps = (card.fsrs_state?.reps || 0) + 1;
+        const entry = {
+          at: new Date().toISOString(),
+          reps,
+          action,
+          before,
+          after
+        };
+        const history = Array.isArray(card.evolution_history) ? [...card.evolution_history, entry] : [entry];
+
+        try {
+          await updateCardInCloud(card.id, {
+            evolution_tags: after,
+            evolution_history: history
+          });
+          state.review.editedThisReview = true;
+          logActivitySilent('evolution', card.id, { action, reps, before, after });
+          showToast('进化层已微调并同步');
+          renderReviewTab();
+        } catch (err) {
+          showToast(err.message || '更新进化层失败');
+        }
+      }
+
+      // --- Cross-Domain Peek Modal (Zero Spoiler) ---
+      function openCrossDomainModal(currentCard, linkedCard) {
+        logActivitySilent('ai_usage', currentCard.id, { feature: 'cross_link_peek', adopted: true });
+        const tags = Array.isArray(linkedCard.evolution_tags) ? linkedCard.evolution_tags : [];
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="color:var(--terra);">✦</span>
+                <h3 style="margin:0;font-size:15px;font-weight:600;">来自「${esc(linkedCard.domain_tag)}」的相似卡片</h3>
+              </div>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+            <p style="margin:0;font-size:12px;color:var(--ink-muted);">
+              仅将不同领域的两块砖推到一起，不做剧透，剩下的交给大脑自然碰撞。
+            </p>
+            <div class="card-soft" style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">事实线索</div>
+                <p style="margin:0;font-size:14px;line-height:1.65;white-space:pre-wrap;">${esc(linkedCard.front_fact)}</p>
+              </div>
+              <div style="padding-top:10px;border-top:1px solid var(--border-soft);">
+                <div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">最初感受</div>
+                <p style="margin:0;font-size:13px;color:var(--ink-secondary);line-height:1.6;white-space:pre-wrap;">${esc(linkedCard.back_anchor)}</p>
+              </div>
+              ${tags.length ? `
+                <div style="padding-top:8px;border-top:1px solid var(--border-soft);display:flex;flex-wrap:wrap;gap:6px;">
+                  ${tags.map(w => `<span style="font-size:12px;padding:4px 10px;border-radius:999px;background:var(--sage-soft);color:var(--sage);">${esc(w)}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+            <button type="button" class="btn btn-soft btn-block" id="m-done">收起，继续复习</button>
+          </div>
+        `);
+        document.getElementById('m-close').onclick = closeModal;
+        document.getElementById('m-done').onclick = closeModal;
+      }
+
+      // =====================================================================
+      // 11. TAB 2: 速记录入 (QUICK CAPTURE)
+      // =====================================================================
+      function renderCaptureTab() {
+        const container = document.getElementById('view-capture');
+        if (!container) return;
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">速记录入</h1>
+              <p class="page-sub">随时语音口述或粘贴，原味大白话最保真</p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:14px;">
+            <textarea id="cap-raw" class="textarea" rows="5" style="border:none;background:transparent;padding:0;" placeholder="直接用手机语音输入法说出一段对话、现象和你的第一感觉，或粘贴看到的原话..."></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:10px;border-top:1px solid var(--border-soft);">
+              <button type="button" class="btn-ghost" id="btn-cap-manual">手动填写</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btn-cap-ai">
+                ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 智能拆解</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="cap-form-panel" class="hidden anim-up" style="display:flex;flex-direction:column;gap:12px;">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label class="field-label" style="margin:0;" for="cap-front">正面 · 客观事实 / 原话</label>
+                <span class="lock-badge">${ICONS.lock} 存入后锁定</span>
+              </div>
+              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录不可变的客观现象、原话或具体事件..."></textarea>
+            </div>
+
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label class="field-label" style="margin:0;" for="cap-anchor">背面锚点 · 最初感受（大白话）</label>
+                <span class="lock-badge">${ICONS.lock} 存入后锁定</span>
+              </div>
+              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="第一眼看到时的共鸣、惊讶或大白话直觉..."></textarea>
+            </div>
+
+            <div class="card">
+              <label class="field-label" for="cap-evo-init">初始进化词条（选填，留空更轻松）</label>
+              <input id="cap-evo-init" class="input" type="text" maxlength="24" placeholder="如：隐性摩擦成本（可不填，复习时再慢慢磨）" />
+            </div>
+
+            <details class="card-soft">
+              <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);">
+                <span>后台静默分类：<strong id="cap-domain-label" style="color:var(--ink);font-weight:500;">${esc(state.capture.domainTag)}</strong>（复习时隐藏）</span>
+                <span style="text-decoration:underline;">调整</span>
+              </summary>
+              <div id="cap-domain-pills" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);"></div>
+            </details>
+
+            <button type="button" class="btn btn-ink btn-block" id="btn-cap-save">锁定并存入云端</button>
+          </div>
+        `;
+
+        renderCaptureDomainPills();
+
+        const rawEl = document.getElementById('cap-raw');
+        const panel = document.getElementById('cap-form-panel');
+        const frontEl = document.getElementById('cap-front');
+        const anchorEl = document.getElementById('cap-anchor');
+        const evoEl = document.getElementById('cap-evo-init');
+        const aiBtn = document.getElementById('btn-cap-ai');
+        const aiTxt = document.getElementById('btn-cap-ai-txt');
+
+        document.getElementById('btn-cap-manual').onclick = () => {
+          panel.classList.remove('hidden');
+          if (rawEl.value.trim() && !frontEl.value.trim()) {
+            frontEl.value = rawEl.value.trim();
+          }
+          state.capture.aiSplitUsed = false;
+          frontEl.focus();
+        };
+
+        aiBtn.onclick = async () => {
+          const raw = rawEl.value.trim();
+          if (!raw) {
+            showToast('请先输入或口述一段内容');
+            return;
+          }
+          if (!isAiConfigured()) {
+            promptConfigureAi();
+            return;
+          }
+          aiBtn.disabled = true;
+          aiTxt.textContent = '拆解中...';
+
+          try {
+            const res = await aiSplitCapture(raw);
+            frontEl.value = res.front_fact;
+            anchorEl.value = res.back_anchor;
+            state.capture.domainTag = res.domain_tag;
+            state.capture.aiSplitUsed = true;
+            renderCaptureDomainPills();
+            panel.classList.remove('hidden');
+            showToast('已保留原味大白话拆解完成');
+          } catch (err) {
+            showToast(err.message || 'AI 拆解失败，可先手动填写');
+            frontEl.value = raw;
+            panel.classList.remove('hidden');
+          } finally {
+            aiBtn.disabled = false;
+            aiTxt.textContent = 'AI 智能拆解';
+          }
+        };
+
+        document.getElementById('btn-cap-save').onclick = async () => {
+          const front = frontEl.value.trim();
+          const anchor = anchorEl.value.trim();
+          const initWord = evoEl.value.trim();
+
+          if (!front) {
+            showToast('请填写正面的客观事实或原话');
+            return;
+          }
+          if (!anchor) {
+            showToast('请留下一句最初的大白话感受作为锚点');
+            return;
+          }
+
+          const saveBtn = document.getElementById('btn-cap-save');
+          saveBtn.disabled = true;
+          saveBtn.textContent = '正在锁定存入...';
+
+          const nowIso = new Date().toISOString();
+          const fsrs = createInitialFsrsState();
+          const tags = initWord ? [initWord] : [];
+          const history = initWord ? [{ at: nowIso, reps: 0, action: 'init', before: [], after: tags }] : [];
+
+          try {
+            const created = await insertCardToCloud({
+              front_fact: front,
+              back_anchor: anchor,
+              evolution_tags: tags,
+              evolution_history: history,
+              domain_tag: state.capture.domainTag,
+              fsrs_state: fsrs,
+              due_at: fsrs.due,
+              cross_link_id: null,
+              cross_link_hint: null
+            });
+
+            if (state.capture.aiSplitUsed) {
+              logActivitySilent('ai_usage', created?.id, { feature: 'split', adopted: true });
+            }
+
+            rawEl.value = '';
+            frontEl.value = '';
+            anchorEl.value = '';
+            evoEl.value = '';
+            panel.classList.add('hidden');
+            state.capture.aiSplitUsed = false;
+
+            showToast('已锁定存入云端，明天起进入保鲜曲线');
+            renderLibraryTab();
+
+            // Non-blocking background cross-domain matcher
+            runSilentCrossDomainMatch(created);
+          } catch (err) {
+            showToast(err.message || '存入云端失败，请稍后重试');
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '锁定并存入云端';
+          }
+        };
+      }
+
+      function renderCaptureDomainPills() {
+        const box = document.getElementById('cap-domain-pills');
+        const lbl = document.getElementById('cap-domain-label');
+        if (!box || !lbl) return;
+        lbl.textContent = state.capture.domainTag;
+        box.innerHTML = DOMAINS.map(d => `
+          <button type="button" class="preset-chip ${d === state.capture.domainTag ? 'active' : ''}" data-dom="${d}">${d}</button>
+        `).join('');
+        box.querySelectorAll('button').forEach(btn => {
+          btn.onclick = () => {
+            state.capture.domainTag = btn.getAttribute('data-dom');
+            renderCaptureDomainPills();
+          };
+        });
+      }
+
+      // =====================================================================
+      // 12. TAB 3: 卡片库 (LIBRARY)
+      // =====================================================================
+      function renderLibraryTab() {
+        const container = document.getElementById('view-library');
+        if (!container) return;
+
+        const q = state.library.search.trim().toLowerCase();
+        const filtered = state.cards.filter(c => {
+          if (state.library.domain !== '全部' && c.domain_tag !== state.library.domain) return false;
+          if (!q) return true;
+          return (
+            String(c.front_fact || '').toLowerCase().includes(q) ||
+            String(c.back_anchor || '').toLowerCase().includes(q) ||
+            (c.evolution_tags || []).some(w => String(w).toLowerCase().includes(q))
+          );
+        });
+
+        // Keep search focus intact if already rendered
+        const existingSearch = document.getElementById('lib-search-input');
+        if (!existingSearch) {
+          container.innerHTML = `
+            <div class="page-header">
+              <div>
+                <h1 class="page-title">卡片库</h1>
+                <p class="page-sub">长时记忆素材池与认知进化轨迹</p>
+              </div>
+              <span id="lib-count" style="font-size:12px;color:var(--ink-muted);font-variant-numeric:tabular-nums;"></span>
+            </div>
+
+            <div style="position:relative;margin-bottom:12px;">
+              <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-muted);display:inline-flex;pointer-events:none;">${ICONS.search}</span>
+              <input id="lib-search-input" class="input" type="search" style="padding-left:38px;" placeholder="搜索事实线索、感受或进化关键词..." value="${esc(state.library.search)}" />
+            </div>
+
+            <div id="lib-pills" class="pills-scroll"></div>
+            <div id="lib-list" style="flex:1;"></div>
+          `;
+
+          document.getElementById('lib-search-input').addEventListener('input', (e) => {
+            state.library.search = e.target.value;
+            updateLibraryListOnly();
+          });
+        }
+
+        updateLibraryListOnly();
+      }
+
+      function updateLibraryListOnly() {
+        const countEl = document.getElementById('lib-count');
+        const pillsEl = document.getElementById('lib-pills');
+        const listEl = document.getElementById('lib-list');
+        if (!pillsEl || !listEl) return;
+
+        const filters = ['全部', ...DOMAINS];
+        pillsEl.innerHTML = filters.map(d => `
+          <button type="button" class="pill ${d === state.library.domain ? 'active' : ''}" data-dom="${d}">${d}</button>
+        `).join('');
+
+        pillsEl.querySelectorAll('button').forEach(btn => {
+          btn.onclick = () => {
+            state.library.domain = btn.getAttribute('data-dom');
+            updateLibraryListOnly();
+          };
+        });
+
+        const q = state.library.search.trim().toLowerCase();
+        const filtered = state.cards.filter(c => {
+          if (state.library.domain !== '全部' && c.domain_tag !== state.library.domain) return false;
+          if (!q) return true;
+          return (
+            String(c.front_fact || '').toLowerCase().includes(q) ||
+            String(c.back_anchor || '').toLowerCase().includes(q) ||
+            (c.evolution_tags || []).some(w => String(w).toLowerCase().includes(q))
+          );
+        });
+
+        if (countEl) countEl.textContent = `${filtered.length} 张`;
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = `
+            <div style="text-align:center;padding:48px 16px;font-size:13px;color:var(--ink-muted);">
+              ${state.cards.length === 0 ? '素材库还是空的，去「速记录入」记下第一条洞察吧' : '没有匹配的卡片'}
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = filtered.map(c => {
+          const tags = Array.isArray(c.evolution_tags) ? c.evolution_tags : [];
+          return `
+            <button type="button" class="lib-card" data-cid="${esc(c.id)}">
+              <p class="line-clamp-2" style="margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--ink);">${esc(c.front_fact)}</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  ${tags.length
+                    ? tags.map(w => `<span style="font-size:11px;padding:3px 9px;border-radius:999px;background:var(--sage-soft);color:var(--sage);">${esc(w)}</span>`).join('')
+                    : `<span style="font-size:11px;color:var(--ink-muted);opacity:0.75;">待孵化词条</span>`
+                  }
+                </div>
+                <span style="font-size:11px;color:var(--ink-muted);flex-shrink:0;">${esc(c.domain_tag || '生活杂感')}</span>
+              </div>
+            </button>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll('.lib-card').forEach(btn => {
+          btn.onclick = () => {
+            const card = state.cards.find(x => x.id === btn.getAttribute('data-cid'));
+            if (card) openCardDetailModal(card);
+          };
+        });
+      }
+
+      function openCardDetailModal(card) {
+        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
+        const history = Array.isArray(card.evolution_history) ? card.evolution_history : [];
+        const linked = card.cross_link_id ? state.cards.find(c => c.id === card.cross_link_id) : null;
+        const fsrs = card.fsrs_state || {};
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:13px;font-weight:600;color:var(--ink-secondary);">卡片详情与进化轨迹</span>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <div class="card-soft">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
+                <span>正面 · 客观事实</span>
+                <span class="lock-badge">${ICONS.lock} 已锁定</span>
+              </div>
+              <p style="margin:0;font-size:14px;line-height:1.68;white-space:pre-wrap;">${esc(card.front_fact)}</p>
+            </div>
+
+            <div class="card" style="padding:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
+                <span>背面锚点 · 最初感受</span>
+                <span class="lock-badge">${ICONS.lock} 已锁定</span>
+              </div>
+              <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;white-space:pre-wrap;">${esc(card.back_anchor)}</p>
+            </div>
+
+            <div>
+              <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px;">进化层 · 最新认识 (${tags.length}/3)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${tags.length
+                  ? tags.map(w => `<span style="font-size:12px;padding:5px 11px;border-radius:999px;background:var(--sage-soft);color:var(--sage);font-weight:500;">${esc(w)}</span>`).join('')
+                  : `<span style="font-size:12px;color:var(--ink-muted);">尚未沉淀进化词条</span>`
+                }
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);">
+              <span style="font-size:12px;color:var(--ink-muted);">隐藏领域标签</span>
+              <select id="m-domain-sel" class="select" style="width:auto;padding:6px 12px;font-size:13px;">
+                ${DOMAINS.map(d => `<option value="${d}" ${d === card.domain_tag ? 'selected' : ''}>${d}</option>`).join('')}
+              </select>
+            </div>
+
+            ${linked ? `
+              <div style="padding:12px 13px;border-radius:14px;background:var(--terra-soft);border:1px solid var(--terra-border);">
+                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨界关联（${esc(linked.domain_tag)}）</div>
+                <p class="line-clamp-2" style="margin:0;font-size:12px;color:var(--ink-secondary);">${esc(linked.front_fact)}</p>
+              </div>
+            ` : ''}
+
+            <div style="padding-top:10px;border-top:1px solid var(--border-soft);">
+              <div style="font-size:12px;font-weight:500;color:var(--ink-muted);margin-bottom:10px;">进化历史时间线</div>
+              ${history.length === 0 ? `<p style="margin:0;font-size:12px;color:var(--ink-muted);">暂无演化记录</p>` : `
+                <div class="timeline">
+                  ${history.slice().reverse().map(h => `
+                    <div class="timeline-item">
+                      <span class="timeline-dot"></span>
+                      <div style="font-size:11px;color:var(--ink-muted);margin-bottom:2px;">${formatTime(h.at)} · 第 ${h.reps || 0} 次接触</div>
+                      <div>
+                        <span style="color:var(--ink-muted);">${esc((h.before || []).join(' / ') || '空白')}</span>
+                        <span style="color:var(--sage);margin:0 4px;">→</span>
+                        <span style="font-weight:500;">${esc((h.after || []).join(' / ') || '空白')}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border-soft);">
+              <span style="font-size:11px;color:var(--ink-muted);">已保鲜 ${fsrs.reps || 0} 次 · 间隔 ${fsrs.scheduled_days || 1} 天</span>
+              <div id="m-del-area">
+                <button type="button" class="btn-ghost" id="m-btn-del" style="color:var(--terra);">删除卡片</button>
+              </div>
+            </div>
+          </div>
+        `);
+
+        document.getElementById('m-close').onclick = closeModal;
+
+        document.getElementById('m-domain-sel').onchange = async (e) => {
+          try {
+            await updateCardInCloud(card.id, { domain_tag: e.target.value });
+            showToast('领域标签已更新');
+            updateLibraryListOnly();
+          } catch (err) {
+            showToast(err.message || '更新失败');
+          }
+        };
+
+        document.getElementById('m-btn-del').onclick = () => {
+          document.getElementById('m-del-area').innerHTML = `
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-soft btn-sm" id="m-del-no">取消</button>
+              <button type="button" class="btn btn-terra btn-sm" id="m-del-yes">确认删除</button>
+            </div>
+          `;
+          document.getElementById('m-del-no').onclick = () => openCardDetailModal(card);
+          document.getElementById('m-del-yes').onclick = async () => {
+            try {
+              await deleteCardInCloud(card.id);
+              state.review.queue = state.review.queue.filter(id => id !== card.id);
+              closeModal();
+              showToast('卡片已永久移除');
+              updateLibraryListOnly();
+              renderReviewTab();
+            } catch (err) {
+              showToast(err.message || '删除失败');
+            }
+          };
+        };
+      }
+
+      // =====================================================================
+      // 13. TAB 4: 设置与实验室 (SETTINGS & LAB)
+      // =====================================================================
+      function renderSettingsTab() {
+        const container = document.getElementById('view-settings');
+        if (!container) return;
+
+        const reviewLogCount = state.activityLogs.filter(l => l.event_type === 'review').length;
+        const evoLogCount = state.cards.reduce((sum, c) => sum + ((c.evolution_history || []).length), 0);
+        const aiLogCount = state.activityLogs.filter(l => l.event_type === 'ai_usage').length;
+        const sbHost = cleanBaseUrl(state.sbConfig.url).replace(/^https?:\/\//i, '');
+
+        container.innerHTML = `
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">设置与实验室</h1>
+              <p class="page-sub">本机 AI 引擎、云端节律与自我诊断原料</p>
+            </div>
+          </div>
+
+          <div class="settings-stack">
+            <!-- 1. Local AI Settings -->
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <h2 style="margin:0;font-size:15px;font-weight:600;">AI 接口设置</h2>
+                <span style="font-size:11px;color:var(--sage);background:var(--sage-soft);padding:2px 8px;border-radius:999px;">仅存本机</span>
+              </div>
+              <p style="margin:0 0 12px;font-size:12px;color:var(--ink-muted);">
+                密钥只保留在当前手机浏览器本地，绝不写入网页源码或上传托管平台。
+              </p>
+
+              <div class="preset-grid" id="ai-presets">
+                ${AI_PRESETS.map(p => `
+                  <button type="button" class="preset-chip ${state.aiConfig.preset === p.id ? 'active' : ''}" data-preset="${p.id}">${p.label}</button>
+                `).join('')}
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label class="field-label" for="ai-base-url">Base URL</label>
+                  <input id="ai-base-url" class="input" type="url" value="${esc(state.aiConfig.baseUrl)}" placeholder="https://api.deepseek.com/v1" />
+                </div>
+                <div>
+                  <label class="field-label" for="ai-api-key">API Key</label>
+                  <div class="pw-wrap">
+                    <input id="ai-api-key" class="input" type="password" value="${esc(state.aiConfig.apiKey)}" placeholder="sk-..." autocomplete="off" />
+                    <button type="button" class="pw-eye" id="btn-eye-ai-key" aria-label="显示或隐藏密钥">${ICONS.eye}</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label" for="ai-model">Model Name</label>
+                  <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="deepseek-chat" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
+                  <button type="button" class="btn btn-primary btn-sm" id="btn-save-ai">保存本机配置</button>
+                  <button type="button" class="btn btn-soft btn-sm" id="btn-test-ai">测试连通性</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Rhythm & Theme (Synced to user_prefs) -->
+            <div class="card">
+              <h2 style="margin:0 0 12px;font-size:15px;font-weight:600;">节律与外观</h2>
+
+              <div style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                  <span style="color:var(--ink-secondary);">每日保鲜软上限</span>
+                  <strong style="font-variant-numeric:tabular-nums;"><span id="pref-limit-val">${state.prefs.daily_limit}</span> 张 / 天</strong>
+                </div>
+                <input id="pref-limit-range" type="range" min="10" max="100" step="5" value="${state.prefs.daily_limit}" />
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-top:4px;">
+                  <span>10 张</span>
+                  <span>50 张（稳态推荐）</span>
+                  <span>100 张</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div>
+                  <div style="font-size:14px;">静默混入半熟卡</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">每刷 4 张当天卡，悄悄混入 1 张高留存蓄水池卡</div>
+                </div>
+                <button type="button" class="switch ${state.prefs.mix_backlog ? 'on' : ''}" id="sw-mix" role="switch" aria-checked="${state.prefs.mix_backlog}">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+
+              <div class="setting-row" style="padding-bottom:2px;">
+                <div>
+                  <div style="font-size:14px;">深色护眼模式</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">低眩光夜间阅读配色</div>
+                </div>
+                <button type="button" class="switch ${state.prefs.theme === 'dark' ? 'on' : ''}" id="sw-theme" role="switch" aria-checked="${state.prefs.theme === 'dark'}">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Silent Activity Lab & Cold Backup -->
+            <div class="card">
+              <h2 style="margin:0 0 4px;font-size:15px;font-weight:600;">静默活动日志与冷备份</h2>
+              <p style="margin:0;font-size:12px;color:var(--ink-muted);">后台无感记录节奏与认知演化，随时导出喂给大模型做诊断或存进 Google Drive 兜底。</p>
+
+              <div class="stat-grid">
+                <div class="stat-box"><div class="stat-val">${state.cards.length}</div><div class="stat-lbl">卡片总数</div></div>
+                <div class="stat-box"><div class="stat-val">${reviewLogCount}</div><div class="stat-lbl">复习记录</div></div>
+                <div class="stat-box"><div class="stat-val">${evoLogCount}</div><div class="stat-lbl">进化快照</div></div>
+                <div class="stat-box"><div class="stat-val">${aiLogCount}</div><div class="stat-lbl">AI 协助</div></div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <button type="button" class="btn btn-sage-soft btn-sm btn-block" id="btn-export-md">
+                  一键导出 AI 体检报告 (Markdown)
+                </button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+                  <button type="button" class="btn btn-soft btn-sm" id="btn-export-json">导出完整存档</button>
+                  <label class="btn btn-soft btn-sm" style="margin:0;cursor:pointer;">
+                    导入恢复存档
+                    <input id="input-import-json" type="file" accept="application/json" class="hidden" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Account Management -->
+            <div class="card">
+              <h2 style="margin:0 0 10px;font-size:15px;font-weight:600;">私有账号与云端</h2>
+              <div class="card-soft" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;">
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                  <span style="color:var(--ink-muted);">当前登录邮箱</span>
+                  <span style="font-weight:500;word-break:break-all;">${esc(state.session?.user?.email || '-')}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                  <span style="color:var(--ink-muted);">云端数据库</span>
+                  <span style="font-family:var(--font-mono);font-size:11px;word-break:break-all;">${esc(sbHost || '-')}</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-terra btn-sm btn-block" id="btn-logout">退出登录</button>
+            </div>
+          </div>
+        `;
+
+        // Wire AI preset buttons
+        container.querySelectorAll('#ai-presets button').forEach(btn => {
+          btn.onclick = () => {
+            const preset = AI_PRESETS.find(p => p.id === btn.getAttribute('data-preset'));
+            if (!preset) return;
+            state.aiConfig.preset = preset.id;
+            if (preset.id !== 'custom') {
+              document.getElementById('ai-base-url').value = preset.baseUrl;
+              document.getElementById('ai-model').value = preset.model;
+            }
+            container.querySelectorAll('#ai-presets button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          };
+        });
+
+        // Toggle AI key visibility
+        const keyInput = document.getElementById('ai-api-key');
+        const eyeBtn = document.getElementById('btn-eye-ai-key');
+        eyeBtn.onclick = () => {
+          const isPw = keyInput.type === 'password';
+          keyInput.type = isPw ? 'text' : 'password';
+          eyeBtn.innerHTML = isPw ? ICONS.eyeOff : ICONS.eye;
+        };
+
+        const readAiInputs = () => {
+          state.aiConfig.baseUrl = document.getElementById('ai-base-url').value.trim();
+          state.aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
+          state.aiConfig.model = document.getElementById('ai-model').value.trim();
+        };
+
+        document.getElementById('btn-save-ai').onclick = () => {
+          readAiInputs();
+          saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
+          showToast('AI 配置已安全保存在本机');
+        };
+
+        document.getElementById('btn-test-ai').onclick = async () => {
+          readAiInputs();
+          saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
+          if (!isAiConfigured()) {
+            showToast('请先完整填写 Base URL、API Key 与 Model Name');
+            return;
+          }
+          const btn = document.getElementById('btn-test-ai');
+          btn.disabled = true;
+          btn.textContent = '测试中...';
+          try {
+            const reply = await callOpenAiCompatible('只回复“连通成功”四个字。', '测试连接', false);
+            showToast(`测试通过：${reply.slice(0, 18)}`);
+          } catch (err) {
+            showToast(err.message || '连通测试失败');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '测试连通性';
+          }
+        };
+
+        // Prefs: Daily limit
+        const range = document.getElementById('pref-limit-range');
+        const valSpan = document.getElementById('pref-limit-val');
+        range.oninput = () => { valSpan.textContent = range.value; };
+        range.onchange = async () => {
+          state.prefs.daily_limit = Number(range.value);
+          try {
+            await saveUserPrefsToCloud();
+            buildTodayQueue();
+            showToast(`每日保鲜上限已设为 ${state.prefs.daily_limit} 张`);
+          } catch (err) {
+            showToast(err.message || '偏好同步失败');
+          }
+        };
+
+        // Prefs: Mix backlog
+        document.getElementById('sw-mix').onclick = async () => {
+          state.prefs.mix_backlog = !state.prefs.mix_backlog;
+          renderSettingsTab();
+          try {
+            await saveUserPrefsToCloud();
+            buildTodayQueue();
+            showToast(state.prefs.mix_backlog ? '已开启静默混入半熟卡' : '已关闭静默混入');
+          } catch (err) {
+            showToast(err.message || '偏好同步失败');
+          }
+        };
+
+        // Prefs: Theme
+        document.getElementById('sw-theme').onclick = async () => {
+          state.prefs.theme = state.prefs.theme === 'dark' ? 'light' : 'dark';
+          applyTheme(state.prefs.theme);
+          renderSettingsTab();
+          try {
+            await saveUserPrefsToCloud();
+          } catch (_) {}
+        };
+
+        // Export Markdown Diagnosis Report
+        document.getElementById('btn-export-md').onclick = openDiagnosisReportModal;
+
+        // Export Full JSON Archive
+        document.getElementById('btn-export-json').onclick = () => {
+          const archive = {
+            app: 'neihua-cognitive-assistant',
+            version: 1,
+            exported_at: new Date().toISOString(),
+            prefs: state.prefs,
+            cards: state.cards,
+            activity_logs: state.activityLogs
+          };
+          const day = new Date().toISOString().slice(0, 10);
+          downloadFile(JSON.stringify(archive, null, 2), `内化完整存档-${day}.json`, 'application/json;charset=utf-8');
+          showToast('完整存档已下载，可存入网盘兜底');
+        };
+
+        // Import JSON Archive into Supabase
+        document.getElementById('input-import-json').onchange = async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const parsed = JSON.parse(await file.text());
+            if (!Array.isArray(parsed.cards)) throw new Error('存档格式不正确');
+
+            showToast('正在将存档同步至云端...');
+            const existingIds = new Set(state.cards.map(c => c.id));
+            let imported = 0;
+
+            for (const c of parsed.cards) {
+              if (!c.front_fact || !c.back_anchor) continue;
+              if (c.id && existingIds.has(c.id)) continue; // Avoid duplicates
+              await insertCardToCloud({
+                front_fact: c.front_fact,
+                back_anchor: c.back_anchor,
+                evolution_tags: Array.isArray(c.evolution_tags) ? c.evolution_tags.slice(0, 3) : [],
+                evolution_history: Array.isArray(c.evolution_history) ? c.evolution_history : [],
+                domain_tag: DOMAINS.includes(c.domain_tag) ? c.domain_tag : '生活杂感',
+                fsrs_state: c.fsrs_state || createInitialFsrsState(),
+                due_at: c.due_at || createInitialFsrsState().due,
+                cross_link_id: null,
+                cross_link_hint: null
+              });
+              imported++;
+            }
+
+            if (parsed.prefs) {
+              state.prefs = { ...state.prefs, ...parsed.prefs };
+              applyTheme(state.prefs.theme);
+              await saveUserPrefsToCloud();
+            }
+
+            buildTodayQueue();
+            renderSettingsTab();
+            renderLibraryTab();
+            showToast(`成功恢复 ${imported} 张新卡片`);
+          } catch (err) {
+            showToast(err.message || '存档解析或导入失败');
+          } finally {
+            e.target.value = '';
+          }
+        };
+
+        // Logout
+        document.getElementById('btn-logout').onclick = sbLogout;
+      }
+
+      // --- Markdown Self-Diagnosis Report Builder ---
+      function buildDiagnosisMarkdown() {
+        const revLogs = state.activityLogs.filter(l => l.event_type === 'review');
+        const aiLogs = state.activityLogs.filter(l => l.event_type === 'ai_usage');
+
+        const avgFront = revLogs.length
+          ? (revLogs.reduce((s, r) => s + (Number(r.payload?.front_ms) || 0), 0) / revLogs.length / 1000).toFixed(1)
+          : '0.0';
+        const avgBack = revLogs.length
+          ? (revLogs.reduce((s, r) => s + (Number(r.payload?.back_ms) || 0), 0) / revLogs.length / 1000).toFixed(1)
+          : '0.0';
+        const againTotal = revLogs.filter(r => r.payload?.rating === 'again').length;
+
+        // Fatigue curve by queue index bucket
+        const buckets = { '1-10': [], '11-25': [], '26-50': [], '51+': [] };
+        revLogs.forEach(r => {
+          const i = Number(r.payload?.queue_index) || 1;
+          if (i <= 10) buckets['1-10'].push(r);
+          else if (i <= 25) buckets['11-25'].push(r);
+          else if (i <= 50) buckets['26-50'].push(r);
+          else buckets['51+'].push(r);
+        });
+        const fatigueLines = Object.entries(buckets).map(([k, arr]) => {
+          if (!arr.length) return `- 第 ${k} 张：暂无样本`;
+          const s = (arr.reduce((sum, x) => sum + (Number(x.payload?.front_ms) || 0), 0) / arr.length / 1000).toFixed(1);
+          const fuzz = Math.round((arr.filter(x => x.payload?.rating === 'again').length / arr.length) * 100);
+          return `- 第 ${k} 张（${arr.length} 次）：平均正面耗时 ${s}s，模糊率 ${fuzz}%`;
+        });
+
+        // Stubborn cards
+        const againByCard = {};
+        revLogs.forEach(r => {
+          if (r.payload?.rating === 'again' && r.card_id) {
+            againByCard[r.card_id] = (againByCard[r.card_id] || 0) + 1;
+          }
+        });
+        const stubborn = Object.entries(againByCard)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([cid, cnt]) => {
+            const c = state.cards.find(x => x.id === cid);
+            return c ? `- 「${c.front_fact.slice(0, 42)}」（模糊 ${cnt} 次 · ${c.domain_tag}）` : null;
+          })
+          .filter(Boolean);
+
+        // AI feature adoption
+        const aiMap = {};
+        aiLogs.forEach(l => {
+          const f = l.payload?.feature || 'unknown';
+          if (!aiMap[f]) aiMap[f] = { total: 0, adopted: 0 };
+          aiMap[f].total++;
+          if (l.payload?.adopted) aiMap[f].adopted++;
+        });
+        const aiLines = Object.entries(aiMap).map(([k, v]) =>
+          `- ${k}：触发 ${v.total} 次，采纳 ${v.adopted} 次（${Math.round((v.adopted / v.total) * 100)}%）`
+        );
+
+        // Recent evolution snapshots
+        const evoLines = [];
+        state.cards.forEach(c => {
+          (c.evolution_history || []).forEach(h => {
+            evoLines.push(`- [${formatTime(h.at)}] (${c.domain_tag}) 第 ${h.reps || 0} 次接触：${(h.before || []).join('/') || '无'} → ${(h.after || []).join('/') || '无'}`);
+          });
+        });
+
+        return `# 内化 · 轻量认知助手 自我诊断报告原料
+
+> 请作为认知科学与效率产品顾问，分析以下真实行为日志并给出改进建议：
+> 1. 根据队列位置的耗时与模糊率，判断我当前的每日软上限（${state.prefs.daily_limit} 张）是否存在疲劳拐点？
+> 2. 顽固卡片有哪些共同的表述问题？该如何改进录入拆解规则？
+> 3. 结合进化快照与 AI 采纳率，我的脚手架和概念压缩提示词应如何迭代？
+
+## 一、基础数据概览
+- 卡片总量：${state.cards.length} 张
+- 累计复习记录：${revLogs.length} 次（其中有点模糊 ${againTotal} 次）
+- 平均正面提取耗时：${avgFront} 秒
+- 平均背面微加工耗时：${avgBack} 秒
+
+## 二、队列位置与疲劳拐点
+${fatigueLines.join('\n')}
+
+## 三、高频模糊卡片（顽固卡）
+${stubborn.length ? stubborn.join('\n') : '- 暂无明显顽固卡片'}
+
+## 四、AI 能力有效率
+${aiLines.length ? aiLines.join('\n') : '- 暂无 AI 调用记录'}
+
+## 五、近期认知进化轨迹（最近 25 条）
+${evoLines.length ? evoLines.slice(-25).join('\n') : '- 暂无进化层记录'}
+`;
+      }
+
+      function openDiagnosisReportModal() {
+        const md = buildDiagnosisMarkdown();
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="margin:0;font-size:16px;font-weight:600;">AI 体检报告原料</h3>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+            <p style="margin:0;font-size:12px;color:var(--ink-muted);">复制后直接发给任意大模型，即可帮你诊断疲劳拐点与迭代方向。</p>
+            <textarea readonly rows="10" class="textarea" style="font-family:var(--font-mono);font-size:12px;">${esc(md)}</textarea>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <button type="button" class="btn btn-primary btn-sm" id="m-md-copy">一键复制全文</button>
+              <button type="button" class="btn btn-soft btn-sm" id="m-md-dl">下载 .md 文件</button>
+            </div>
+          </div>
+        `);
+        document.getElementById('m-close').onclick = closeModal;
+        document.getElementById('m-md-copy').onclick = () => copyText(md);
+        document.getElementById('m-md-dl').onclick = () => {
+          downloadFile(md, `内化AI体检报告-${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown;charset=utf-8');
+          showToast('体检报告已开始下载');
+        };
+      }
+
+      // =====================================================================
+      // 14. APPLICATION BOOTSTRAP
+      // =====================================================================
+      async function boot() {
+        applyTheme(state.prefs.theme);
+        initPwaAssets();
+        initAuthWallEvents();
+
+        // Backdrop click to close modal
+        document.getElementById('modal-root').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-root') closeModal();
+        });
+
+        // Verify persisted Supabase session on load
+        if (state.session?.access_token && state.sbConfig.url && state.sbConfig.anonKey) {
+          try {
+            await ensureValidAccessToken(false);
+            await enterAuthenticatedApp();
+          } catch (_) {
+            showAuthWall('上次登录已过期，请重新输入密码验证。');
+          }
+        } else {
+          showAuthWall();
+        }
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+</html>
