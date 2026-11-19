@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="内化" />
@@ -69,26 +69,42 @@
     }
 
     /* =====================================================================
-       BASE RESET & LAYOUT SHELL
+       BASE RESET & MOBILE-FIRST SMOOTH SCROLLING SHELL
+       (Never put overflow-x: hidden or overscroll-behavior-y: none on html+body)
        ===================================================================== */
     *, *::before, *::after {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
-    html, body {
+    html {
       margin: 0;
       padding: 0;
       width: 100%;
-      min-height: 100%;
+      height: auto;
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100dvh;
+      height: auto;
       background: var(--bg);
       color: var(--ink);
       font-family: var(--font-sans);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
+      overflow-x: clip;
+      touch-action: pan-y;
       transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    body.modal-open {
+      overflow: hidden;
     }
 
     button, input, textarea, select {
@@ -102,6 +118,7 @@
       background: none;
       padding: 0;
       user-select: none;
+      touch-action: manipulation;
     }
 
     button:disabled {
@@ -122,6 +139,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
+      overflow-x: clip;
     }
 
     @media (min-width: 520px) {
@@ -151,7 +169,7 @@
     }
 
     .anim-up {
-      animation: fadeUp 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: fadeUp 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     .anim-pulse {
@@ -203,7 +221,8 @@
     }
 
     .textarea {
-      resize: none;
+      resize: vertical;
+      min-height: 72px;
     }
 
     .btn {
@@ -232,6 +251,13 @@
       padding: 7px 13px;
       font-size: 13px;
       border-radius: var(--radius-sm);
+    }
+
+    .btn-xs {
+      min-height: 30px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 10px;
     }
 
     .btn-primary {
@@ -281,11 +307,34 @@
       padding: 6px 10px;
       font-size: 13px;
       border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .btn-ghost:hover:not(:disabled) {
       color: var(--ink);
       background: var(--surface-soft);
+    }
+
+    .inline-notice {
+      padding: 10px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+
+    .inline-notice.terra {
+      background: var(--terra-soft);
+      border: 1px solid var(--terra-border);
+      color: var(--terra);
+    }
+
+    .inline-notice.sage {
+      background: var(--sage-soft);
+      border: 1px solid var(--sage-border);
+      color: var(--sage);
     }
 
     /* Toggle Switch */
@@ -326,6 +375,34 @@
       cursor: pointer;
     }
 
+    /* Segmented View Switch */
+    .seg-bar {
+      display: inline-flex;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+
+    .seg-btn {
+      flex: 1;
+      min-height: 34px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      transition: all 0.18s ease;
+    }
+
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
     /* =====================================================================
        AUTH WALL (PRIVATE GATE - ONLY RENDERED WHEN LOGGED OUT)
        ===================================================================== */
@@ -334,7 +411,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: calc(var(--safe-top) + 24px) 22px calc(var(--safe-bottom) + 28px);
+      padding: calc(var(--safe-top) + 24px) 22px calc(var(--safe-bottom) + 32px);
     }
 
     .brand-mark {
@@ -425,14 +502,14 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 84px);
+      padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 96px);
     }
 
     .page-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 14px;
       padding: 0 2px;
     }
@@ -467,14 +544,14 @@
       transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* Sync indicator dot */
+    /* Sync indicator pill */
     .sync-dot-wrap {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
       color: var(--ink-muted);
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 999px;
       background: var(--surface-soft);
     }
@@ -505,7 +582,7 @@
       width: 100%;
       max-width: 480px;
       z-index: 30;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-top: 1px solid var(--border);
@@ -513,7 +590,7 @@
     }
 
     html.dark .bottom-nav {
-      background: rgba(33, 32, 29, 0.92);
+      background: rgba(33, 32, 29, 0.94);
     }
 
     .bottom-nav-grid {
@@ -552,7 +629,7 @@
 
     .front-card {
       flex: 1;
-      min-height: 290px;
+      min-height: 280px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -562,6 +639,8 @@
       padding: 26px 22px;
       box-shadow: var(--shadow-sm);
       margin-bottom: 16px;
+      cursor: pointer;
+      touch-action: pan-y;
     }
 
     .clue-kicker {
@@ -615,6 +694,11 @@
       color: var(--sage);
       border: 1px solid var(--sage-border);
       transition: transform 0.14s ease, border-color 0.18s ease;
+    }
+
+    .evo-capsule.just-edited {
+      border-style: dashed;
+      border-color: var(--sage);
     }
 
     .evo-capsule:not(:disabled):active {
@@ -715,9 +799,11 @@
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding-bottom: 6px;
       margin-bottom: 12px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
     }
 
     .pills-scroll::-webkit-scrollbar {
@@ -751,6 +837,8 @@
       padding: 15px 16px;
       margin-bottom: 10px;
       box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      touch-action: pan-y;
       transition: border-color 0.18s ease, transform 0.14s ease;
     }
 
@@ -763,6 +851,16 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+
+    .tag-cloud-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      touch-action: pan-y;
     }
 
     /* Timeline in Detail Modal */
@@ -908,10 +1006,13 @@
       max-width: 480px;
       max-height: 88dvh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
       background: var(--surface);
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
-      padding: 20px 18px calc(var(--safe-bottom) + 20px);
+      padding: 20px 18px calc(var(--safe-bottom) + 24px);
       box-shadow: var(--shadow-md);
       border-top: 1px solid var(--border);
     }
@@ -931,7 +1032,7 @@
       transform: translateX(-50%);
       z-index: 60;
       width: 90%;
-      max-width: 380px;
+      max-width: 400px;
       display: flex;
       justify-content: center;
       pointer-events: none;
@@ -949,10 +1050,11 @@
       font-size: 13px;
       font-weight: 500;
       padding: 10px 16px;
-      border-radius: 999px;
+      border-radius: 16px;
       box-shadow: var(--shadow-md);
       text-align: center;
       max-width: 100%;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -1040,20 +1142,25 @@
       // =====================================================================
       // 1. CONSTANTS, STORAGE KEYS & INLINE SVG ICONS
       // =====================================================================
-      const DOMAINS = ['专业认知', '人情世故', '亲密关系', '自我觉察', '商业规律', '生活杂感'];
+      const UNCLASSIFIED_LABEL = '未分类';
       const MS_PER_DAY = 86400000;
+      const MIN_FIRST_REVIEW_DELAY_MS = 6 * 3600000; // At least 6 hours before first recall
 
       const STORAGE_KEYS = {
         SUPABASE: 'neihua_supabase_cfg_v1',
         SESSION: 'neihua_auth_session_v1',
         AI_LOCAL: 'neihua_ai_local_cfg_v1',
-        THEME: 'neihua_theme_v1'
+        THEME: 'neihua_theme_v1',
+        CACHE_PREFIX: 'neihua_cache_v2_',
+        SYNC_QUEUE_PREFIX: 'neihua_sync_q_v2_',
+        DRAFT_PREFIX: 'neihua_draft_v2_'
       };
 
       const AI_PRESETS = [
+        { id: 'openai_terra', label: 'OpenAI 主力', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6.1-terra' },
+        { id: 'openai_luna', label: 'OpenAI 轻量', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna' },
         { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
         { id: 'gemini', label: 'Gemini 兼容', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' },
-        { id: 'openai', label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
         { id: 'siliconflow', label: '硅基流动', baseUrl: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-7B-Instruct' },
         { id: 'custom', label: '自定义', baseUrl: '', model: '' }
       ];
@@ -1068,6 +1175,8 @@
         sparkle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.3L19 10.2l-5.1 1.9L12 17.4l-1.9-5.3L5 10.2l5.1-1.9L12 3z"/></svg>',
         bulb: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
         edit: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+        undo: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>',
+        trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
         search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
         eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
         eyeOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-5.94M9.9 4.24A10.8 10.8 0 0 1 12 4c7 0 11 7 11 7a21.8 21.8 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>',
@@ -1083,10 +1192,10 @@
         sbConfig: loadJsonStorage(STORAGE_KEYS.SUPABASE, { url: '', anonKey: '' }),
         session: loadJsonStorage(STORAGE_KEYS.SESSION, null),
         aiConfig: loadJsonStorage(STORAGE_KEYS.AI_LOCAL, {
-          preset: 'deepseek',
-          baseUrl: 'https://api.deepseek.com/v1',
+          preset: 'openai_terra',
+          baseUrl: 'https://api.openai.com/v1',
           apiKey: '',
-          model: 'deepseek-chat'
+          model: 'gpt-6.1-terra'
         }),
         prefs: {
           daily_limit: 50,
@@ -1097,35 +1206,48 @@
         activityLogs: [],
         activeTab: 'review',
         syncStatus: 'idle', // 'idle' | 'syncing' | 'ok' | 'error'
+        syncQueue: [],
+        syncFlushing: false,
         appMounted: false,
 
-        // Review Session State
+        // Review Session State (Daily counts derived from cloud activity_logs)
         review: {
-          queue: [],
+          queue: [], // Array of { id, tier, extraBatch }
           index: 0,
-          reviewedIds: new Set(),
-          sunkenShown: 0,
+          inExtraBatch: false,
           hasReservoir: false,
           phase: 'front', // 'front' | 'back'
-          rating: null,
-          frontStartMs: 0,
-          backStartMs: 0,
-          frontDurationMs: 0,
+          // Visibility-aware timers
+          frontAccMs: 0,
+          backAccMs: 0,
+          segStartMs: 0,
+          // Single micro-edit tracking (allows fixing typo in the SAME slot edited)
           editedThisReview: false,
+          editedSlotIndex: null,
+          editedHistoryIdx: null,
           scaffoldQuestions: null,
           scaffoldLoading: false,
           scaffoldTriggered: false,
-          submitting: false
+          undoStack: []
         },
 
         // Capture State
         capture: {
-          domainTag: '生活杂感',
-          aiSplitUsed: false
+          raw: '',
+          front: '',
+          anchor: '',
+          evoInit: '',
+          domainTag: '', // Empty = AI auto-classify based on content
+          formOpen: false,
+          rawCollapsed: false,
+          anchorMissingHint: false,
+          aiSplitUsed: false,
+          aiSplitSnapshot: null
         },
 
         // Library Filter State
         library: {
+          viewMode: 'domain', // 'domain' | 'evolution'
           search: '',
           domain: '全部'
         }
@@ -1143,7 +1265,6 @@
             const ctx = canvas.getContext('2d');
             if (!ctx) return '';
 
-            // Rounded sage square
             const r = size * 0.24;
             ctx.fillStyle = '#4E6E5D';
             ctx.beginPath();
@@ -1159,7 +1280,6 @@
             ctx.closePath();
             ctx.fill();
 
-            // Minimal organic leaf / insight glyph
             ctx.fillStyle = 'rgba(248, 246, 241, 0.95)';
             ctx.beginPath();
             ctx.moveTo(size * 0.29, size * 0.67);
@@ -1168,7 +1288,6 @@
             ctx.closePath();
             ctx.fill();
 
-            // Anchor dot
             ctx.fillStyle = '#4E6E5D';
             ctx.beginPath();
             ctx.arc(size * 0.44, size * 0.53, size * 0.055, 0, Math.PI * 2);
@@ -1215,7 +1334,7 @@
       }
 
       // =====================================================================
-      // 4. STORAGE, THEME, TOAST, MODAL & FORMATTING HELPERS
+      // 4. STORAGE, CACHE, THEME, TOAST, MODAL & FORMATTING HELPERS
       // =====================================================================
       function loadJsonStorage(key, fallback) {
         try {
@@ -1234,6 +1353,89 @@
         }
       }
 
+      function currentUserId() {
+        return state.session?.user?.id || '';
+      }
+
+      function persistUserCache() {
+        const uid = currentUserId();
+        if (!uid) return;
+        saveJsonStorage(STORAGE_KEYS.CACHE_PREFIX + uid, {
+          cards: state.cards,
+          prefs: state.prefs,
+          activityLogs: state.activityLogs.slice(0, 2500),
+          updatedAt: Date.now()
+        });
+      }
+
+      function loadUserCache(uid) {
+        if (!uid) return null;
+        return loadJsonStorage(STORAGE_KEYS.CACHE_PREFIX + uid, null);
+      }
+
+      function persistSyncQueue() {
+        const uid = currentUserId();
+        if (!uid) return;
+        saveJsonStorage(STORAGE_KEYS.SYNC_QUEUE_PREFIX + uid, state.syncQueue);
+      }
+
+      function loadSyncQueue(uid) {
+        if (!uid) return [];
+        const q = loadJsonStorage(STORAGE_KEYS.SYNC_QUEUE_PREFIX + uid, []);
+        return Array.isArray(q) ? q : [];
+      }
+
+      function persistCaptureDraft() {
+        const uid = currentUserId();
+        if (!uid) return;
+        saveJsonStorage(STORAGE_KEYS.DRAFT_PREFIX + uid, {
+          raw: state.capture.raw,
+          front: state.capture.front,
+          anchor: state.capture.anchor,
+          evoInit: state.capture.evoInit,
+          domainTag: state.capture.domainTag,
+          formOpen: state.capture.formOpen,
+          rawCollapsed: state.capture.rawCollapsed
+        });
+      }
+
+      function loadCaptureDraft(uid) {
+        if (!uid) return;
+        const d = loadJsonStorage(STORAGE_KEYS.DRAFT_PREFIX + uid, null);
+        if (!d) return;
+        state.capture.raw = String(d.raw || '');
+        state.capture.front = String(d.front || '');
+        state.capture.anchor = String(d.anchor || '');
+        state.capture.evoInit = String(d.evoInit || '');
+        state.capture.domainTag = String(d.domainTag || '');
+        state.capture.formOpen = Boolean(d.formOpen);
+        state.capture.rawCollapsed = Boolean(d.rawCollapsed);
+      }
+
+      function clearCaptureDraft() {
+        const uid = currentUserId();
+        if (uid) localStorage.removeItem(STORAGE_KEYS.DRAFT_PREFIX + uid);
+        state.capture.raw = '';
+        state.capture.front = '';
+        state.capture.anchor = '';
+        state.capture.evoInit = '';
+        state.capture.domainTag = '';
+        state.capture.formOpen = false;
+        state.capture.rawCollapsed = false;
+        state.capture.anchorMissingHint = false;
+        state.capture.aiSplitUsed = false;
+        state.capture.aiSplitSnapshot = null;
+      }
+
+      function clearPrivateUserStorage(uid) {
+        if (!uid) return;
+        try {
+          localStorage.removeItem(STORAGE_KEYS.CACHE_PREFIX + uid);
+          localStorage.removeItem(STORAGE_KEYS.SYNC_QUEUE_PREFIX + uid);
+          localStorage.removeItem(STORAGE_KEYS.DRAFT_PREFIX + uid);
+        } catch (_) {}
+      }
+
       function applyTheme(theme) {
         const isDark = theme === 'dark';
         document.documentElement.classList.toggle('dark', isDark);
@@ -1243,7 +1445,7 @@
       }
 
       let toastTimer = null;
-      function showToast(message, duration = 2600) {
+      function showToast(message, duration = 2800) {
         const wrap = document.getElementById('toast-wrap');
         const pill = document.getElementById('toast-pill');
         pill.textContent = message;
@@ -1256,13 +1458,16 @@
         const root = document.getElementById('modal-root');
         const sheet = document.getElementById('modal-sheet');
         sheet.innerHTML = html;
+        sheet.scrollTop = 0;
         root.classList.remove('hidden');
+        document.body.classList.add('modal-open');
       }
 
       function closeModal() {
         const root = document.getElementById('modal-root');
         root.classList.add('hidden');
         document.getElementById('modal-sheet').innerHTML = '';
+        document.body.classList.remove('modal-open');
       }
 
       function esc(str) {
@@ -1276,6 +1481,17 @@
       }
 
       function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            () => showToast('已复制到剪贴板'),
+            () => fallbackCopy(text)
+          );
+          return true;
+        }
+        return fallbackCopy(text);
+      }
+
+      function fallbackCopy(text) {
         try {
           const ta = document.createElement('textarea');
           ta.value = text;
@@ -1306,6 +1522,11 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
 
+      function localDateKey(d = new Date()) {
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      }
+
       function startOfTodayMs() {
         const d = new Date();
         d.setHours(0, 0, 0, 0);
@@ -1326,19 +1547,83 @@
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       }
 
+      function isValidUuid(str) {
+        return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+      }
+
+      function makeClientId() {
+        return `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function normalizeDomainLabel(tag) {
+        const cleaned = String(tag || '').trim().replace(/\s+/g, '');
+        return cleaned ? cleaned.slice(0, 14) : UNCLASSIFIED_LABEL;
+      }
+
+      /**
+       * Dynamically collect existing user categories ordered by card count DESC
+       */
+      function getExistingDomains(includeUnclassified = false) {
+        const counts = new Map();
+        for (const c of state.cards) {
+          const dom = normalizeDomainLabel(c.domain_tag);
+          if (!includeUnclassified && dom === UNCLASSIFIED_LABEL) continue;
+          counts.set(dom, (counts.get(dom) || 0) + 1);
+        }
+        return Array.from(counts.entries())
+          .sort((a, b) => {
+            if (a[0] === UNCLASSIFIED_LABEL) return 1;
+            if (b[0] === UNCLASSIFIED_LABEL) return -1;
+            return b[1] - a[1] || a[0].localeCompare(b[0], 'zh-CN');
+          })
+          .map(([name, count]) => ({ name, count }));
+      }
+
       function setSyncStatus(status) {
         state.syncStatus = status;
         const dot = document.getElementById('sync-dot');
         const txt = document.getElementById('sync-dot-text');
         if (!dot || !txt) return;
-        dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
-        txt.textContent = status === 'syncing' ? '同步中' : status === 'error' ? '待重试' : '云端已同步';
+        const pending = state.syncQueue.length;
+        dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : (status === 'error' || pending > 0) ? ' error' : '');
+        if (status === 'syncing') {
+          txt.textContent = pending > 0 ? `同步中 (${pending})` : '同步中';
+        } else if (status === 'error' || pending > 0) {
+          txt.textContent = pending > 0 ? `待同步 (${pending})` : '待重试';
+        } else {
+          txt.textContent = '云端已同步';
+        }
       }
 
       // =====================================================================
-      // 5. FSRS-4.5 FORGETTING CURVE & 4-TIER ANTI-AVALANCHE SCHEDULER
+      // 5. VISIBILITY-AWARE STOPWATCH FOR REVIEW TIMING
       // =====================================================================
-      // Standard FSRS-4.5 weights
+      function pauseActiveReviewTimer() {
+        if (state.activeTab !== 'review' || !state.review.segStartMs) return;
+        const delta = Math.max(0, Date.now() - state.review.segStartMs);
+        if (state.review.phase === 'front') state.review.frontAccMs += delta;
+        else state.review.backAccMs += delta;
+        state.review.segStartMs = 0;
+      }
+
+      function resumeActiveReviewTimer() {
+        if (state.activeTab !== 'review' || document.hidden) return;
+        if (state.review.index < state.review.queue.length && !state.review.segStartMs) {
+          state.review.segStartMs = Date.now();
+        }
+      }
+
+      function getCurrentPhaseElapsedMs() {
+        const extra = (!document.hidden && state.review.segStartMs)
+          ? Math.max(0, Date.now() - state.review.segStartMs)
+          : 0;
+        const raw = (state.review.phase === 'front' ? state.review.frontAccMs : state.review.backAccMs) + extra;
+        return clamp(Math.round(raw), 80, 300000);
+      }
+
+      // =====================================================================
+      // 6. FSRS-4.5 FORGETTING CURVE (2-BUTTON BALANCED) & 4-TIER SCHEDULER
+      // =====================================================================
       const FSRS_W = [
         0.4072, 1.1829, 3.1262, 15.4722,
         7.2102, 0.5316, 1.0651, 0.0234,
@@ -1365,10 +1650,11 @@
       }
 
       /**
-       * Create initial FSRS state for a newly captured card (first review tomorrow)
+       * Create initial FSRS state for a newly captured card (tomorrow AND >= 6h later)
        */
       function createInitialFsrsState(nowMs = Date.now()) {
-        const dueIso = new Date(startOfTodayMs() + MS_PER_DAY).toISOString();
+        const dueMs = Math.max(startOfTodayMs() + MS_PER_DAY, nowMs + MIN_FIRST_REVIEW_DELAY_MS);
+        const dueIso = new Date(dueMs).toISOString();
         return {
           stability: 1.0,
           difficulty: 5.0,
@@ -1383,7 +1669,7 @@
       }
 
       /**
-       * Compute next FSRS-4.5 state for binary rating:
+       * Balanced 2-button FSRS-4.5 scheduler (eliminates binary Ease/Difficulty Hell):
        * 'good' -> Rating 3 (想起来了)
        * 'again' -> Rating 1 (有点模糊)
        */
@@ -1397,43 +1683,47 @@
         const prevLapses = Number(base.lapses) || 0;
 
         let S, D, scheduledDays, nextState;
-        const D0Good = clamp(FSRS_W[4] - (3 - 3) * FSRS_W[5], 1, 10);
 
         if (prevReps === 0 || base.state === 0) {
-          // First active recall review
-          S = FSRS_W[G - 1];
-          D = clamp(FSRS_W[4] - (G - 3) * FSRS_W[5], 1, 10);
           if (G === 3) {
+            S = FSRS_W[2]; // ~3.13 days
+            D = 5.0;       // Neutral midpoint for 2-button scale
             scheduledDays = Math.max(1, Math.round(S));
             nextState = 2;
           } else {
+            S = FSRS_W[0]; // ~0.41 days
+            D = 6.2;
             scheduledDays = 1;
             nextState = 1;
           }
         } else {
-          const prevS = Math.max(0.2, Number(base.stability) || 1.0);
-          const prevD = clamp(Number(base.difficulty) || 5.0, 1, 10);
+          const prevS = Math.max(0.25, Number(base.stability) || 1.0);
+          const prevD = clamp(Number(base.difficulty) || 5.0, 1.5, 9.5);
           const R = Math.pow(1 + FSRS_FACTOR * (elapsedDays / prevS), FSRS_DECAY);
 
-          // Mean reversion difficulty update
-          D = clamp(FSRS_W[7] * D0Good + (1 - FSRS_W[7]) * (prevD - FSRS_W[6] * (G - 3)), 1, 10);
-
           if (G === 3) {
-            // Successful recall (Good)
+            // Smooth difficulty recovery & gentle mastery progression
+            const targetD = 4.5;
+            const stepBonus = prevD > 4.5 ? 0.25 : 0.12;
+            D = clamp(0.18 * targetD + 0.82 * prevD - stepBonus, 1.5, 9.5);
+
             const inc = Math.exp(FSRS_W[8]) *
               (11 - D) *
               Math.pow(prevS, -FSRS_W[9]) *
               (Math.exp(FSRS_W[10] * (1 - R)) - 1);
-            S = clamp(prevS * (1 + Math.max(0.15, inc)), 0.5, 365);
-            scheduledDays = clamp(Math.round(S), 1, 365);
+            S = clamp(prevS * (1 + Math.max(0.25, inc)), 1.0, 365);
+            const minNextDay = Math.min(365, Math.max(2, Math.round(prevS) + 1));
+            scheduledDays = clamp(Math.round(S), minNextDay, 365);
             nextState = 2;
           } else {
-            // Lapsed recall (Again)
+            // Gentle lapse penalty without trapping card in permanent high difficulty
+            D = clamp(prevD + 1.15, 1.5, 9.5);
+
             const sf = FSRS_W[11] *
               Math.pow(D, -FSRS_W[12]) *
               (Math.pow(prevS + 1, FSRS_W[13]) - 1) *
               Math.exp(FSRS_W[14] * (1 - R));
-            S = clamp(Math.min(prevS, sf), 0.25, 30);
+            S = clamp(Math.min(prevS * 0.7, sf), 0.35, 30);
             scheduledDays = 1;
             nextState = 3;
           }
@@ -1454,7 +1744,38 @@
       }
 
       /**
-       * Partition cards into the 4 anti-avalanche priority tiers
+       * Derive today's usage records strictly from cloud-backed activity_logs
+       * (Survives page refreshes, PWA restarts, and multi-device switching)
+       */
+      function getTodayCloudStats() {
+        const todayStart = startOfTodayMs();
+        const todayKey = localDateKey();
+        const reviewedTodayIds = new Set();
+        let reviewedTodayCount = 0;
+        let sunkenShownToday = 0;
+
+        for (const log of state.activityLogs) {
+          if (log.event_type !== 'review' || log._undone) continue;
+          const p = log.payload || {};
+          const matchDay = p.session_date
+            ? p.session_date === todayKey
+            : (log.created_at && new Date(log.created_at).getTime() >= todayStart);
+          if (!matchDay) continue;
+
+          reviewedTodayCount++;
+          if (log.card_id) reviewedTodayIds.add(log.card_id);
+          if (p.tier === 'tier4') sunkenShownToday++;
+        }
+
+        return {
+          reviewedTodayCount,
+          reviewedTodayIds,
+          sunkenShownToday
+        };
+      }
+
+      /**
+       * Partition due cards into the 4 anti-avalanche priority tiers
        */
       function classifyTiers(excludeSet) {
         const now = Date.now();
@@ -1491,11 +1812,8 @@
           }
         }
 
-        // Tier 1: shortest scheduled interval ASC
         tier1.sort((a, b) => a.sched - b.sched || a.dueMs - b.dueMs);
-        // Tier 2: due time ASC
         tier2.sort((a, b) => a.dueMs - b.dueMs);
-        // Tier 3 & 4: retrievability R DESC (save highest-R cards before total decay)
         tier3.sort((a, b) => b.R - a.R);
         tier4.sort((a, b) => b.R - a.R);
 
@@ -1508,42 +1826,92 @@
       }
 
       /**
-       * Build today's clean queue with peak-shaving, valley-filling, and silent mixing
+       * Build today's clean queue honoring cloud-persisted daily cap,
+       * post-break semi-ripe rescue, silent 1-in-4 mixing, and 1-2/day sunken revival.
        */
       function buildTodayQueue() {
         const cap = clamp(Number(state.prefs.daily_limit) || 50, 5, 150);
         const mix = Boolean(state.prefs.mix_backlog);
-        const { tier1, tier2, tier3, tier4 } = classifyTiers(state.review.reviewedIds);
+        const stats = getTodayCloudStats();
+        const remainingQuota = Math.max(0, cap - stats.reviewedTodayCount);
 
-        const todayDue = [...tier1, ...tier2];
+        const { tier1, tier2, tier3, tier4 } = classifyTiers(stats.reviewedTodayIds);
+        const allAvailableCount = tier1.length + tier2.length + tier3.length + tier4.length;
+
+        state.review.inExtraBatch = false;
+
+        if (remainingQuota === 0) {
+          state.review.queue = [];
+          state.review.index = 0;
+          state.review.hasReservoir = allAvailableCount > 0;
+          resetCardTurnState();
+          return;
+        }
+
+        const todayDue = [
+          ...tier1.map(c => ({ id: c.id, tier: 'tier1' })),
+          ...tier2.map(c => ({ id: c.id, tier: 'tier2' }))
+        ];
+
         const queue = [];
         let t3Idx = 0;
         let t4Idx = 0;
         let todayCount = 0;
+        let sunkenPlanned = stats.sunkenShownToday;
 
-        // 1. Add today-due cards (peak shaved at daily_limit), quietly mixing 1 Tier-3 every 4 cards
-        for (const c of todayDue) {
-          if (queue.length >= cap) break;
-          queue.push(c.id);
+        // 1. Add strictly today-due cards, silently mixing 1 Tier-3 every 4 cards
+        for (const item of todayDue) {
+          if (queue.length >= remainingQuota) break;
+          queue.push({ id: item.id, tier: item.tier, extraBatch: false });
           todayCount++;
-          if (mix && todayCount % 4 === 0 && t3Idx < tier3.length && queue.length < cap) {
-            queue.push(tier3[t3Idx++].id);
+          if (mix && todayCount % 4 === 0 && t3Idx < tier3.length && queue.length < remainingQuota) {
+            queue.push({ id: tier3[t3Idx++].id, tier: 'tier3', extraBatch: false });
           }
         }
 
-        // 2. Valley-fill: if due today < 5 and reservoir non-empty, silently top up to 5
-        const minFloor = Math.min(5, cap);
-        while (queue.length < minFloor && t3Idx < tier3.length) {
-          queue.push(tier3[t3Idx++].id);
+        // 2. Valley-fill & Post-break rescue:
+        //    - If returning after skipping days (todayDue == 0), gently rescue high-R semi-ripe cards up to 30% of cap (min 10)
+        //    - Otherwise top up to 5-card minimum floor
+        const targetFill = todayDue.length === 0
+          ? Math.min(remainingQuota, Math.max(10, Math.round(cap * 0.3)))
+          : Math.min(5, remainingQuota);
+
+        while (queue.length < targetFill && t3Idx < tier3.length) {
+          queue.push({ id: tier3[t3Idx++].id, tier: 'tier3', extraBatch: false });
         }
-        while (queue.length < minFloor && t4Idx < tier4.length && state.review.sunkenShown < 2) {
-          queue.push(tier4[t4Idx++].id);
-          state.review.sunkenShown++;
+
+        // 3. Slow sunken revival: allow 1-2 Tier-4 sunken cards per day across sessions
+        if (mix && tier4.length > 0 && sunkenPlanned < 2) {
+          const sunkenAllowed = Math.min(2 - sunkenPlanned, tier4.length);
+          for (let k = 0; k < sunkenAllowed; k++) {
+            const sunkenItem = { id: tier4[t4Idx].id, tier: 'tier4', extraBatch: false };
+            if (queue.length < remainingQuota) {
+              // Place after initial warm-up cards if possible
+              const insertPos = queue.length >= 4 ? queue.length - 1 : queue.length;
+              queue.splice(insertPos, 0, sunkenItem);
+              t4Idx++;
+              sunkenPlanned++;
+            } else if (queue.length >= 10) {
+              // Gently swap one non-Tier-1 slot near the back so sunken cards actually revive
+              let swapIdx = -1;
+              for (let j = queue.length - 1; j >= 5; j--) {
+                if (queue[j].tier === 'tier3' || queue[j].tier === 'tier2') {
+                  swapIdx = j;
+                  break;
+                }
+              }
+              if (swapIdx >= 0) {
+                queue[swapIdx] = sunkenItem;
+                t4Idx++;
+                sunkenPlanned++;
+              }
+            }
+          }
         }
 
         // Boolean-only reservoir check (STRICTLY never expose overdue counts!)
-        const leftover = (todayDue.length - todayCount) + (tier3.length - t3Idx) + (tier4.length - t4Idx);
-        state.review.hasReservoir = leftover > 0;
+        const queuedIds = new Set(queue.map(q => q.id));
+        state.review.hasReservoir = [...tier1, ...tier2, ...tier3, ...tier4].some(c => !queuedIds.has(c.id));
 
         state.review.queue = queue;
         state.review.index = 0;
@@ -1554,18 +1922,28 @@
        * Voluntary extra batch: "顺手再捞 10 张"
        */
       function pullExtraTenCards() {
-        const { tier1, tier2, tier3, tier4 } = classifyTiers(state.review.reviewedIds);
+        const stats = getTodayCloudStats();
+        const { tier1, tier2, tier3, tier4 } = classifyTiers(stats.reviewedTodayIds);
         const batch = [];
+        let sunkenPlanned = stats.sunkenShownToday;
 
-        for (const c of [...tier1, ...tier2, ...tier3]) {
+        for (const c of tier1) {
           if (batch.length >= 10) break;
-          batch.push(c.id);
+          batch.push({ id: c.id, tier: 'tier1', extraBatch: true });
+        }
+        for (const c of tier2) {
+          if (batch.length >= 10) break;
+          batch.push({ id: c.id, tier: 'tier2', extraBatch: true });
+        }
+        for (const c of tier3) {
+          if (batch.length >= 10) break;
+          batch.push({ id: c.id, tier: 'tier3', extraBatch: true });
         }
         for (const c of tier4) {
           if (batch.length >= 10) break;
-          if (state.review.sunkenShown >= 2) break;
-          batch.push(c.id);
-          state.review.sunkenShown++;
+          if (sunkenPlanned >= 2) break;
+          batch.push({ id: c.id, tier: 'tier4', extraBatch: true });
+          sunkenPlanned++;
         }
 
         if (batch.length === 0) {
@@ -1575,29 +1953,30 @@
           return;
         }
 
-        const picked = new Set(batch);
+        const picked = new Set(batch.map(x => x.id));
         state.review.hasReservoir = [...tier1, ...tier2, ...tier3, ...tier4].some(c => !picked.has(c.id));
         state.review.queue = batch;
         state.review.index = 0;
+        state.review.inExtraBatch = true;
         resetCardTurnState();
         renderReviewTab();
       }
 
       function resetCardTurnState() {
         state.review.phase = 'front';
-        state.review.rating = null;
-        state.review.frontStartMs = Date.now();
-        state.review.backStartMs = 0;
-        state.review.frontDurationMs = 0;
+        state.review.frontAccMs = 0;
+        state.review.backAccMs = 0;
+        state.review.segStartMs = (!document.hidden && state.activeTab === 'review') ? Date.now() : 0;
         state.review.editedThisReview = false;
+        state.review.editedSlotIndex = null;
+        state.review.editedHistoryIdx = null;
         state.review.scaffoldQuestions = null;
         state.review.scaffoldLoading = false;
         state.review.scaffoldTriggered = false;
-        state.review.submitting = false;
       }
 
       // =====================================================================
-      // 6. NATIVE FETCH SUPABASE AUTH & POSTGREST CLIENT
+      // 7. NATIVE FETCH SUPABASE AUTH, POSTGREST & OPTIMISTIC SYNC QUEUE
       // =====================================================================
       function cleanBaseUrl(url) {
         return String(url || '').trim().replace(/\/+$/, '');
@@ -1718,15 +2097,20 @@
       }
 
       function handleSessionExpired() {
+        const uid = currentUserId();
+        clearPrivateUserStorage(uid);
         state.session = null;
         localStorage.removeItem(STORAGE_KEYS.SESSION);
         state.cards = [];
         state.activityLogs = [];
+        state.syncQueue = [];
+        state.review.undoStack = [];
         state.appMounted = false;
         showAuthWall('登录状态已过期，请重新安全登录。');
       }
 
       async function sbLogout() {
+        const uid = currentUserId();
         try {
           if (state.session?.access_token && state.sbConfig.url && state.sbConfig.anonKey) {
             await fetch(`${cleanBaseUrl(state.sbConfig.url)}/auth/v1/logout`, {
@@ -1738,11 +2122,13 @@
             });
           }
         } catch (_) {}
+        clearPrivateUserStorage(uid);
         state.session = null;
         localStorage.removeItem(STORAGE_KEYS.SESSION);
         state.cards = [];
         state.activityLogs = [];
-        state.review.reviewedIds.clear();
+        state.syncQueue = [];
+        state.review.undoStack = [];
         state.appMounted = false;
         showAuthWall();
         showToast('已安全退出登录');
@@ -1788,14 +2174,26 @@
         }
       }
 
-      // --- Data Operations matching exact Supabase schema ---
+      // --- Paginated Cloud Fetchers (Never truncated at 500 rows) ---
+      async function fetchPaginatedTable(baseQuery, maxRows = 5000, pageSize = 1000) {
+        const all = [];
+        for (let offset = 0; offset < maxRows; offset += pageSize) {
+          const sep = baseQuery.includes('?') ? '&' : '?';
+          const chunk = await sbRest(`${baseQuery}${sep}limit=${pageSize}&offset=${offset}`);
+          if (!Array.isArray(chunk) || chunk.length === 0) break;
+          all.push(...chunk);
+          if (chunk.length < pageSize) break;
+        }
+        return all;
+      }
+
       async function fetchAllUserData() {
         setSyncStatus('syncing');
         const userId = state.session.user.id;
         const [cardsData, prefsData, logsData] = await Promise.all([
-          sbRest('cards?select=*&order=created_at.desc'),
+          fetchPaginatedTable('cards?select=*&order=created_at.desc', 5000, 1000),
           sbRest(`user_prefs?user_id=eq.${encodeURIComponent(userId)}&select=*`),
-          sbRest('activity_logs?select=*&order=created_at.desc&limit=500')
+          fetchPaginatedTable('activity_logs?select=*&order=created_at.desc', 5000, 1000)
         ]);
 
         state.cards = Array.isArray(cardsData) ? cardsData : [];
@@ -1810,87 +2208,197 @@
           };
           applyTheme(state.prefs.theme);
         } else {
-          // Initialize user_prefs row silently
-          saveUserPrefsToCloud().catch(() => {});
+          enqueueSyncOp({ type: 'save_prefs' });
         }
+
+        persistUserCache();
         setSyncStatus('ok');
       }
 
-      async function saveUserPrefsToCloud() {
-        setSyncStatus('syncing');
-        await sbRest('user_prefs?on_conflict=user_id', {
-          method: 'POST',
-          headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-          body: {
-            user_id: state.session.user.id,
-            daily_limit: Number(state.prefs.daily_limit) || 50,
-            mix_backlog: Boolean(state.prefs.mix_backlog),
-            theme: state.prefs.theme
-          }
+      // --- Background Optimistic Sync Queue ---
+      function enqueueSyncOp(op) {
+        state.syncQueue.push({
+          opId: makeClientId(),
+          createdAt: Date.now(),
+          ...op
         });
-        setSyncStatus('ok');
+        persistSyncQueue();
+        flushSyncQueue();
       }
 
+      async function flushSyncQueue() {
+        if (state.syncFlushing || !state.session?.access_token) return;
+        if (state.syncQueue.length === 0) {
+          setSyncStatus('ok');
+          return;
+        }
+
+        state.syncFlushing = true;
+        setSyncStatus('syncing');
+
+        try {
+          while (state.syncQueue.length > 0) {
+            const op = state.syncQueue[0];
+            if (op.type === 'patch_card') {
+              await sbRest(`cards?id=eq.${encodeURIComponent(op.cardId)}`, {
+                method: 'PATCH',
+                body: op.patch
+              });
+            } else if (op.type === 'delete_card') {
+              await sbRest(`cards?id=eq.${encodeURIComponent(op.cardId)}`, {
+                method: 'DELETE'
+              });
+            } else if (op.type === 'insert_log') {
+              const rows = await sbRest('activity_logs', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=representation' },
+                body: op.row
+              });
+              const created = Array.isArray(rows) ? rows[0] : rows;
+              if (created?.id && op.clientId) {
+                const localLog = state.activityLogs.find(l => l._clientId === op.clientId);
+                if (localLog) {
+                  localLog.id = created.id;
+                  // If user already undid this log before it finished syncing, immediately delete it in cloud
+                  if (localLog._undone) {
+                    state.syncQueue.push({
+                      opId: makeClientId(),
+                      type: 'delete_log',
+                      logId: created.id,
+                      createdAt: Date.now()
+                    });
+                  }
+                }
+              }
+            } else if (op.type === 'delete_log') {
+              if (op.logId) {
+                await sbRest(`activity_logs?id=eq.${encodeURIComponent(op.logId)}`, {
+                  method: 'DELETE'
+                });
+              }
+            } else if (op.type === 'save_prefs') {
+              await sbRest('user_prefs?on_conflict=user_id', {
+                method: 'POST',
+                headers: { 'Prefer': 'resolution=merge-duplicates' },
+                body: {
+                  user_id: state.session.user.id,
+                  daily_limit: Number(state.prefs.daily_limit) || 50,
+                  mix_backlog: Boolean(state.prefs.mix_backlog),
+                  theme: state.prefs.theme
+                }
+              });
+            }
+
+            state.syncQueue.shift();
+            persistSyncQueue();
+            persistUserCache();
+          }
+          setSyncStatus('ok');
+        } catch (_) {
+          setSyncStatus('error');
+        } finally {
+          state.syncFlushing = false;
+        }
+      }
+
+      // --- Data Operations matching exact Supabase schema ---
       async function insertCardToCloud(cardPayload) {
         setSyncStatus('syncing');
+        const body = {
+          user_id: state.session.user.id,
+          ...cardPayload
+        };
         const rows = await sbRest('cards', {
           method: 'POST',
           headers: { 'Prefer': 'return=representation' },
-          body: {
-            user_id: state.session.user.id,
-            ...cardPayload
-          }
+          body
         });
         const created = Array.isArray(rows) ? rows[0] : rows;
         if (created) {
           state.cards.unshift(created);
+          persistUserCache();
         }
         setSyncStatus('ok');
         return created;
       }
 
-      async function updateCardInCloud(cardId, patch) {
-        setSyncStatus('syncing');
+      function updateCardOptimistic(cardId, patch) {
         const body = { ...patch, updated_at: new Date().toISOString() };
-        const rows = await sbRest(`cards?id=eq.${encodeURIComponent(cardId)}`, {
-          method: 'PATCH',
-          headers: { 'Prefer': 'return=representation' },
-          body
-        });
-        const updated = Array.isArray(rows) ? rows[0] : null;
         const idx = state.cards.findIndex(c => c.id === cardId);
         if (idx >= 0) {
-          state.cards[idx] = updated || { ...state.cards[idx], ...body };
+          state.cards[idx] = { ...state.cards[idx], ...body };
+          persistUserCache();
         }
-        setSyncStatus('ok');
-        return state.cards[idx];
+        enqueueSyncOp({ type: 'patch_card', cardId, patch: body });
+        return idx >= 0 ? state.cards[idx] : null;
       }
 
-      async function deleteCardInCloud(cardId) {
-        setSyncStatus('syncing');
-        await sbRest(`cards?id=eq.${encodeURIComponent(cardId)}`, { method: 'DELETE' });
+      function deleteCardOptimistic(cardId) {
         state.cards = state.cards.filter(c => c.id !== cardId);
-        setSyncStatus('ok');
+        // Clean references on other cards locally
+        state.cards.forEach(c => {
+          if (c.cross_link_id === cardId) {
+            c.cross_link_id = null;
+            c.cross_link_hint = null;
+          }
+        });
+        // Adjust review queue index safely if deleting current or earlier item
+        const qIdx = state.review.queue.findIndex(item => item.id === cardId);
+        if (qIdx >= 0) {
+          state.review.queue.splice(qIdx, 1);
+          if (qIdx < state.review.index) {
+            state.review.index = Math.max(0, state.review.index - 1);
+          } else if (qIdx === state.review.index) {
+            resetCardTurnState();
+          }
+        }
+        persistUserCache();
+        enqueueSyncOp({ type: 'delete_card', cardId });
       }
 
-      // Fire-and-forget silent telemetry writer
-      function logActivitySilent(eventType, cardId, payload) {
-        if (!state.session?.user?.id) return;
+      function logActivityCloud(eventType, cardId, payload) {
+        if (!state.session?.user?.id) return null;
+        const clientId = makeClientId();
         const row = {
           user_id: state.session.user.id,
           event_type: eventType,
           card_id: cardId || null,
           payload: payload || {}
         };
-        // Optimistic local append for instant lab counts
-        state.activityLogs.unshift({ ...row, created_at: new Date().toISOString() });
-        sbRest('activity_logs', { method: 'POST', body: row }).catch(() => {
-          // Never interrupt user flow for silent telemetry errors
-        });
+        const localRecord = {
+          ...row,
+          _clientId: clientId,
+          created_at: new Date().toISOString()
+        };
+        state.activityLogs.unshift(localRecord);
+        persistUserCache();
+        enqueueSyncOp({ type: 'insert_log', row, clientId });
+        return clientId;
+      }
+
+      function undoActivityLogCloud(clientId) {
+        if (!clientId) return;
+        const idx = state.activityLogs.findIndex(l => l._clientId === clientId);
+        if (idx >= 0) {
+          const log = state.activityLogs[idx];
+          log._undone = true;
+          const dbId = log.id;
+          state.activityLogs.splice(idx, 1);
+          persistUserCache();
+
+          // If still queued for insert, remove it before hitting server; otherwise delete in cloud
+          const pendingIdx = state.syncQueue.findIndex(op => op.type === 'insert_log' && op.clientId === clientId);
+          if (pendingIdx >= 0) {
+            state.syncQueue.splice(pendingIdx, 1);
+            persistSyncQueue();
+          } else if (dbId) {
+            enqueueSyncOp({ type: 'delete_log', logId: dbId });
+          }
+        }
       }
 
       // =====================================================================
-      // 7. OPENAI-COMPATIBLE AI CLIENT (LOCAL KEY ONLY, ZERO SERVER LEAK)
+      // 8. OPENAI-COMPATIBLE AI CLIENT (LOCAL KEY ONLY, OMIT TEMPERATURE)
       // =====================================================================
       function isAiConfigured() {
         return Boolean(
@@ -1911,7 +2419,7 @@
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
             <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;">
-              为保护密钥安全，大模型 API Key 仅存放在你当前设备的浏览器本地，不会上传到任何托管平台。去「设置」页填一次即可开启智能拆解、思维脚手架与概念压缩。
+              为保护密钥安全，大模型 API Key 仅存放在你当前设备的浏览器本地，不会上传到任何托管平台。去「设置」页填一次即可开启智能拆解、自动归类、思维脚手架与概念压缩。
             </p>
             <div style="display:flex;gap:10px;padding-top:4px;">
               <button type="button" class="btn btn-soft" style="flex:1;" id="m-later">先手动使用</button>
@@ -1942,6 +2450,25 @@
         return JSON.parse(cleaned);
       }
 
+      function parseAiErrorDetail(status, rawText) {
+        let serverMsg = '';
+        try {
+          const parsed = JSON.parse(rawText);
+          serverMsg = parsed?.error?.message || parsed?.message || (typeof parsed?.error === 'string' ? parsed.error : '');
+        } catch (_) {
+          serverMsg = String(rawText || '').trim().slice(0, 160);
+        }
+        const suffix = serverMsg ? `：${serverMsg}` : '';
+        if (status === 401) return `API Key 无效或未授权 (401)${suffix}`;
+        if (status === 404) return `接口地址或模型不存在 (404)${suffix}`;
+        if (status === 429) return `请求受限或额度不足 (429)${suffix}`;
+        return `AI 接口异常 (${status})${suffix}`;
+      }
+
+      /**
+       * Compatible with OpenAI GPT-6 (gpt-6.1-terra / gpt-6-luna), DeepSeek, Gemini, etc.
+       * Strictly omits non-default temperature parameter so reasoning models default cleanly to 1.
+       */
       async function callOpenAiCompatible(systemPrompt, userPrompt, expectJson = true) {
         if (!isAiConfigured()) {
           throw new Error('NO_AI_KEY');
@@ -1963,23 +2490,19 @@
             },
             body: JSON.stringify({
               model: state.aiConfig.model.trim(),
-              temperature: 1,
               messages: [
                 { role: 'system', content: sys },
                 { role: 'user', content: userPrompt }
               ]
             })
           });
-        } catch (_) {
-          throw new Error('无法连接 AI 接口（可能是网络异常或该接口不支持浏览器直连跨域）');
+        } catch (netErr) {
+          throw new Error(`无法连接 AI 接口（网络异常或浏览器跨域受限）：${netErr?.message || 'Failed to fetch'}`);
         }
 
         const text = await resp.text();
         if (!resp.ok) {
-          if (resp.status === 401) throw new Error('API Key 无效或余额不足，请检查设置');
-          if (resp.status === 404) throw new Error('接口地址或模型名称不存在，请检查设置');
-          if (resp.status === 429) throw new Error('请求频率受限，请稍等几秒再试');
-          throw new Error(`AI 接口返回异常 (${resp.status})`);
+          throw new Error(parseAiErrorDetail(resp.status, text));
         }
 
         const data = JSON.parse(text);
@@ -1988,20 +2511,50 @@
         return expectJson ? extractJsonObject(content) : content.trim();
       }
 
-      // AI 1: Quick Capture Split + Silent Domain Tag
+      // AI 1: Quick Capture Split + Dynamic Content-Driven Auto-Categorization
       async function aiSplitCapture(rawText) {
+        const existing = getExistingDomains(false).map(d => d.name);
+        const existingHint = existing.length
+          ? `用户卡片库中已有以下类别：${existing.join('、')}。\n归类原则：如果本条内容自然契合已有类别，优先复用该类别名称（保持类别简洁不碎片化）；如果确实属于全新的主题领域，请根据输入内容自动提炼一个 2–6 字的简洁宽泛新类别名。`
+          : `用户卡片库目前还没有任何类别。请根据这段输入内容本身的主题场景，自动提炼一个 2–6 字的简洁、自然、宽泛的类别名称（如“沟通协作”“投资决策”“情绪觉察”“产品思维”等，不要机械敷衍）。`;
+
         const sys = `你是“非结构化洞察内化系统”的克制录入助手。将用户输入拆分成如下 JSON 字段：
 {
   "front_fact": "剥离出的客观事实、原话、对话或具体现象（精炼清晰）",
-  "back_anchor": "用户第一眼看到该现象时的直觉、情绪与感触。铁律：严格保留用户的原话大白话口吻，严禁润色成书面语、严禁说教、严禁替用户总结大道理",
-  "domain_tag": "从以下 6 个固定大类中严格单选其一：专业认知、人情世故、亲密关系、自我觉察、商业规律、生活杂感"
-}`;
-        const res = await callOpenAiCompatible(sys, `请拆解这段随手记录：\n${rawText}`, true);
+  "back_anchor": "用户第一眼看到该现象时的直觉、情绪与感触。铁律：1）严格保留用户的原话大白话口吻，严禁润色成书面语、严禁说教；2）如果用户输入里只贴了一段客观事实或他人原话、完全没有表达自己的感受，必须返回空字符串 \"\"，严禁替用户编造假感受！",
+  "domain_tag": "根据输入内容自动归类的 2–6 字大类名称"
+}
+${existingHint}`;
+
+        const res = await callOpenAiCompatible(sys, `请拆解并归类这段随手记录：\n${rawText}`, true);
         return {
           front_fact: String(res.front_fact || rawText).trim(),
           back_anchor: String(res.back_anchor || '').trim(),
-          domain_tag: DOMAINS.includes(res.domain_tag) ? res.domain_tag : '生活杂感'
+          domain_tag: normalizeDomainLabel(res.domain_tag)
         };
+      }
+
+      // AI 1b: Silent Auto-Classify for manually entered cards left blank
+      async function runSilentAutoClassify(card) {
+        if (!isAiConfigured() || !card?.id) return;
+        const existing = getExistingDomains(false).map(d => d.name);
+        const existingHint = existing.length
+          ? `优先从用户已有类别中选择最匹配的一项：${existing.join('、')}；若都不合适，再生成一个新的 2–6 字宽泛大类名称。`
+          : `请根据内容提炼一个 2–6 字的简洁宽泛大类名称。`;
+
+        try {
+          const sys = `你是卡片静默归类助手。只返回 JSON：{"domain_tag": "2到6字类别名"}。\n${existingHint}`;
+          const prompt = `事实：${card.front_fact}\n感受：${card.back_anchor}\n词条：${(card.evolution_tags || []).join('、') || '暂无'}`;
+          const res = await callOpenAiCompatible(sys, prompt, true);
+          const tag = normalizeDomainLabel(res.domain_tag);
+          if (tag && tag !== UNCLASSIFIED_LABEL) {
+            updateCardOptimistic(card.id, { domain_tag: tag });
+            logActivityCloud('ai_usage', card.id, { feature: 'auto_classify', adopted: true });
+            if (state.activeTab === 'library') renderLibraryTab();
+          }
+        } catch (_) {
+          // Silent background operation
+        }
       }
 
       // AI 2: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
@@ -2037,41 +2590,153 @@
         return Array.isArray(res.options) ? res.options.slice(0, 2) : [];
       }
 
-      // AI 4: Silent Background Cross-Domain Matcher
-      async function runSilentCrossDomainMatch(savedCard) {
-        if (!isAiConfigured() || !savedCard?.id) return;
-        const candidates = state.cards
-          .filter(c => c.id !== savedCard.id && c.domain_tag !== savedCard.domain_tag)
-          .slice(0, 35);
+      // AI 4: Full-Library & Evolution-Aware Silent Cross-Domain Matcher
+      function buildCrossDomainCandidatePool(targetCard, maxCandidates = 55) {
+        const targetDom = normalizeDomainLabel(targetCard.domain_tag);
+        const pool = state.cards.filter(c =>
+          c.id !== targetCard.id &&
+          normalizeDomainLabel(c.domain_tag) !== targetDom
+        );
+        if (pool.length <= maxCandidates) return pool;
+
+        // Stratified pool: prioritize cards with mature evolution_tags + spread across old & new cards
+        const withEvo = pool.filter(c => Array.isArray(c.evolution_tags) && c.evolution_tags.length > 0);
+        const withoutEvo = pool.filter(c => !Array.isArray(c.evolution_tags) || c.evolution_tags.length === 0);
+
+        const picked = [];
+        const pickedIds = new Set();
+        const addFrom = (arr, quota) => {
+          if (arr.length <= quota) {
+            arr.forEach(c => { if (!pickedIds.has(c.id)) { picked.push(c); pickedIds.add(c.id); } });
+            return;
+          }
+          // Evenly sample across the entire timeline so old cards collide with new ones!
+          const step = arr.length / quota;
+          for (let i = 0; i < quota; i++) {
+            const c = arr[Math.min(arr.length - 1, Math.floor(i * step))];
+            if (!pickedIds.has(c.id)) {
+              picked.push(c);
+              pickedIds.add(c.id);
+            }
+          }
+        };
+
+        addFrom(withEvo, Math.min(38, maxCandidates));
+        addFrom(withoutEvo, maxCandidates - picked.length);
+        return picked;
+      }
+
+      async function runSilentCrossDomainMatch(targetCard) {
+        if (!isAiConfigured() || !targetCard?.id) return;
+        const candidates = buildCrossDomainCandidatePool(targetCard, 55);
         if (candidates.length === 0) return;
 
         try {
-          const sys = `你是后台静默跨界碰瓷器。判断新卡片与不同领域的历史候选卡片中，是否存在底层结构或通用规律上的高度共振。
+          const sys = `你是后台静默跨界碰瓷器。判断目标卡片与不同领域的历史候选卡片中，是否存在底层机制或通用规律上的高度共振（尤其关注进化词条反映的深层规律）。
 规则：
 - 若存在令人惊喜的底层结构相似性，返回 {"match_id": "对应候选卡片id"}。
 - 若没有足够强的底层相似性，切勿硬凑，返回 {"match_id": ""}。
 - 严禁返回解释或剧透原因。`;
           const listStr = candidates.map(c =>
-            `ID:${c.id} | 事实:${String(c.front_fact).slice(0, 55)} | 词条:${(c.evolution_tags || []).join('/')}`
+            `ID:${c.id} | 类别:${normalizeDomainLabel(c.domain_tag)} | 事实:${String(c.front_fact).slice(0, 52)} | 进化词条:${(c.evolution_tags || []).join('/') || '暂无'}`
           ).join('\n');
-          const prompt = `新卡片（${savedCard.domain_tag}）：\n事实：${savedCard.front_fact}\n感受：${savedCard.back_anchor}\n\n不同领域候选：\n${listStr}`;
+          const prompt = `目标卡片（${normalizeDomainLabel(targetCard.domain_tag)}）：\n事实：${targetCard.front_fact}\n感受：${targetCard.back_anchor}\n最新进化词条：${(targetCard.evolution_tags || []).join(' / ') || '暂无'}\n\n不同领域候选：\n${listStr}`;
 
           const res = await callOpenAiCompatible(sys, prompt, true);
           const match = candidates.find(c => c.id === res.match_id);
           if (match) {
-            await updateCardInCloud(savedCard.id, {
+            updateCardOptimistic(targetCard.id, {
               cross_link_id: match.id,
-              cross_link_hint: match.domain_tag
+              cross_link_hint: normalizeDomainLabel(match.domain_tag)
             });
-            logActivitySilent('ai_usage', savedCard.id, { feature: 'cross_link', adopted: true });
+            // Bidirectionally link the matched card if it doesn't have one yet
+            if (!match.cross_link_id) {
+              updateCardOptimistic(match.id, {
+                cross_link_id: targetCard.id,
+                cross_link_hint: normalizeDomainLabel(targetCard.domain_tag)
+              });
+            }
+            logActivityCloud('ai_usage', targetCard.id, { feature: 'cross_link', adopted: true });
           }
         } catch (_) {
-          // Silent background operation: never bother user
+          // Silent background operation
         }
       }
 
+      // AI 5: Batch Re-Categorize Existing Cards by Latest Understanding
+      async function aiReorganizeLibraryDomains(cardsList) {
+        const formatCardForPrompt = (c) => {
+          const evo = (c.evolution_tags || []).join(' / ') || '暂无';
+          return `ID:${c.id} | 现类别:${normalizeDomainLabel(c.domain_tag)} | 最新理解(进化词条):${evo} | 事实:${String(c.front_fact).slice(0, 75)} | 最初感受:${String(c.back_anchor).slice(0, 45)}`;
+        };
+
+        const batchSize = 55;
+        // Stage 1: Establish unified taxonomy + classify first batch (prioritizing cards with evolution tags)
+        const sortedForTaxonomy = [...cardsList].sort((a, b) => {
+          const aLen = (a.evolution_tags || []).length;
+          const bLen = (b.evolution_tags || []).length;
+          return bLen - aLen;
+        });
+        const firstBatch = sortedForTaxonomy.slice(0, batchSize);
+        const restCards = sortedForTaxonomy.slice(batchSize);
+
+        const targetCatCount = cardsList.length <= 8 ? '2 到 4' : cardsList.length <= 25 ? '3 到 6' : '4 到 9';
+        const sys1 = `你是个人认知卡片库的整理顾问。请综合每张卡片的「最新理解（进化词条）」、事实与最初感受，为用户提炼一套干净、精炼、贴合其真实内容的大类体系，并把每张卡片按最新理解重新归类。
+严格规则：
+1. 根据这批卡片的实际内容动态生成 ${targetCatCount} 个宽泛且有区分度的类别名（每个 2–6 个汉字），不要照搬刻板默认分类，也不要碎成一卡一类。
+2. 优先依据「最新理解（进化词条）」判断卡片归属；若暂无进化词条，则依据事实与最初感受判断。
+3. 返回纯 JSON：
+{
+  "categories": ["类别A", "类别B", ...],
+  "assignments": [{"id": "卡片ID", "domain_tag": "类别A"}, ...]
+}
+每张输入卡片都必须出现在 assignments 中，且 domain_tag 必须严格取自 categories。`;
+
+        const res1 = await callOpenAiCompatible(
+          sys1,
+          `请整理并重新归类以下 ${firstBatch.length} 张卡片：\n${firstBatch.map(formatCardForPrompt).join('\n')}`,
+          true
+        );
+
+        const categories = Array.isArray(res1.categories)
+          ? Array.from(new Set(res1.categories.map(normalizeDomainLabel).filter(x => x && x !== UNCLASSIFIED_LABEL)))
+          : [];
+        const assignmentMap = new Map();
+
+        if (Array.isArray(res1.assignments)) {
+          res1.assignments.forEach(a => {
+            if (a?.id && a?.domain_tag) {
+              assignmentMap.set(a.id, normalizeDomainLabel(a.domain_tag));
+            }
+          });
+        }
+
+        // Stage 2: Classify any remaining cards strictly into the established taxonomy
+        if (restCards.length > 0 && categories.length > 0) {
+          for (let i = 0; i < restCards.length; i += batchSize) {
+            const chunk = restCards.slice(i, i + batchSize);
+            const sysNext = `请将以下卡片严格按最新理解归入已确定的类别体系中：${categories.join('、')}。
+返回纯 JSON：{"assignments": [{"id": "卡片ID", "domain_tag": "类别名"}]}`;
+            const resNext = await callOpenAiCompatible(
+              sysNext,
+              chunk.map(formatCardForPrompt).join('\n'),
+              true
+            );
+            if (Array.isArray(resNext.assignments)) {
+              resNext.assignments.forEach(a => {
+                if (a?.id && a?.domain_tag) {
+                  assignmentMap.set(a.id, normalizeDomainLabel(a.domain_tag));
+                }
+              });
+            }
+          }
+        }
+
+        return { categories, assignmentMap };
+      }
+
       // =====================================================================
-      // 8. AUTH WALL VIEW & LOGIN FLOW
+      // 9. AUTH WALL VIEW & LOGIN FLOW
       // =====================================================================
       function showAuthWall(errorMsg = '') {
         const authWall = document.getElementById('auth-wall');
@@ -2080,7 +2745,6 @@
         appMain.innerHTML = ''; // Strictly unmount all app UI when logged out
         authWall.classList.remove('hidden');
 
-        // Pre-fill Supabase config from localStorage
         const urlInput = document.getElementById('cfg-sb-url');
         const anonInput = document.getElementById('cfg-sb-anon');
         const details = document.getElementById('supabase-config-details');
@@ -2090,7 +2754,7 @@
         anonInput.value = state.sbConfig.anonKey || '';
 
         const configured = Boolean(state.sbConfig.url && state.sbConfig.anonKey);
-        details.open = !configured; // Expand on first visit; collapse once saved
+        details.open = !configured;
         statusTag.textContent = configured ? '已记住本机配置' : '首次需填写';
         statusTag.className = 'db-status-tag' + (configured ? ' ready' : '');
 
@@ -2159,12 +2823,16 @@
       }
 
       // =====================================================================
-      // 9. AUTHENTICATED APP SHELL MOUNTING
+      // 10. AUTHENTICATED APP SHELL MOUNTING (CACHE-FIRST + CLOUD REFRESH)
       // =====================================================================
       async function enterAuthenticatedApp() {
         document.getElementById('auth-wall').classList.add('hidden');
         const appMain = document.getElementById('app-main');
         appMain.classList.remove('hidden');
+
+        const uid = currentUserId();
+        state.syncQueue = loadSyncQueue(uid);
+        loadCaptureDraft(uid);
 
         if (!state.appMounted) {
           appMain.innerHTML = `
@@ -2192,35 +2860,71 @@
           state.appMounted = true;
         }
 
-        // Show calm initial loading placeholder inside review view
-        document.getElementById('view-review').innerHTML = `
-          <div class="done-stage">
-            <div class="done-icon anim-pulse">${ICONS.sun}</div>
-            <p style="font-size:13px;color:var(--ink-muted);margin:0;">正在同步你的私有记忆素材库...</p>
-          </div>
-        `;
-
-        try {
-          await fetchAllUserData();
+        // Instant hydration from local cache if available (zero cold-start wait!)
+        const cached = loadUserCache(uid);
+        const hadCache = Boolean(cached && Array.isArray(cached.cards));
+        if (hadCache) {
+          state.cards = cached.cards;
+          state.activityLogs = Array.isArray(cached.activityLogs) ? cached.activityLogs : [];
+          if (cached.prefs) {
+            state.prefs = { ...state.prefs, ...cached.prefs };
+            applyTheme(state.prefs.theme);
+          }
           buildTodayQueue();
           renderReviewTab();
           renderCaptureTab();
           renderLibraryTab();
           renderSettingsTab();
           switchTab('review');
-        } catch (err) {
-          showToast(err.message || '云端数据加载失败');
+        } else {
           document.getElementById('view-review').innerHTML = `
             <div class="done-stage">
-              <p style="font-size:14px;color:var(--terra);margin:0 0 14px;">${esc(err.message || '云端连接异常')}</p>
-              <button type="button" class="btn btn-primary btn-sm" id="btn-retry-load">重新同步</button>
+              <div class="done-icon anim-pulse">${ICONS.sun}</div>
+              <p style="font-size:13px;color:var(--ink-muted);margin:0;">正在同步你的私有记忆素材库...</p>
             </div>
           `;
-          document.getElementById('btn-retry-load').onclick = () => enterAuthenticatedApp();
+        }
+
+        // Flush any pending offline changes first, then pull latest cloud truth
+        try {
+          if (state.syncQueue.length > 0) {
+            await flushSyncQueue();
+          }
+          await fetchAllUserData();
+
+          // If user already started flipping a card from cache, don't yank it away; otherwise rebuild cleanly
+          const midTurn = hadCache && state.review.phase === 'back';
+          if (!midTurn) {
+            buildTodayQueue();
+            renderReviewTab();
+          }
+          if (!hadCache) {
+            renderCaptureTab();
+            switchTab('review');
+          }
+          renderLibraryTab();
+          renderSettingsTab();
+        } catch (err) {
+          if (hadCache) {
+            setSyncStatus('error');
+            showToast('当前离线，已载入本机缓存，联网后将自动同步');
+          } else {
+            showToast(err.message || '云端数据加载失败');
+            document.getElementById('view-review').innerHTML = `
+              <div class="done-stage">
+                <p style="font-size:14px;color:var(--terra);margin:0 0 14px;">${esc(err.message || '云端连接异常')}</p>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-retry-load">重新同步</button>
+              </div>
+            `;
+            document.getElementById('btn-retry-load').onclick = () => enterAuthenticatedApp();
+          }
         }
       }
 
       function switchTab(tab) {
+        if (state.activeTab === 'review' && tab !== 'review') {
+          pauseActiveReviewTimer();
+        }
         state.activeTab = tab;
         ['review', 'capture', 'library', 'settings'].forEach(name => {
           const el = document.getElementById(`view-${name}`);
@@ -2229,39 +2933,105 @@
         document.querySelectorAll('.nav-item').forEach(btn => {
           btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
         });
-        if (tab === 'review') renderReviewTab();
+        window.scrollTo(0, 0);
+        if (tab === 'review') {
+          renderReviewTab();
+          resumeActiveReviewTimer();
+        }
+        if (tab === 'capture') renderCaptureTab();
         if (tab === 'library') renderLibraryTab();
         if (tab === 'settings') renderSettingsTab();
       }
 
       // =====================================================================
-      // 10. TAB 1: 今日复习 (REVIEW)
+      // 11. TAB 1: 今日复习 (REVEAL FIRST -> VERIFY -> RATE & ADVANCE + UNDO)
       // =====================================================================
-      function getCurrentReviewCard() {
-        const id = state.review.queue[state.review.index];
-        return id ? state.cards.find(c => c.id === id) || null : null;
+      function getCurrentQueueItem() {
+        return state.review.queue[state.review.index] || null;
       }
 
-      function renderReviewHeader(currentNum, totalNum) {
-        const pct = totalNum > 0 ? Math.min(100, Math.round((currentNum / totalNum) * 100)) : 100;
-        const label = totalNum > 0
-          ? (currentNum <= totalNum ? `今日第 ${currentNum} / ${totalNum} 张` : `今日 ${totalNum} / ${totalNum} 已完成`)
-          : '今日暂无待保鲜卡片';
-        const dotClass = state.syncStatus === 'syncing' ? 'syncing' : state.syncStatus === 'error' ? 'error' : '';
-        const dotTxt = state.syncStatus === 'syncing' ? '同步中' : state.syncStatus === 'error' ? '待重试' : '云端已同步';
+      function getCurrentReviewCard() {
+        const item = getCurrentQueueItem();
+        return item ? state.cards.find(c => c.id === item.id) || null : null;
+      }
+
+      function renderReviewHeader() {
+        const stats = getTodayCloudStats();
+        const doneToday = stats.reviewedTodayCount;
+        const remainingInQueue = Math.max(0, state.review.queue.length - state.review.index);
+        const totalToday = doneToday + remainingInQueue;
+
+        let label = '今日暂无待保鲜卡片';
+        let pct = 100;
+        if (remainingInQueue > 0) {
+          const currentOrdinal = doneToday + 1;
+          if (state.review.inExtraBatch) {
+            label = `加餐第 ${state.review.index + 1} / ${state.review.queue.length} 张 · 今日第 ${currentOrdinal} 张`;
+            pct = Math.min(100, Math.round((state.review.index / Math.max(1, state.review.queue.length)) * 100));
+          } else {
+            label = `今日第 ${currentOrdinal} / ${totalToday} 张`;
+            pct = totalToday > 0 ? Math.min(100, Math.round((doneToday / totalToday) * 100)) : 0;
+          }
+        } else if (doneToday > 0) {
+          label = `今日已完成 ${doneToday} 张`;
+          pct = 100;
+        }
+
+        const pending = state.syncQueue.length;
+        const dotClass = state.syncStatus === 'syncing' ? 'syncing' : (state.syncStatus === 'error' || pending > 0) ? 'error' : '';
+        const dotTxt = state.syncStatus === 'syncing'
+          ? (pending > 0 ? `同步中 (${pending})` : '同步中')
+          : (state.syncStatus === 'error' || pending > 0)
+            ? (pending > 0 ? `待同步 (${pending})` : '待重试')
+            : '云端已同步';
+
+        const canUndo = state.review.undoStack.length > 0;
 
         return `
           <div class="page-header" style="margin-bottom:10px;">
             <span style="font-size:13px;font-weight:500;color:var(--ink-secondary);font-variant-numeric:tabular-nums;">${label}</span>
-            <span class="sync-dot-wrap">
-              <span id="sync-dot" class="sync-dot ${dotClass}"></span>
-              <span id="sync-dot-text">${dotTxt}</span>
-            </span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${canUndo ? `
+                <button type="button" class="btn-ghost btn-xs" id="btn-undo-review" title="撤回上一张">
+                  ${ICONS.undo}<span>撤回</span>
+                </button>
+              ` : ''}
+              <button type="button" class="sync-dot-wrap" id="btn-sync-pill" title="点击立即同步">
+                <span id="sync-dot" class="sync-dot ${dotClass}"></span>
+                <span id="sync-dot-text">${dotTxt}</span>
+              </button>
+            </div>
           </div>
           <div class="progress-track">
             <div class="progress-fill" style="width:${pct}%"></div>
           </div>
         `;
+      }
+
+      function wireReviewHeaderButtons() {
+        const undoBtn = document.getElementById('btn-undo-review');
+        if (undoBtn) undoBtn.onclick = onUndoLastReview;
+
+        const syncPill = document.getElementById('btn-sync-pill');
+        if (syncPill) {
+          syncPill.onclick = async () => {
+            if (state.syncQueue.length > 0) {
+              await flushSyncQueue();
+              showToast(state.syncQueue.length === 0 ? '所有离线变更已同步到云端' : '网络尚未恢复，稍后自动重试');
+            } else {
+              try {
+                await fetchAllUserData();
+                if (state.review.phase === 'front' && state.review.index >= state.review.queue.length) {
+                  buildTodayQueue();
+                  renderReviewTab();
+                }
+                showToast('已与云端同步最新数据');
+              } catch (err) {
+                showToast(err.message || '同步失败');
+              }
+            }
+          };
+        }
       }
 
       function renderReviewTab() {
@@ -2273,15 +3043,23 @@
 
         // Completed / Empty State
         if (total === 0 || idx >= total) {
+          const stats = getTodayCloudStats();
+          const headline = stats.reviewedTodayCount > 0
+            ? '今日已保鲜，交给后台潜意识'
+            : (state.cards.length === 0 ? '素材库还是空的，先去记第一条吧' : '今日暂无待保鲜卡片');
+          const subtext = stats.reviewedTodayCount > 0
+            ? '前台内存已留白。散步、洗澡或放空时，大脑默认模式网络会自动让已固化的素材发生跨界碰撞。'
+            : '随时记下打动你的对话、现象和第一感觉，明天起自动进入低压力遗忘曲线。';
+
           container.innerHTML = `
-            ${renderReviewHeader(total, total)}
+            ${renderReviewHeader()}
             <div class="done-stage anim-up">
               <div class="done-icon">${ICONS.sun}</div>
-              <h2 style="margin:0 0 8px;font-size:18px;font-weight:600;">今日已保鲜，交给后台潜意识</h2>
-              <p style="margin:0 0 26px;font-size:13px;color:var(--ink-muted);max-width:290px;line-height:1.7;">
-                前台内存已留白。散步、洗澡或放空时，大脑默认模式网络会自动让已固化的素材发生跨界碰撞。
+              <h2 style="margin:0 0 8px;font-size:18px;font-weight:600;">${headline}</h2>
+              <p style="margin:0 0 26px;font-size:13px;color:var(--ink-muted);max-width:295px;line-height:1.7;">
+                ${subtext}
               </p>
-              <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:220px;">
+              <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:230px;">
                 <button type="button" class="btn btn-primary btn-block" id="btn-done-capture">去记一条新洞察</button>
                 ${state.review.hasReservoir ? `
                   <button type="button" class="btn btn-soft btn-sm btn-block" id="btn-pull-ten" style="color:var(--ink-muted);">
@@ -2291,6 +3069,7 @@
               </div>
             </div>
           `;
+          wireReviewHeaderButtons();
           document.getElementById('btn-done-capture').onclick = () => switchTab('capture');
           const pullBtn = document.getElementById('btn-pull-ten');
           if (pullBtn) pullBtn.onclick = pullExtraTenCards;
@@ -2304,42 +3083,48 @@
           return;
         }
 
-        // ---------------- FRONT PHASE (Pure recall, NO domain tag) ----------------
+        // ---------------- FRONT PHASE (Pure recall -> Reveal first, rate after!) ----------------
         if (state.review.phase === 'front') {
           container.innerHTML = `
-            ${renderReviewHeader(idx + 1, total)}
+            ${renderReviewHeader()}
             <div class="review-stage anim-up">
-              <div class="front-card">
+              <div class="front-card" id="front-card-tap" role="button" tabindex="0" aria-label="点击翻看背面">
                 <div class="clue-kicker">测试线索 · 纯复述，零绩效</div>
                 <p class="clue-text">${esc(card.front_fact)}</p>
+                <div style="margin-top:24px;font-size:12px;color:var(--ink-muted);opacity:0.78;">
+                  在脑海里自然想起最初感受或关键词即可，轻触翻看对照
+                </div>
               </div>
-              <div class="rating-grid">
-                <button type="button" class="btn btn-terra" id="btn-rate-again">有点模糊</button>
-                <button type="button" class="btn btn-primary" id="btn-rate-good">想起来了</button>
-              </div>
+              <button type="button" class="btn btn-primary btn-block" id="btn-reveal-back">
+                翻看背面
+              </button>
             </div>
           `;
-          document.getElementById('btn-rate-again').onclick = () => onFrontRated('again');
-          document.getElementById('btn-rate-good').onclick = () => onFrontRated('good');
+          wireReviewHeaderButtons();
+          document.getElementById('btn-reveal-back').onclick = onRevealBack;
+          document.getElementById('front-card-tap').onclick = onRevealBack;
           return;
         }
 
-        // ---------------- BACK PHASE (Anchor + 3 Evolution Slots + Gentle AI) ----------------
+        // ---------------- BACK PHASE (Anchor + 3 Evolution Slots + Gentle AI + Binary Rate) ----------------
         const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
         const isFull = tags.length >= 3;
         const edited = state.review.editedThisReview;
+        const editedSlot = state.review.editedSlotIndex;
         const linkedCard = card.cross_link_id
           ? state.cards.find(c => c.id === card.cross_link_id)
           : null;
 
-        // Build 3 fixed visual capsule slots
+        // Build 3 fixed visual capsule slots (strictly max 1 edit, but allows typo-fix on the SAME slot just edited)
         let slotsHtml = '';
         for (let i = 0; i < 3; i++) {
           if (i < tags.length) {
+            const canFixSameSlot = edited && editedSlot === i;
+            const disabledAttr = (edited && !canFixSameSlot) ? 'disabled' : '';
             slotsHtml += `
-              <button type="button" class="evo-capsule" data-slot="${i}" ${edited ? 'disabled' : ''}>
+              <button type="button" class="evo-capsule ${canFixSameSlot ? 'just-edited' : ''}" data-slot="${i}" ${disabledAttr} title="${canFixSameSlot ? '刚改过此槽，可点此修正错别字' : '点击微调词条'}">
                 <span>${esc(tags[i])}</span>
-                ${edited ? '' : `<span style="opacity:0.65;display:inline-flex;">${ICONS.edit}</span>`}
+                ${(!edited || canFixSameSlot) ? `<span style="opacity:0.65;display:inline-flex;">${ICONS.edit}</span>` : ''}
               </button>
             `;
           } else {
@@ -2370,15 +3155,20 @@
         }
 
         container.innerHTML = `
-          ${renderReviewHeader(idx + 1, total)}
+          ${renderReviewHeader()}
           <div class="review-stage anim-up">
             <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
-              <!-- Dimmed Front Fact Reference -->
+              <!-- Dimmed Front Fact Reference (with unobtrusive edit shortcut) -->
               <div class="card-soft" style="padding:12px 14px;">
-                <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.65;white-space:pre-wrap;">${esc(card.front_fact)}</p>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                  <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.65;white-space:pre-wrap;flex:1;">${esc(card.front_fact)}</p>
+                  <button type="button" class="btn-ghost btn-xs" id="btn-review-edit-card" style="flex-shrink:0;margin:-4px -6px 0 0;" title="编辑或删除此卡片">
+                    ${ICONS.edit}
+                  </button>
+                </div>
               </div>
 
-              <!-- Back Anchor Layer (Immutable) -->
+              <!-- Back Anchor Layer (Immutable default) -->
               <div class="card">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                   <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">锚点层 · 最初感受</span>
@@ -2406,7 +3196,7 @@
 
                 ${edited ? `
                   <div style="margin-top:12px;padding:9px 12px;border-radius:12px;background:var(--sage-soft);color:var(--sage);font-size:12px;line-height:1.55;">
-                    微调已完成，留白给后台潜意识。
+                    微调已完成，留白给后台潜意识。${editedSlot !== null ? '（若刚打错字，可再点虚线词条修正）' : ''}
                   </div>
                 ` : ''}
 
@@ -2415,7 +3205,7 @@
                   <button type="button" class="btn-ghost" id="btn-scaffold" style="margin-left:-8px;" ${state.review.scaffoldLoading ? 'disabled' : ''}>
                     ${ICONS.bulb} 要个脚手架
                   </button>
-                  <span style="font-size:11px;color:var(--ink-muted);">无新感觉直接点下一张</span>
+                  <span style="font-size:11px;color:var(--ink-muted);">无新感觉直接点下方进下一张</span>
                 </div>
 
                 ${scaffoldHtml}
@@ -2429,20 +3219,26 @@
               </div>
             </div>
 
-            <button type="button" class="btn btn-ink btn-block" id="btn-next-card" ${state.review.submitting ? 'disabled' : ''}>
-              ${state.review.submitting ? '保存进度中...' : '下一张'}
-            </button>
+            <!-- Binary Rating directly commits & advances cleanly (zero blocking wait!) -->
+            <div class="rating-grid">
+              <button type="button" class="btn btn-terra" id="btn-rate-again">有点模糊</button>
+              <button type="button" class="btn btn-primary" id="btn-rate-good">想起来了</button>
+            </div>
           </div>
         `;
 
-        // Wire Back Phase Events
-        document.getElementById('btn-next-card').onclick = onNextCard;
-        document.getElementById('btn-scaffold').onclick = onRequestScaffold;
+        wireReviewHeaderButtons();
 
+        document.getElementById('btn-rate-again').onclick = () => onBackRatedAndNext('again');
+        document.getElementById('btn-rate-good').onclick = () => onBackRatedAndNext('good');
+        document.getElementById('btn-scaffold').onclick = onRequestScaffold;
+        document.getElementById('btn-review-edit-card').onclick = () => openCardEditModal(card, { fromReview: true });
+
+        container.querySelectorAll('.evo-capsule').forEach(btn => {
+          if (btn.disabled) return;
+          btn.onclick = () => openEvolutionEditModal(card, Number(btn.getAttribute('data-slot')));
+        });
         if (!edited) {
-          container.querySelectorAll('.evo-capsule').forEach(btn => {
-            btn.onclick = () => openEvolutionEditModal(card, Number(btn.getAttribute('data-slot')));
-          });
           container.querySelectorAll('.evo-slot-empty').forEach(btn => {
             btn.onclick = () => openEvolutionEditModal(card, null);
           });
@@ -2456,62 +3252,94 @@
         }
       }
 
-      function onFrontRated(ratingKey) {
+      function onRevealBack() {
         if (state.review.phase !== 'front') return;
-        const now = Date.now();
-        state.review.frontDurationMs = Math.max(80, now - (state.review.frontStartMs || now));
-        state.review.backStartMs = now;
-        state.review.rating = ratingKey;
+        state.review.frontAccMs = getCurrentPhaseElapsedMs();
+        state.review.backAccMs = 0;
+        state.review.segStartMs = Date.now();
         state.review.phase = 'back';
         renderReviewTab();
+        window.scrollTo(0, 0);
       }
 
-      async function onNextCard() {
+      function onBackRatedAndNext(ratingKey) {
+        const qItem = getCurrentQueueItem();
         const card = getCurrentReviewCard();
-        if (!card || state.review.submitting) return;
-
-        state.review.submitting = true;
-        renderReviewTab();
+        if (!qItem || !card) return;
 
         const now = Date.now();
-        const backDurationMs = Math.max(80, now - (state.review.backStartMs || now));
+        const backDurationMs = getCurrentPhaseElapsedMs();
+        const frontDurationMs = clamp(Math.round(state.review.frontAccMs || 800), 80, 300000);
         const R = Number(computeRetrievability(card.fsrs_state, now).toFixed(3));
-        const ratingKey = state.review.rating || 'good';
         const nextFsrs = scheduleFsrsCard(card.fsrs_state, ratingKey, now);
+        const prevStats = getTodayCloudStats();
+        const dailyOrdinal = prevStats.reviewedTodayCount + 1;
 
-        try {
-          await updateCardInCloud(card.id, {
-            fsrs_state: nextFsrs,
-            due_at: nextFsrs.due
+        // Snapshot for instant Undo
+        const prevCardSnapshot = {
+          fsrs_state: card.fsrs_state ? JSON.parse(JSON.stringify(card.fsrs_state)) : null,
+          due_at: card.due_at
+        };
+
+        // 1. Optimistically update card & enqueue cloud PATCH (zero wait!)
+        updateCardOptimistic(card.id, {
+          fsrs_state: nextFsrs,
+          due_at: nextFsrs.due
+        });
+
+        // 2. Cloud-persisted review usage log
+        const reviewLogClientId = logActivityCloud('review', card.id, {
+          session_date: localDateKey(),
+          tier: qItem.tier,
+          extra_batch: Boolean(qItem.extraBatch),
+          front_ms: frontDurationMs,
+          back_ms: backDurationMs,
+          rating: ratingKey === 'good' ? 'good' : 'again',
+          retrievability_r: R,
+          queue_index: dailyOrdinal,
+          edited_evolution: state.review.editedThisReview
+        });
+
+        if (state.review.scaffoldTriggered) {
+          logActivityCloud('ai_usage', card.id, {
+            feature: 'scaffold',
+            adopted: state.review.editedThisReview
           });
-
-          state.review.reviewedIds.add(card.id);
-
-          // Silent Review Telemetry
-          logActivitySilent('review', card.id, {
-            front_ms: state.review.frontDurationMs,
-            back_ms: backDurationMs,
-            rating: ratingKey === 'good' ? 'good' : 'again',
-            retrievability_r: R,
-            queue_index: state.review.index + 1,
-            edited_evolution: state.review.editedThisReview
-          });
-
-          if (state.review.scaffoldTriggered) {
-            logActivitySilent('ai_usage', card.id, {
-              feature: 'scaffold',
-              adopted: state.review.editedThisReview
-            });
-          }
-
-          state.review.index++;
-          resetCardTurnState();
-          renderReviewTab();
-        } catch (err) {
-          state.review.submitting = false;
-          showToast(err.message || '保存复习进度失败，请重试');
-          renderReviewTab();
         }
+
+        // Push to undo stack (keep last 15)
+        state.review.undoStack.push({
+          cardId: card.id,
+          prevCardSnapshot,
+          queueIndex: state.review.index,
+          reviewLogClientId
+        });
+        if (state.review.undoStack.length > 15) state.review.undoStack.shift();
+
+        // Advance immediately!
+        state.review.index++;
+        resetCardTurnState();
+        renderReviewTab();
+        window.scrollTo(0, 0);
+      }
+
+      function onUndoLastReview() {
+        if (state.review.undoStack.length === 0) return;
+        const snap = state.review.undoStack.pop();
+        const card = state.cards.find(c => c.id === snap.cardId);
+
+        if (card) {
+          updateCardOptimistic(card.id, {
+            fsrs_state: snap.prevCardSnapshot.fsrs_state,
+            due_at: snap.prevCardSnapshot.due_at
+          });
+        }
+        undoActivityLogCloud(snap.reviewLogClientId);
+
+        state.review.index = Math.min(snap.queueIndex, state.review.queue.length);
+        resetCardTurnState();
+        renderReviewTab();
+        showToast('已撤回上一张卡片');
       }
 
       async function onRequestScaffold() {
@@ -2529,7 +3357,7 @@
         try {
           state.review.scaffoldQuestions = await aiFetchScaffolding(card);
         } catch (err) {
-          showToast(err.message || '脚手架生成失败');
+          showToast(err.message || '脚手架生成失败', 4000);
           state.review.scaffoldQuestions = [
             '这件事背后最反常识的支点是什么？',
             '换一个完全不同的领域，它还成立吗？'
@@ -2540,9 +3368,11 @@
         }
       }
 
-      // --- Evolution Micro-Edit Modal (Max 1 edit per review) ---
+      // --- Evolution Micro-Edit Modal (Max 1 edit per review, typo fix allowed on same slot) ---
       function openEvolutionEditModal(card, slotIndex) {
-        if (state.review.editedThisReview) return;
+        const isFixingJustEdited = state.review.editedThisReview && state.review.editedSlotIndex === slotIndex;
+        if (state.review.editedThisReview && !isFixingJustEdited) return;
+
         const isEdit = slotIndex !== null && slotIndex !== undefined;
         const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
         const currentText = isEdit ? (tags[slotIndex] || '') : '';
@@ -2550,11 +3380,13 @@
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <h3 style="margin:0;font-size:16px;font-weight:600;">${isEdit ? '替换或微调词条' : '填入一个进化词条'}</h3>
+              <h3 style="margin:0;font-size:16px;font-weight:600;">${isFixingJustEdited ? '修正刚改的词条' : (isEdit ? '替换或微调词条' : '填入一个进化词条')}</h3>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
             <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.55;">
-              像搬砖一样沉淀 1 个精炼短词或短句（建议 2–12 字），本次复习改完即止。
+              ${isFixingJustEdited
+                ? '仅修正本次刚刚填入的词条错别字，改完即可继续往下刷。'
+                : '像搬砖一样沉淀 1 个精炼短词或短句（建议 2–12 字），本次复习改完即止。'}
             </p>
             <input id="m-evo-input" class="input" type="text" maxlength="24" value="${esc(currentText)}" placeholder="例如：隐性摩擦成本" />
             <div style="display:flex;gap:10px;">
@@ -2568,7 +3400,7 @@
         setTimeout(() => input?.focus(), 60);
         document.getElementById('m-close').onclick = closeModal;
 
-        document.getElementById('m-evo-save').onclick = async () => {
+        document.getElementById('m-evo-save').onclick = () => {
           const val = input.value.trim();
           if (!val) {
             showToast('请输入简短词条');
@@ -2576,6 +3408,7 @@
           }
           const before = [...tags];
           const after = [...tags];
+          let targetSlot = slotIndex;
           if (isEdit) {
             if (after[slotIndex] === val) {
               closeModal();
@@ -2587,26 +3420,27 @@
               closeModal();
               return;
             }
+            targetSlot = after.length;
             after.push(val);
           }
-          await commitEvolution(card, isEdit ? 'replace' : 'add', before, after);
+          commitEvolution(card, isEdit ? 'replace' : 'add', before, after, targetSlot, isFixingJustEdited);
           closeModal();
         };
 
         const delBtn = document.getElementById('m-evo-del');
         if (delBtn) {
-          delBtn.onclick = async () => {
+          delBtn.onclick = () => {
             const before = [...tags];
             const after = before.filter((_, i) => i !== slotIndex);
-            await commitEvolution(card, 'remove', before, after);
+            commitEvolution(card, 'remove', before, after, null, isFixingJustEdited);
             closeModal();
           };
         }
       }
 
-      // --- AI Concept Compressor Modal ---
-      function openCompressModal(card) {
-        if (state.review.editedThisReview) return;
+      // --- AI Concept Compressor Modal (Now with editable refinement before commit!) ---
+      function openCompressModal(card, onDoneCallback = null) {
+        if (!onDoneCallback && state.review.editedThisReview) return;
         if (!isAiConfigured()) {
           promptConfigureAi();
           return;
@@ -2634,6 +3468,11 @@
 
             <button type="button" class="btn btn-primary btn-block" id="m-comp-run">${ICONS.sparkle} 提炼 2 个压缩替代词</button>
             <div id="m-comp-results" class="hidden" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="m-comp-refine" class="hidden card-soft" style="display:flex;flex-direction:column;gap:10px;">
+              <div id="m-comp-refine-title" style="font-size:12px;color:var(--ink-muted);">可微调几个字后再落定替换</div>
+              <input id="m-comp-refine-input" class="input" type="text" maxlength="24" />
+              <button type="button" class="btn btn-ink btn-sm btn-block" id="m-comp-confirm">确认替换词条</button>
+            </div>
           </div>
         `);
 
@@ -2641,6 +3480,12 @@
         const ideaInput = document.getElementById('m-comp-idea');
         const runBtn = document.getElementById('m-comp-run');
         const resBox = document.getElementById('m-comp-results');
+        const refineBox = document.getElementById('m-comp-refine');
+        const refineTitle = document.getElementById('m-comp-refine-title');
+        const refineInput = document.getElementById('m-comp-refine-input');
+        const confirmBtn = document.getElementById('m-comp-confirm');
+        let selectedTargetIdx = 0;
+
         setTimeout(() => ideaInput?.focus(), 60);
 
         runBtn.onclick = async () => {
@@ -2652,6 +3497,7 @@
           runBtn.disabled = true;
           runBtn.textContent = '正在凝练语义...';
           resBox.classList.add('hidden');
+          refineBox.classList.add('hidden');
 
           try {
             const options = await aiCompressTags(card, idea);
@@ -2673,20 +3519,39 @@
             resBox.classList.remove('hidden');
 
             resBox.querySelectorAll('button[data-opt]').forEach(btn => {
-              btn.onclick = async () => {
+              btn.onclick = () => {
                 const opt = options[Number(btn.getAttribute('data-opt'))];
-                const targetIdx = clamp(Number(opt.replace_index) || 0, 0, 2);
-                const before = [...tags];
-                const after = [...tags];
-                after[targetIdx] = String(opt.word || '').trim();
-                await commitEvolution(card, 'compress', before, after);
-                logActivitySilent('ai_usage', card.id, { feature: 'compress', adopted: true });
-                closeModal();
+                selectedTargetIdx = clamp(Number(opt.replace_index) || 0, 0, 2);
+                const oldW = tags[selectedTargetIdx] || '';
+                refineTitle.textContent = `将替换槽位 ${selectedTargetIdx + 1}「${oldW}」，可直接确认或微调字词：`;
+                refineInput.value = String(opt.word || '').trim();
+                refineBox.classList.remove('hidden');
+                refineInput.focus();
               };
             });
+
+            confirmBtn.onclick = () => {
+              const finalWord = refineInput.value.trim();
+              if (!finalWord) {
+                showToast('词条不能为空');
+                return;
+              }
+              const before = [...tags];
+              const after = [...tags];
+              after[selectedTargetIdx] = finalWord;
+              if (onDoneCallback) {
+                onDoneCallback(after);
+                logActivityCloud('ai_usage', card.id, { feature: 'compress', adopted: true });
+                closeModal();
+              } else {
+                commitEvolution(card, 'compress', before, after, selectedTargetIdx, false);
+                logActivityCloud('ai_usage', card.id, { feature: 'compress', adopted: true });
+                closeModal();
+              }
+            };
           } catch (err) {
-            showToast(err.message || '概念压缩失败');
-            logActivitySilent('ai_usage', card.id, { feature: 'compress', adopted: false });
+            showToast(err.message || '概念压缩失败', 4000);
+            logActivityCloud('ai_usage', card.id, { feature: 'compress', adopted: false });
           } finally {
             runBtn.disabled = false;
             runBtn.innerHTML = `${ICONS.sparkle} 重新提炼压缩词`;
@@ -2694,34 +3559,51 @@
         };
       }
 
-      async function commitEvolution(card, action, before, after) {
+      function commitEvolution(card, action, before, after, targetSlotIndex, isTypoFix = false) {
         const reps = (card.fsrs_state?.reps || 0) + 1;
-        const entry = {
-          at: new Date().toISOString(),
-          reps,
-          action,
-          before,
-          after
-        };
-        const history = Array.isArray(card.evolution_history) ? [...card.evolution_history, entry] : [entry];
+        const history = Array.isArray(card.evolution_history) ? [...card.evolution_history] : [];
 
-        try {
-          await updateCardInCloud(card.id, {
-            evolution_tags: after,
-            evolution_history: history
+        if (isTypoFix && state.review.editedHistoryIdx !== null && history[state.review.editedHistoryIdx]) {
+          // Amend the just-created history entry cleanly
+          history[state.review.editedHistoryIdx] = {
+            ...history[state.review.editedHistoryIdx],
+            at: new Date().toISOString(),
+            after
+          };
+        } else {
+          history.push({
+            at: new Date().toISOString(),
+            reps,
+            action,
+            before,
+            after
           });
-          state.review.editedThisReview = true;
-          logActivitySilent('evolution', card.id, { action, reps, before, after });
-          showToast('进化层已微调并同步');
-          renderReviewTab();
-        } catch (err) {
-          showToast(err.message || '更新进化层失败');
+          state.review.editedHistoryIdx = history.length - 1;
         }
+
+        const updatedCard = updateCardOptimistic(card.id, {
+          evolution_tags: after,
+          evolution_history: history
+        });
+
+        state.review.editedThisReview = true;
+        state.review.editedSlotIndex = targetSlotIndex;
+
+        if (!isTypoFix) {
+          logActivityCloud('evolution', card.id, { action, reps, before, after });
+          // Re-run silent cross-domain matching when new semantic evolution tags emerge!
+          if (updatedCard && after.length > 0) {
+            runSilentCrossDomainMatch(updatedCard);
+          }
+        }
+
+        showToast(isTypoFix ? '已修正词条错别字' : '进化层已微调并后台同步');
+        renderReviewTab();
       }
 
       // --- Cross-Domain Peek Modal (Zero Spoiler) ---
       function openCrossDomainModal(currentCard, linkedCard) {
-        logActivitySilent('ai_usage', currentCard.id, { feature: 'cross_link_peek', adopted: true });
+        logActivityCloud('ai_usage', currentCard.id, { feature: 'cross_link_peek', adopted: true });
         const tags = Array.isArray(linkedCard.evolution_tags) ? linkedCard.evolution_tags : [];
 
         openModal(`
@@ -2729,7 +3611,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="color:var(--terra);">✦</span>
-                <h3 style="margin:0;font-size:15px;font-weight:600;">来自「${esc(linkedCard.domain_tag)}」的相似卡片</h3>
+                <h3 style="margin:0;font-size:15px;font-weight:600;">来自「${esc(normalizeDomainLabel(linkedCard.domain_tag))}」的相似卡片</h3>
               </div>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
@@ -2759,11 +3641,16 @@
       }
 
       // =====================================================================
-      // 11. TAB 2: 速记录入 (QUICK CAPTURE)
+      // 12. TAB 2: 速记录入 (QUICK CAPTURE + DRAFT PERSISTENCE + DYNAMIC AI CATEGORY)
       // =====================================================================
       function renderCaptureTab() {
         const container = document.getElementById('view-capture');
         if (!container) return;
+
+        const existingDoms = getExistingDomains(false);
+        const displayDomain = state.capture.domainTag
+          ? esc(state.capture.domainTag)
+          : (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
 
         container.innerHTML = `
           <div class="page-header">
@@ -2771,107 +3658,214 @@
               <h1 class="page-title">速记录入</h1>
               <p class="page-sub">随时语音口述或粘贴，原味大白话最保真</p>
             </div>
+            ${(state.capture.raw || state.capture.front || state.capture.anchor) ? `
+              <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear">清空草稿</button>
+            ` : ''}
           </div>
 
           <div class="card" style="margin-bottom:14px;">
-            <textarea id="cap-raw" class="textarea" rows="5" style="border:none;background:transparent;padding:0;" placeholder="直接用手机语音输入法说出一段对话、现象和你的第一感觉，或粘贴看到的原话..."></textarea>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:10px;border-top:1px solid var(--border-soft);">
-              <button type="button" class="btn-ghost" id="btn-cap-manual">手动填写</button>
-              <button type="button" class="btn btn-primary btn-sm" id="btn-cap-ai">
-                ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 智能拆解</span>
-              </button>
-            </div>
+            ${state.capture.rawCollapsed ? `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <span class="line-clamp-2" style="font-size:12px;color:var(--ink-muted);flex:1;">原文：${esc(state.capture.raw)}</span>
+                <button type="button" class="btn-ghost btn-xs" id="btn-cap-expand-raw" style="flex-shrink:0;">展开修改</button>
+              </div>
+            ` : `
+              <textarea id="cap-raw" class="textarea" rows="5" style="border:none;background:transparent;padding:0;min-height:110px;" placeholder="直接用手机语音输入法说出一段对话、现象和你的第一感觉，或粘贴看到的原话...">${esc(state.capture.raw)}</textarea>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:10px;border-top:1px solid var(--border-soft);">
+                <button type="button" class="btn-ghost" id="btn-cap-manual">手动填写</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-cap-ai">
+                  ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 智能拆解并归类</span>
+                </button>
+              </div>
+            `}
           </div>
 
-          <div id="cap-form-panel" class="hidden anim-up" style="display:flex;flex-direction:column;gap:12px;">
+          <div id="cap-form-panel" class="${state.capture.formOpen ? '' : 'hidden'} anim-up" style="display:flex;flex-direction:column;gap:12px;">
             <div class="card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <label class="field-label" style="margin:0;" for="cap-front">正面 · 客观事实 / 原话</label>
-                <span class="lock-badge">${ICONS.lock} 存入后锁定</span>
+                <span class="lock-badge">${ICONS.lock} 存入后默认锁定</span>
               </div>
-              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录不可变的客观现象、原话或具体事件..."></textarea>
+              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录不可变的客观现象、原话或具体事件...">${esc(state.capture.front)}</textarea>
             </div>
 
             <div class="card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <label class="field-label" style="margin:0;" for="cap-anchor">背面锚点 · 最初感受（大白话）</label>
-                <span class="lock-badge">${ICONS.lock} 存入后锁定</span>
+                <span class="lock-badge">${ICONS.lock} 存入后默认锁定</span>
               </div>
-              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="第一眼看到时的共鸣、惊讶或大白话直觉..."></textarea>
+              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="第一眼看到时的共鸣、惊讶或大白话直觉...">${esc(state.capture.anchor)}</textarea>
+              ${state.capture.anchorMissingHint ? `
+                <div class="inline-notice terra" style="margin-top:8px;">
+                  原文里没有包含你自己的感受，AI 没有替你编造——顺手补一句最真实的大白话直觉吧。
+                </div>
+              ` : ''}
             </div>
 
             <div class="card">
               <label class="field-label" for="cap-evo-init">初始进化词条（选填，留空更轻松）</label>
-              <input id="cap-evo-init" class="input" type="text" maxlength="24" placeholder="如：隐性摩擦成本（可不填，复习时再慢慢磨）" />
+              <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="如：隐性摩擦成本（可不填，复习时再慢慢磨）" />
             </div>
 
             <details class="card-soft">
               <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);">
-                <span>后台静默分类：<strong id="cap-domain-label" style="color:var(--ink);font-weight:500;">${esc(state.capture.domainTag)}</strong>（复习时隐藏）</span>
+                <span>隐藏分类：<strong id="cap-domain-label" style="color:var(--ink);font-weight:500;">${displayDomain}</strong>（复习时隐藏）</span>
                 <span style="text-decoration:underline;">调整</span>
               </summary>
-              <div id="cap-domain-pills" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);"></div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px;">
+                <input id="cap-domain-input" class="input" type="text" maxlength="14" value="${esc(state.capture.domainTag)}" placeholder="留空则由 AI 根据内容自动归类，也可手动输入类别名" />
+                ${existingDoms.length ? `
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;" id="cap-domain-pills">
+                    <button type="button" class="preset-chip ${!state.capture.domainTag ? 'active' : ''}" data-dom="">AI 自动归类</button>
+                    ${existingDoms.map(d => `
+                      <button type="button" class="preset-chip ${d.name === state.capture.domainTag ? 'active' : ''}" data-dom="${esc(d.name)}">${esc(d.name)}</button>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <div style="font-size:11px;color:var(--ink-muted);">卡片库还没有已有类别，AI 会根据这段内容为你自然命名。</div>
+                `}
+              </div>
             </details>
 
             <button type="button" class="btn btn-ink btn-block" id="btn-cap-save">锁定并存入云端</button>
           </div>
         `;
 
-        renderCaptureDomainPills();
+        // Wire Clear Draft
+        const clearBtn = document.getElementById('btn-cap-clear');
+        if (clearBtn) {
+          clearBtn.onclick = () => {
+            clearCaptureDraft();
+            renderCaptureTab();
+            showToast('草稿已清空');
+          };
+        }
 
+        // Wire Expand Raw
+        const expandBtn = document.getElementById('btn-cap-expand-raw');
+        if (expandBtn) {
+          expandBtn.onclick = () => {
+            state.capture.rawCollapsed = false;
+            persistCaptureDraft();
+            renderCaptureTab();
+          };
+        }
+
+        // Wire Inputs + Auto-save draft
         const rawEl = document.getElementById('cap-raw');
-        const panel = document.getElementById('cap-form-panel');
         const frontEl = document.getElementById('cap-front');
         const anchorEl = document.getElementById('cap-anchor');
         const evoEl = document.getElementById('cap-evo-init');
+        const domInput = document.getElementById('cap-domain-input');
+        const domLabel = document.getElementById('cap-domain-label');
+
+        if (rawEl) {
+          rawEl.oninput = () => {
+            state.capture.raw = rawEl.value;
+            persistCaptureDraft();
+          };
+        }
+        frontEl.oninput = () => {
+          state.capture.front = frontEl.value;
+          persistCaptureDraft();
+        };
+        anchorEl.oninput = () => {
+          state.capture.anchor = anchorEl.value;
+          if (anchorEl.value.trim()) state.capture.anchorMissingHint = false;
+          persistCaptureDraft();
+        };
+        evoEl.oninput = () => {
+          state.capture.evoInit = evoEl.value;
+          persistCaptureDraft();
+        };
+        domInput.oninput = () => {
+          state.capture.domainTag = domInput.value.trim();
+          domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
+          persistCaptureDraft();
+        };
+
+        const pillsBox = document.getElementById('cap-domain-pills');
+        if (pillsBox) {
+          pillsBox.querySelectorAll('button').forEach(btn => {
+            btn.onclick = () => {
+              state.capture.domainTag = btn.getAttribute('data-dom') || '';
+              domInput.value = state.capture.domainTag;
+              domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
+              pillsBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+              persistCaptureDraft();
+            };
+          });
+        }
+
+        const manualBtn = document.getElementById('btn-cap-manual');
+        if (manualBtn) {
+          manualBtn.onclick = () => {
+            state.capture.formOpen = true;
+            if (state.capture.raw.trim() && !state.capture.front.trim()) {
+              state.capture.front = state.capture.raw.trim();
+            }
+            state.capture.aiSplitUsed = false;
+            state.capture.aiSplitSnapshot = null;
+            persistCaptureDraft();
+            renderCaptureTab();
+            setTimeout(() => document.getElementById('cap-front')?.focus(), 60);
+          };
+        }
+
         const aiBtn = document.getElementById('btn-cap-ai');
-        const aiTxt = document.getElementById('btn-cap-ai-txt');
+        if (aiBtn) {
+          aiBtn.onclick = async () => {
+            const raw = (rawEl ? rawEl.value : state.capture.raw).trim();
+            if (!raw) {
+              showToast('请先输入或口述一段内容');
+              return;
+            }
+            if (!isAiConfigured()) {
+              promptConfigureAi();
+              return;
+            }
+            aiBtn.disabled = true;
+            const aiTxt = document.getElementById('btn-cap-ai-txt');
+            if (aiTxt) aiTxt.textContent = '拆解归类中...';
 
-        document.getElementById('btn-cap-manual').onclick = () => {
-          panel.classList.remove('hidden');
-          if (rawEl.value.trim() && !frontEl.value.trim()) {
-            frontEl.value = rawEl.value.trim();
-          }
-          state.capture.aiSplitUsed = false;
-          frontEl.focus();
-        };
-
-        aiBtn.onclick = async () => {
-          const raw = rawEl.value.trim();
-          if (!raw) {
-            showToast('请先输入或口述一段内容');
-            return;
-          }
-          if (!isAiConfigured()) {
-            promptConfigureAi();
-            return;
-          }
-          aiBtn.disabled = true;
-          aiTxt.textContent = '拆解中...';
-
-          try {
-            const res = await aiSplitCapture(raw);
-            frontEl.value = res.front_fact;
-            anchorEl.value = res.back_anchor;
-            state.capture.domainTag = res.domain_tag;
-            state.capture.aiSplitUsed = true;
-            renderCaptureDomainPills();
-            panel.classList.remove('hidden');
-            showToast('已保留原味大白话拆解完成');
-          } catch (err) {
-            showToast(err.message || 'AI 拆解失败，可先手动填写');
-            frontEl.value = raw;
-            panel.classList.remove('hidden');
-          } finally {
-            aiBtn.disabled = false;
-            aiTxt.textContent = 'AI 智能拆解';
-          }
-        };
+            try {
+              const res = await aiSplitCapture(raw);
+              state.capture.raw = raw;
+              state.capture.front = res.front_fact;
+              state.capture.anchor = res.back_anchor;
+              state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
+              state.capture.formOpen = true;
+              state.capture.rawCollapsed = true;
+              state.capture.anchorMissingHint = !res.back_anchor;
+              state.capture.aiSplitUsed = true;
+              state.capture.aiSplitSnapshot = {
+                front_fact: res.front_fact,
+                back_anchor: res.back_anchor,
+                domain_tag: state.capture.domainTag
+              };
+              persistCaptureDraft();
+              renderCaptureTab();
+              if (!res.back_anchor) {
+                showToast('事实已拆出，请补一句你自己的第一感觉');
+                setTimeout(() => document.getElementById('cap-anchor')?.focus(), 80);
+              } else {
+                showToast(`已保留原味拆解 · 归入「${res.domain_tag}」`);
+              }
+            } catch (err) {
+              showToast(err.message || 'AI 拆解失败，可先手动填写', 4200);
+              state.capture.front = state.capture.front || raw;
+              state.capture.formOpen = true;
+              persistCaptureDraft();
+              renderCaptureTab();
+            }
+          };
+        }
 
         document.getElementById('btn-cap-save').onclick = async () => {
           const front = frontEl.value.trim();
           const anchor = anchorEl.value.trim();
           const initWord = evoEl.value.trim();
+          const chosenDomain = domInput.value.trim();
 
           if (!front) {
             showToast('请填写正面的客观事实或原话');
@@ -2890,6 +3884,8 @@
           const fsrs = createInitialFsrsState();
           const tags = initWord ? [initWord] : [];
           const history = initWord ? [{ at: nowIso, reps: 0, action: 'init', before: [], after: tags }] : [];
+          const needsSilentClassify = !chosenDomain && isAiConfigured();
+          const initialDomain = chosenDomain ? normalizeDomainLabel(chosenDomain) : UNCLASSIFIED_LABEL;
 
           try {
             const created = await insertCardToCloud({
@@ -2897,7 +3893,7 @@
               back_anchor: anchor,
               evolution_tags: tags,
               evolution_history: history,
-              domain_tag: state.capture.domainTag,
+              domain_tag: initialDomain,
               fsrs_state: fsrs,
               due_at: fsrs.due,
               cross_link_id: null,
@@ -2905,82 +3901,73 @@
             });
 
             if (state.capture.aiSplitUsed) {
-              logActivitySilent('ai_usage', created?.id, { feature: 'split', adopted: true });
+              const snap = state.capture.aiSplitSnapshot || {};
+              const modified = (snap.front_fact !== front) || (snap.back_anchor !== anchor) || (snap.domain_tag !== chosenDomain);
+              logActivityCloud('ai_usage', created?.id, {
+                feature: 'split',
+                adopted: true,
+                modified
+              });
             }
 
-            rawEl.value = '';
-            frontEl.value = '';
-            anchorEl.value = '';
-            evoEl.value = '';
-            panel.classList.add('hidden');
-            state.capture.aiSplitUsed = false;
-
-            showToast('已锁定存入云端，明天起进入保鲜曲线');
+            clearCaptureDraft();
+            renderCaptureTab();
             renderLibraryTab();
 
-            // Non-blocking background cross-domain matcher
-            runSilentCrossDomainMatch(created);
+            showToast(needsSilentClassify
+              ? '已存入云端，后台正为你自动归类，明天起进入保鲜曲线'
+              : '已锁定存入云端，明天起进入保鲜曲线');
+
+            // Non-blocking background auto-classify (if blank) + cross-domain match
+            if (created) {
+              (async () => {
+                if (needsSilentClassify) {
+                  await runSilentAutoClassify(created);
+                }
+                const latestCard = state.cards.find(c => c.id === created.id) || created;
+                await runSilentCrossDomainMatch(latestCard);
+              })();
+            }
           } catch (err) {
-            showToast(err.message || '存入云端失败，请稍后重试');
-          } finally {
+            showToast(err.message || '存入云端失败，请稍后重试', 3600);
             saveBtn.disabled = false;
             saveBtn.textContent = '锁定并存入云端';
           }
         };
       }
 
-      function renderCaptureDomainPills() {
-        const box = document.getElementById('cap-domain-pills');
-        const lbl = document.getElementById('cap-domain-label');
-        if (!box || !lbl) return;
-        lbl.textContent = state.capture.domainTag;
-        box.innerHTML = DOMAINS.map(d => `
-          <button type="button" class="preset-chip ${d === state.capture.domainTag ? 'active' : ''}" data-dom="${d}">${d}</button>
-        `).join('');
-        box.querySelectorAll('button').forEach(btn => {
-          btn.onclick = () => {
-            state.capture.domainTag = btn.getAttribute('data-dom');
-            renderCaptureDomainPills();
-          };
-        });
-      }
-
       // =====================================================================
-      // 12. TAB 3: 卡片库 (LIBRARY)
+      // 13. TAB 3: 卡片库 (DYNAMIC DOMAINS + AI REORGANIZE + EVOLUTION VIEW + EDIT/DELETE)
       // =====================================================================
       function renderLibraryTab() {
         const container = document.getElementById('view-library');
         if (!container) return;
 
-        const q = state.library.search.trim().toLowerCase();
-        const filtered = state.cards.filter(c => {
-          if (state.library.domain !== '全部' && c.domain_tag !== state.library.domain) return false;
-          if (!q) return true;
-          return (
-            String(c.front_fact || '').toLowerCase().includes(q) ||
-            String(c.back_anchor || '').toLowerCase().includes(q) ||
-            (c.evolution_tags || []).some(w => String(w).toLowerCase().includes(q))
-          );
-        });
-
-        // Keep search focus intact if already rendered
         const existingSearch = document.getElementById('lib-search-input');
         if (!existingSearch) {
           container.innerHTML = `
             <div class="page-header">
               <div>
                 <h1 class="page-title">卡片库</h1>
-                <p class="page-sub">长时记忆素材池与认知进化轨迹</p>
+                <p class="page-sub">动态主题池、进化词条与完整编辑管理</p>
               </div>
-              <span id="lib-count" style="font-size:12px;color:var(--ink-muted);font-variant-numeric:tabular-nums;"></span>
+              <button type="button" class="btn btn-sage-soft btn-xs" id="btn-ai-reorg">
+                ${ICONS.sparkle} <span>整理归类</span>
+              </button>
+            </div>
+
+            <div class="seg-bar" role="tablist">
+              <button type="button" class="seg-btn ${state.library.viewMode === 'domain' ? 'active' : ''}" data-lib-mode="domain">按动态类别</button>
+              <button type="button" class="seg-btn ${state.library.viewMode === 'evolution' ? 'active' : ''}" data-lib-mode="evolution">按进化词条</button>
             </div>
 
             <div style="position:relative;margin-bottom:12px;">
               <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-muted);display:inline-flex;pointer-events:none;">${ICONS.search}</span>
-              <input id="lib-search-input" class="input" type="search" style="padding-left:38px;" placeholder="搜索事实线索、感受或进化关键词..." value="${esc(state.library.search)}" />
+              <input id="lib-search-input" class="input" type="search" style="padding-left:38px;" placeholder="搜索事实线索、感受、类别或进化词条..." value="${esc(state.library.search)}" />
             </div>
 
             <div id="lib-pills" class="pills-scroll"></div>
+            <div id="lib-meta-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;font-size:12px;color:var(--ink-muted);"></div>
             <div id="lib-list" style="flex:1;"></div>
           `;
 
@@ -2988,20 +3975,53 @@
             state.library.search = e.target.value;
             updateLibraryListOnly();
           });
+
+          container.querySelectorAll('[data-lib-mode]').forEach(btn => {
+            btn.onclick = () => {
+              state.library.viewMode = btn.getAttribute('data-lib-mode');
+              container.querySelectorAll('[data-lib-mode]').forEach(b => b.classList.toggle('active', b === btn));
+              updateLibraryListOnly();
+            };
+          });
+
+          document.getElementById('btn-ai-reorg').onclick = openReorganizeDomainsModal;
         }
 
         updateLibraryListOnly();
       }
 
       function updateLibraryListOnly() {
-        const countEl = document.getElementById('lib-count');
         const pillsEl = document.getElementById('lib-pills');
+        const metaEl = document.getElementById('lib-meta-row');
         const listEl = document.getElementById('lib-list');
-        if (!pillsEl || !listEl) return;
+        if (!pillsEl || !listEl || !metaEl) return;
 
-        const filters = ['全部', ...DOMAINS];
-        pillsEl.innerHTML = filters.map(d => `
-          <button type="button" class="pill ${d === state.library.domain ? 'active' : ''}" data-dom="${d}">${d}</button>
+        const q = state.library.search.trim().toLowerCase();
+
+        if (state.library.viewMode === 'evolution') {
+          pillsEl.classList.add('hidden');
+          renderEvolutionAggregationView(listEl, metaEl, q);
+          return;
+        }
+
+        pillsEl.classList.remove('hidden');
+
+        // Build purely dynamic categories from actual cards (NO hardcoded default domains!)
+        const dynDomains = getExistingDomains(true);
+        const validNames = new Set(['全部', ...dynDomains.map(d => d.name)]);
+        if (!validNames.has(state.library.domain)) {
+          state.library.domain = '全部';
+        }
+
+        const pillItems = [
+          { name: '全部', count: state.cards.length },
+          ...dynDomains
+        ];
+
+        pillsEl.innerHTML = pillItems.map(item => `
+          <button type="button" class="pill ${item.name === state.library.domain ? 'active' : ''}" data-dom="${esc(item.name)}">
+            ${esc(item.name)} <span style="opacity:0.65;font-size:11px;margin-left:2px;">${item.count}</span>
+          </button>
         `).join('');
 
         pillsEl.querySelectorAll('button').forEach(btn => {
@@ -3011,18 +4031,22 @@
           };
         });
 
-        const q = state.library.search.trim().toLowerCase();
         const filtered = state.cards.filter(c => {
-          if (state.library.domain !== '全部' && c.domain_tag !== state.library.domain) return false;
+          const dom = normalizeDomainLabel(c.domain_tag);
+          if (state.library.domain !== '全部' && dom !== state.library.domain) return false;
           if (!q) return true;
           return (
             String(c.front_fact || '').toLowerCase().includes(q) ||
             String(c.back_anchor || '').toLowerCase().includes(q) ||
+            dom.toLowerCase().includes(q) ||
             (c.evolution_tags || []).some(w => String(w).toLowerCase().includes(q))
           );
         });
 
-        if (countEl) countEl.textContent = `${filtered.length} 张`;
+        metaEl.innerHTML = `
+          <span>共 ${filtered.length} 张卡片</span>
+          <span>${dynDomains.length ? `${dynDomains.length} 个自然类别` : '暂无类别'}</span>
+        `;
 
         if (filtered.length === 0) {
           listEl.innerHTML = `
@@ -3033,10 +4057,12 @@
           return;
         }
 
+        // Use <div role="button"> instead of <button> so mobile vertical touch scrolling is 100% silky!
         listEl.innerHTML = filtered.map(c => {
           const tags = Array.isArray(c.evolution_tags) ? c.evolution_tags : [];
+          const dom = normalizeDomainLabel(c.domain_tag);
           return `
-            <button type="button" class="lib-card" data-cid="${esc(c.id)}">
+            <div role="button" tabindex="0" class="lib-card" data-cid="${esc(c.id)}">
               <p class="line-clamp-2" style="margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--ink);">${esc(c.front_fact)}</p>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
                 <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -3045,47 +4071,248 @@
                     : `<span style="font-size:11px;color:var(--ink-muted);opacity:0.75;">待孵化词条</span>`
                   }
                 </div>
-                <span style="font-size:11px;color:var(--ink-muted);flex-shrink:0;">${esc(c.domain_tag || '生活杂感')}</span>
+                <span style="font-size:11px;color:var(--ink-muted);flex-shrink:0;">${esc(dom)}</span>
               </div>
-            </button>
+            </div>
           `;
         }).join('');
 
-        listEl.querySelectorAll('.lib-card').forEach(btn => {
-          btn.onclick = () => {
-            const card = state.cards.find(x => x.id === btn.getAttribute('data-cid'));
+        listEl.querySelectorAll('.lib-card').forEach(el => {
+          el.onclick = () => {
+            const card = state.cards.find(x => x.id === el.getAttribute('data-cid'));
             if (card) openCardDetailModal(card);
           };
         });
       }
 
-      function openCardDetailModal(card) {
-        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
-        const history = Array.isArray(card.evolution_history) ? card.evolution_history : [];
-        const linked = card.cross_link_id ? state.cards.find(c => c.id === card.cross_link_id) : null;
-        const fsrs = card.fsrs_state || {};
+      function renderEvolutionAggregationView(listEl, metaEl, q) {
+        const tagMap = new Map();
+        for (const c of state.cards) {
+          const tags = Array.isArray(c.evolution_tags) ? c.evolution_tags : [];
+          for (const raw of tags) {
+            const t = String(raw || '').trim();
+            if (!t) continue;
+            if (q && !t.toLowerCase().includes(q) && !String(c.front_fact || '').toLowerCase().includes(q)) continue;
+            if (!tagMap.has(t)) tagMap.set(t, []);
+            tagMap.get(t).push(c);
+          }
+        }
+
+        const groups = Array.from(tagMap.entries())
+          .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'zh-CN'));
+
+        metaEl.innerHTML = `
+          <span>已沉淀 ${groups.length} 个进化词条</span>
+          <span>按跨卡聚合度排序</span>
+        `;
+
+        if (groups.length === 0) {
+          listEl.innerHTML = `
+            <div style="text-align:center;padding:48px 16px;font-size:13px;color:var(--ink-muted);line-height:1.7;">
+              ${q ? '没有匹配的进化词条' : '复习中沉淀出进化词条后，这里会自动把不同领域长出的同一条底层规律聚在一起。'}
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = groups.map(([tagName, cards]) => {
+          const domains = Array.from(new Set(cards.map(c => normalizeDomainLabel(c.domain_tag))));
+          return `
+            <div class="tag-cloud-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+                <span style="font-size:14px;font-weight:600;color:var(--sage);"># ${esc(tagName)}</span>
+                <span style="font-size:11px;color:var(--ink-muted);">${cards.length} 张 · ${esc(domains.join(' / '))}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                ${cards.map(c => `
+                  <div role="button" tabindex="0" class="card-soft evo-group-card" data-cid="${esc(c.id)}" style="padding:10px 12px;cursor:pointer;touch-action:pan-y;">
+                    <div class="line-clamp-2" style="font-size:13px;color:var(--ink);line-height:1.55;">${esc(c.front_fact)}</div>
+                    <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;">${esc(normalizeDomainLabel(c.domain_tag))}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll('.evo-group-card').forEach(el => {
+          el.onclick = () => {
+            const card = state.cards.find(x => x.id === el.getAttribute('data-cid'));
+            if (card) openCardDetailModal(card);
+          };
+        });
+      }
+
+      // --- AI Re-Categorize Library Modal (Preview before apply!) ---
+      function openReorganizeDomainsModal() {
+        if (state.cards.length === 0) {
+          showToast('卡片库还是空的，先记几张卡片再来整理吧');
+          return;
+        }
+        if (!isAiConfigured()) {
+          promptConfigureAi();
+          return;
+        }
 
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:13px;font-weight:600;color:var(--ink-secondary);">卡片详情与进化轨迹</span>
+              <div>
+                <h3 style="margin:0;font-size:16px;font-weight:600;">AI 整理已有卡片类别</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:var(--ink-muted);">按你的最新理解（进化词条）重新提炼并归类</p>
+              </div>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <div class="card-soft" style="font-size:13px;color:var(--ink-secondary);line-height:1.65;">
+              AI 会通读当前全部 <strong>${state.cards.length} 张</strong> 卡片的「最新进化词条」「客观事实」和「最初感受」，重新提炼一套简洁不杂乱的主题类别，并为你预览每一处变动——你确认后才会写回云端。
+            </div>
+
+            <div id="reorg-preview-box" class="hidden" style="display:flex;flex-direction:column;gap:12px;"></div>
+            <div id="reorg-err-box" class="inline-notice terra hidden"></div>
+
+            <div id="reorg-action-row" style="display:flex;gap:10px;">
+              <button type="button" class="btn btn-primary btn-block" id="btn-reorg-run">
+                ${ICONS.sparkle} 开始智能分析归类
+              </button>
+            </div>
+          </div>
+        `);
+
+        document.getElementById('m-close').onclick = closeModal;
+        const previewBox = document.getElementById('reorg-preview-box');
+        const errBox = document.getElementById('reorg-err-box');
+        const actionRow = document.getElementById('reorg-action-row');
+
+        let latestPlan = null;
+
+        async function runAnalysis() {
+          errBox.classList.add('hidden');
+          previewBox.classList.add('hidden');
+          actionRow.innerHTML = `<button type="button" class="btn btn-primary btn-block" disabled>正在通读 ${state.cards.length} 张卡片并重排类别...</button>`;
+
+          try {
+            const { categories, assignmentMap } = await aiReorganizeLibraryDomains(state.cards);
+            if (assignmentMap.size === 0) {
+              throw new Error('AI 未返回有效的归类方案，请重试');
+            }
+
+            const changes = [];
+            const catCounts = new Map();
+            for (const c of state.cards) {
+              const oldDom = normalizeDomainLabel(c.domain_tag);
+              const newDom = assignmentMap.get(c.id) || oldDom;
+              catCounts.set(newDom, (catCounts.get(newDom) || 0) + 1);
+              if (newDom !== oldDom) {
+                changes.push({ card: c, oldDom, newDom });
+              }
+            }
+
+            latestPlan = { categories, changes };
+
+            const summaryChips = Array.from(catCounts.entries())
+              .sort((a, b) => b[1] - a[1])
+              .map(([name, cnt]) => `<span style="font-size:12px;padding:4px 10px;border-radius:999px;background:var(--sage-soft);color:var(--sage);font-weight:500;">${esc(name)} (${cnt})</span>`)
+              .join('');
+
+            const diffListHtml = changes.length === 0
+              ? `<div class="inline-notice sage">所有卡片的类别都已经非常贴合最新理解，无需调整。</div>`
+              : `
+                <div style="font-size:12px;color:var(--ink-muted);">以下 ${changes.length} 张卡片类别将更新：</div>
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px;">
+                  ${changes.map(ch => `
+                    <div class="card-soft" style="padding:10px 12px;">
+                      <div class="line-clamp-2" style="font-size:13px;color:var(--ink);margin-bottom:5px;">${esc(ch.card.front_fact)}</div>
+                      <div style="font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        <span style="color:var(--ink-muted);text-decoration:line-through;">${esc(ch.oldDom)}</span>
+                        <span style="color:var(--sage);">→</span>
+                        <span style="color:var(--sage);font-weight:600;">${esc(ch.newDom)}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+
+            previewBox.innerHTML = `
+              <div>
+                <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px;">AI 提炼的新类别体系：</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">${summaryChips}</div>
+              </div>
+              ${diffListHtml}
+            `;
+            previewBox.classList.remove('hidden');
+
+            if (changes.length === 0) {
+              actionRow.innerHTML = `
+                <button type="button" class="btn btn-soft" style="flex:1;" id="btn-reorg-again">重新分析</button>
+                <button type="button" class="btn btn-primary" style="flex:1;" id="btn-reorg-close-ok">完成</button>
+              `;
+              document.getElementById('btn-reorg-again').onclick = runAnalysis;
+              document.getElementById('btn-reorg-close-ok').onclick = closeModal;
+            } else {
+              actionRow.innerHTML = `
+                <button type="button" class="btn btn-soft" style="flex:1;" id="btn-reorg-again">重新生成</button>
+                <button type="button" class="btn btn-primary" style="flex:1.4;" id="btn-reorg-apply">确认应用 (${changes.length} 张)</button>
+              `;
+              document.getElementById('btn-reorg-again').onclick = runAnalysis;
+              document.getElementById('btn-reorg-apply').onclick = () => {
+                for (const ch of latestPlan.changes) {
+                  updateCardOptimistic(ch.card.id, { domain_tag: ch.newDom });
+                }
+                logActivityCloud('ai_usage', null, {
+                  feature: 'reorganize_domains',
+                  adopted: true,
+                  changed_count: latestPlan.changes.length,
+                  category_count: latestPlan.categories.length
+                });
+                state.library.domain = '全部';
+                closeModal();
+                updateLibraryListOnly();
+                showToast(`已按最新理解重新归类 ${latestPlan.changes.length} 张卡片并后台同步`);
+              };
+            }
+          } catch (err) {
+            errBox.textContent = err.message || '智能归类分析失败';
+            errBox.classList.remove('hidden');
+            actionRow.innerHTML = `<button type="button" class="btn btn-primary btn-block" id="btn-reorg-run">${ICONS.sparkle} 重试智能归类</button>`;
+            document.getElementById('btn-reorg-run').onclick = runAnalysis;
+          }
+        }
+
+        document.getElementById('btn-reorg-run').onclick = runAnalysis;
+      }
+
+      // --- Card Detail Modal (View + Quick Jump to Edit & Delete) ---
+      function openCardDetailModal(card) {
+        // Always fetch freshest card object from state
+        const latest = state.cards.find(c => c.id === card.id) || card;
+        const tags = Array.isArray(latest.evolution_tags) ? latest.evolution_tags : [];
+        const history = Array.isArray(latest.evolution_history) ? latest.evolution_history : [];
+        const linked = latest.cross_link_id ? state.cards.find(c => c.id === latest.cross_link_id) : null;
+        const fsrs = latest.fsrs_state || {};
+        const dom = normalizeDomainLabel(latest.domain_tag);
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:14px;font-weight:600;color:var(--ink);">卡片详情与进化轨迹</span>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
 
             <div class="card-soft">
               <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
                 <span>正面 · 客观事实</span>
-                <span class="lock-badge">${ICONS.lock} 已锁定</span>
+                <span class="lock-badge">${ICONS.lock} 原境默认锁定</span>
               </div>
-              <p style="margin:0;font-size:14px;line-height:1.68;white-space:pre-wrap;">${esc(card.front_fact)}</p>
+              <p style="margin:0;font-size:14px;line-height:1.68;white-space:pre-wrap;">${esc(latest.front_fact)}</p>
             </div>
 
             <div class="card" style="padding:14px;">
               <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
                 <span>背面锚点 · 最初感受</span>
-                <span class="lock-badge">${ICONS.lock} 已锁定</span>
+                <span class="lock-badge">${ICONS.lock} 原境默认锁定</span>
               </div>
-              <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;white-space:pre-wrap;">${esc(card.back_anchor)}</p>
+              <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;white-space:pre-wrap;">${esc(latest.back_anchor)}</p>
             </div>
 
             <div>
@@ -3098,16 +4325,14 @@
               </div>
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);">
-              <span style="font-size:12px;color:var(--ink-muted);">隐藏领域标签</span>
-              <select id="m-domain-sel" class="select" style="width:auto;padding:6px 12px;font-size:13px;">
-                ${DOMAINS.map(d => `<option value="${d}" ${d === card.domain_tag ? 'selected' : ''}>${d}</option>`).join('')}
-              </select>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);font-size:12px;">
+              <span style="color:var(--ink-muted);">所属隐藏类别</span>
+              <span style="padding:3px 10px;border-radius:999px;background:var(--surface-soft);color:var(--ink);font-weight:500;">${esc(dom)}</span>
             </div>
 
             ${linked ? `
-              <div style="padding:12px 13px;border-radius:14px;background:var(--terra-soft);border:1px solid var(--terra-border);">
-                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨界关联（${esc(linked.domain_tag)}）</div>
+              <div role="button" tabindex="0" id="m-detail-cross" style="padding:12px 13px;border-radius:14px;background:var(--terra-soft);border:1px solid var(--terra-border);cursor:pointer;">
+                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨界关联（${esc(normalizeDomainLabel(linked.domain_tag))}）· 点击查看</div>
                 <p class="line-clamp-2" style="margin:0;font-size:12px;color:var(--ink-secondary);">${esc(linked.front_fact)}</p>
               </div>
             ` : ''}
@@ -3131,58 +4356,228 @@
               `}
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border-soft);">
-              <span style="font-size:11px;color:var(--ink-muted);">已保鲜 ${fsrs.reps || 0} 次 · 间隔 ${fsrs.scheduled_days || 1} 天</span>
-              <div id="m-del-area">
-                <button type="button" class="btn-ghost" id="m-btn-del" style="color:var(--terra);">删除卡片</button>
-              </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);font-size:11px;color:var(--ink-muted);">
+              <span>已保鲜 ${fsrs.reps || 0} 次 · 间隔 ${fsrs.scheduled_days || 1} 天</span>
+              <span>创建于 ${formatTime(latest.created_at).slice(0, 10)}</span>
+            </div>
+
+            <div id="m-detail-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
+              <button type="button" class="btn btn-soft btn-sm" id="m-btn-edit">
+                ${ICONS.edit} <span>编辑卡片</span>
+              </button>
+              <button type="button" class="btn btn-terra btn-sm" id="m-btn-del">
+                ${ICONS.trash} <span>删除卡片</span>
+              </button>
             </div>
           </div>
         `);
 
         document.getElementById('m-close').onclick = closeModal;
 
-        document.getElementById('m-domain-sel').onchange = async (e) => {
-          try {
-            await updateCardInCloud(card.id, { domain_tag: e.target.value });
-            showToast('领域标签已更新');
-            updateLibraryListOnly();
-          } catch (err) {
-            showToast(err.message || '更新失败');
-          }
-        };
+        const crossBox = document.getElementById('m-detail-cross');
+        if (crossBox && linked) {
+          crossBox.onclick = () => openCardDetailModal(linked);
+        }
+
+        document.getElementById('m-btn-edit').onclick = () => openCardEditModal(latest, { fromReview: false });
 
         document.getElementById('m-btn-del').onclick = () => {
-          document.getElementById('m-del-area').innerHTML = `
-            <div style="display:flex;gap:6px;">
-              <button type="button" class="btn btn-soft btn-sm" id="m-del-no">取消</button>
-              <button type="button" class="btn btn-terra btn-sm" id="m-del-yes">确认删除</button>
-            </div>
+          document.getElementById('m-detail-actions').innerHTML = `
+            <button type="button" class="btn btn-soft btn-sm" id="m-del-no">取消</button>
+            <button type="button" class="btn btn-terra btn-sm" id="m-del-yes">确认永久删除</button>
           `;
-          document.getElementById('m-del-no').onclick = () => openCardDetailModal(card);
-          document.getElementById('m-del-yes').onclick = async () => {
-            try {
-              await deleteCardInCloud(card.id);
-              state.review.queue = state.review.queue.filter(id => id !== card.id);
-              closeModal();
-              showToast('卡片已永久移除');
+          document.getElementById('m-del-no').onclick = () => openCardDetailModal(latest);
+          document.getElementById('m-del-yes').onclick = () => {
+            deleteCardOptimistic(latest.id);
+            closeModal();
+            showToast('卡片已移除并后台同步');
+            updateLibraryListOnly();
+            renderReviewTab();
+          };
+        };
+      }
+
+      // --- Full Card Editor Modal (Respects 3-slot limit + gentle anchor reminder + Delete) ---
+      function openCardEditModal(card, opts = {}) {
+        const latest = state.cards.find(c => c.id === card.id) || card;
+        const tags = Array.isArray(latest.evolution_tags) ? [...latest.evolution_tags] : [];
+        const existingDoms = getExistingDomains(false);
+        const curDom = normalizeDomainLabel(latest.domain_tag);
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:13px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="margin:0;font-size:16px;font-weight:600;">编辑卡片</h3>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <div>
+              <label class="field-label" for="ed-front">正面 · 客观事实 / 原话</label>
+              <textarea id="ed-front" class="textarea" rows="3">${esc(latest.front_fact)}</textarea>
+              <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;">建议仅修正错别字或补充关键语境，保持原始事实客观。</div>
+            </div>
+
+            <div>
+              <label class="field-label" for="ed-anchor">背面锚点 · 最初感受（大白话）</label>
+              <textarea id="ed-anchor" class="textarea" rows="3">${esc(latest.back_anchor)}</textarea>
+              <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;">尽量保留当时的大白话直觉，不刻意改写成说教。</div>
+            </div>
+
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label class="field-label" style="margin:0;">进化层 · 最新认识（硬性上限 3 槽）</label>
+                ${tags.length >= 3 && isAiConfigured() ? `
+                  <button type="button" class="btn-ghost btn-xs" id="ed-btn-compress" style="color:var(--terra);">
+                    ${ICONS.sparkle} 概念压缩
+                  </button>
+                ` : ''}
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <input id="ed-evo-0" class="input" type="text" maxlength="24" value="${esc(tags[0] || '')}" placeholder="槽位 1（选填，2–12 字精炼词条）" />
+                <input id="ed-evo-1" class="input" type="text" maxlength="24" value="${esc(tags[1] || '')}" placeholder="槽位 2（选填）" />
+                <input id="ed-evo-2" class="input" type="text" maxlength="24" value="${esc(tags[2] || '')}" placeholder="槽位 3（选填）" />
+              </div>
+            </div>
+
+            <div>
+              <label class="field-label" for="ed-domain">所属隐藏类别（复习时隐藏）</label>
+              <input id="ed-domain" class="input" type="text" maxlength="14" value="${esc(curDom === UNCLASSIFIED_LABEL ? '' : curDom)}" placeholder="输入自定义类别或点下方已有类别" />
+              ${existingDoms.length ? `
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="ed-dom-pills">
+                  ${existingDoms.map(d => `
+                    <button type="button" class="preset-chip ${d.name === curDom ? 'active' : ''}" data-dom="${esc(d.name)}">${esc(d.name)}</button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <div style="display:flex;gap:10px;padding-top:6px;">
+              <button type="button" class="btn btn-soft" style="flex:1;" id="ed-cancel">取消</button>
+              <button type="button" class="btn btn-primary" style="flex:1.4;" id="ed-save">保存修改</button>
+            </div>
+
+            <div id="ed-del-wrap" style="padding-top:10px;border-top:1px solid var(--border-soft);text-align:center;">
+              <button type="button" class="btn-ghost btn-xs" id="ed-btn-del" style="color:var(--terra);">
+                ${ICONS.trash} <span>删除这张卡片</span>
+              </button>
+            </div>
+          </div>
+        `);
+
+        const domInput = document.getElementById('ed-domain');
+        const pillsBox = document.getElementById('ed-dom-pills');
+        if (pillsBox) {
+          pillsBox.querySelectorAll('button').forEach(btn => {
+            btn.onclick = () => {
+              domInput.value = btn.getAttribute('data-dom') || '';
+              pillsBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+            };
+          });
+        }
+
+        const compBtn = document.getElementById('ed-btn-compress');
+        if (compBtn) {
+          compBtn.onclick = () => {
+            openCompressModal(latest, (newTags) => {
+              const history = Array.isArray(latest.evolution_history) ? [...latest.evolution_history] : [];
+              history.push({
+                at: new Date().toISOString(),
+                reps: latest.fsrs_state?.reps || 0,
+                action: 'compress',
+                before: tags,
+                after: newTags
+              });
+              updateCardOptimistic(latest.id, { evolution_tags: newTags, evolution_history: history });
+              showToast('已压缩并更新进化层');
               updateLibraryListOnly();
               renderReviewTab();
-            } catch (err) {
-              showToast(err.message || '删除失败');
-            }
+            });
+          };
+        }
+
+        document.getElementById('m-close').onclick = closeModal;
+        document.getElementById('ed-cancel').onclick = () => {
+          if (opts.fromReview) closeModal();
+          else openCardDetailModal(latest);
+        };
+
+        document.getElementById('ed-save').onclick = () => {
+          const newFront = document.getElementById('ed-front').value.trim();
+          const newAnchor = document.getElementById('ed-anchor').value.trim();
+          if (!newFront) {
+            showToast('正面客观事实不能为空');
+            return;
+          }
+          if (!newAnchor) {
+            showToast('背面最初感受不能为空');
+            return;
+          }
+
+          const newTags = [
+            document.getElementById('ed-evo-0').value.trim(),
+            document.getElementById('ed-evo-1').value.trim(),
+            document.getElementById('ed-evo-2').value.trim()
+          ].filter(Boolean).slice(0, 3);
+
+          const newDom = normalizeDomainLabel(domInput.value);
+          const patch = {
+            front_fact: newFront,
+            back_anchor: newAnchor,
+            domain_tag: newDom
+          };
+
+          const tagsChanged = JSON.stringify(tags) !== JSON.stringify(newTags);
+          if (tagsChanged) {
+            const history = Array.isArray(latest.evolution_history) ? [...latest.evolution_history] : [];
+            history.push({
+              at: new Date().toISOString(),
+              reps: latest.fsrs_state?.reps || 0,
+              action: 'manual_edit',
+              before: tags,
+              after: newTags
+            });
+            patch.evolution_tags = newTags;
+            patch.evolution_history = history;
+          }
+
+          const updated = updateCardOptimistic(latest.id, patch);
+          if (tagsChanged && updated && newTags.length > 0) {
+            runSilentCrossDomainMatch(updated);
+          }
+
+          showToast('卡片修改已保存并后台同步');
+          updateLibraryListOnly();
+          renderReviewTab();
+          if (opts.fromReview) closeModal();
+          else openCardDetailModal(updated || latest);
+        };
+
+        document.getElementById('ed-btn-del').onclick = () => {
+          document.getElementById('ed-del-wrap').innerHTML = `
+            <div style="display:flex;justify-content:center;gap:10px;">
+              <button type="button" class="btn btn-soft btn-sm" id="ed-del-no">取消删除</button>
+              <button type="button" class="btn btn-terra btn-sm" id="ed-del-yes">确认永久删除</button>
+            </div>
+          `;
+          document.getElementById('ed-del-no').onclick = () => openCardEditModal(latest, opts);
+          document.getElementById('ed-del-yes').onclick = () => {
+            deleteCardOptimistic(latest.id);
+            closeModal();
+            showToast('卡片已永久删除并同步');
+            updateLibraryListOnly();
+            renderReviewTab();
           };
         };
       }
 
       // =====================================================================
-      // 13. TAB 4: 设置与实验室 (SETTINGS & LAB)
+      // 14. TAB 4: 设置与实验室 (SETTINGS & LAB)
       // =====================================================================
       function renderSettingsTab() {
         const container = document.getElementById('view-settings');
         if (!container) return;
 
-        const reviewLogCount = state.activityLogs.filter(l => l.event_type === 'review').length;
+        const reviewLogCount = state.activityLogs.filter(l => l.event_type === 'review' && !l._undone).length;
         const evoLogCount = state.cards.reduce((sum, c) => sum + ((c.evolution_history || []).length), 0);
         const aiLogCount = state.activityLogs.filter(l => l.event_type === 'ai_usage').length;
         const sbHost = cleanBaseUrl(state.sbConfig.url).replace(/^https?:\/\//i, '');
@@ -3215,7 +4610,7 @@
               <div style="display:flex;flex-direction:column;gap:10px;">
                 <div>
                   <label class="field-label" for="ai-base-url">Base URL</label>
-                  <input id="ai-base-url" class="input" type="url" value="${esc(state.aiConfig.baseUrl)}" placeholder="https://api.deepseek.com/v1" />
+                  <input id="ai-base-url" class="input" type="url" value="${esc(state.aiConfig.baseUrl)}" placeholder="https://api.openai.com/v1" />
                 </div>
                 <div>
                   <label class="field-label" for="ai-api-key">API Key</label>
@@ -3226,12 +4621,13 @@
                 </div>
                 <div>
                   <label class="field-label" for="ai-model">Model Name</label>
-                  <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="deepseek-chat" />
+                  <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="gpt-6.1-terra" />
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
                   <button type="button" class="btn btn-primary btn-sm" id="btn-save-ai">保存本机配置</button>
                   <button type="button" class="btn btn-soft btn-sm" id="btn-test-ai">测试连通性</button>
                 </div>
+                <div id="ai-test-feedback" class="inline-notice hidden"></div>
               </div>
             </div>
 
@@ -3254,8 +4650,8 @@
 
               <div class="setting-row">
                 <div>
-                  <div style="font-size:14px;">静默混入半熟卡</div>
-                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">每刷 4 张当天卡，悄悄混入 1 张高留存蓄水池卡</div>
+                  <div style="font-size:14px;">静默混入蓄水池卡</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">每刷 4 张当天卡混入 1 张半熟卡，并每天慢捞 1–2 张沉底卡</div>
                 </div>
                 <button type="button" class="switch ${state.prefs.mix_backlog ? 'on' : ''}" id="sw-mix" role="switch" aria-checked="${state.prefs.mix_backlog}">
                   <span class="switch-knob"></span>
@@ -3275,12 +4671,12 @@
 
             <!-- 3. Silent Activity Lab & Cold Backup -->
             <div class="card">
-              <h2 style="margin:0 0 4px;font-size:15px;font-weight:600;">静默活动日志与冷备份</h2>
-              <p style="margin:0;font-size:12px;color:var(--ink-muted);">后台无感记录节奏与认知演化，随时导出喂给大模型做诊断或存进 Google Drive 兜底。</p>
+              <h2 style="margin:0 0 4px;font-size:15px;font-weight:600;">云端使用记录与冷备份</h2>
+              <p style="margin:0;font-size:12px;color:var(--ink-muted);">所有复习进度与行为日志均实时存于云端，刷新或换设备不丢失；随时导出体检或存进网盘兜底。</p>
 
               <div class="stat-grid">
                 <div class="stat-box"><div class="stat-val">${state.cards.length}</div><div class="stat-lbl">卡片总数</div></div>
-                <div class="stat-box"><div class="stat-val">${reviewLogCount}</div><div class="stat-lbl">复习记录</div></div>
+                <div class="stat-box"><div class="stat-val">${reviewLogCount}</div><div class="stat-lbl">云端复习</div></div>
                 <div class="stat-box"><div class="stat-val">${evoLogCount}</div><div class="stat-lbl">进化快照</div></div>
                 <div class="stat-box"><div class="stat-val">${aiLogCount}</div><div class="stat-lbl">AI 协助</div></div>
               </div>
@@ -3347,6 +4743,12 @@
           state.aiConfig.model = document.getElementById('ai-model').value.trim();
         };
 
+        const fbBox = document.getElementById('ai-test-feedback');
+        const showAiFeedback = (ok, msg) => {
+          fbBox.className = `inline-notice ${ok ? 'sage' : 'terra'}`;
+          fbBox.textContent = msg;
+        };
+
         document.getElementById('btn-save-ai').onclick = () => {
           readAiInputs();
           saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
@@ -3357,17 +4759,20 @@
           readAiInputs();
           saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
           if (!isAiConfigured()) {
-            showToast('请先完整填写 Base URL、API Key 与 Model Name');
+            showAiFeedback(false, '请先完整填写 Base URL、API Key 与 Model Name');
             return;
           }
           const btn = document.getElementById('btn-test-ai');
           btn.disabled = true;
           btn.textContent = '测试中...';
+          fbBox.classList.add('hidden');
           try {
             const reply = await callOpenAiCompatible('只回复“连通成功”四个字。', '测试连接', false);
-            showToast(`测试通过：${reply.slice(0, 18)}`);
+            showAiFeedback(true, `测试通过：${reply.slice(0, 32)}`);
+            showToast('AI 接口连通成功');
           } catch (err) {
-            showToast(err.message || '连通测试失败');
+            showAiFeedback(false, err.message || '连通测试失败');
+            showToast('连通测试未通过，请查看下方详细报错', 3400);
           } finally {
             btn.disabled = false;
             btn.textContent = '测试连通性';
@@ -3378,38 +4783,31 @@
         const range = document.getElementById('pref-limit-range');
         const valSpan = document.getElementById('pref-limit-val');
         range.oninput = () => { valSpan.textContent = range.value; };
-        range.onchange = async () => {
+        range.onchange = () => {
           state.prefs.daily_limit = Number(range.value);
-          try {
-            await saveUserPrefsToCloud();
-            buildTodayQueue();
-            showToast(`每日保鲜上限已设为 ${state.prefs.daily_limit} 张`);
-          } catch (err) {
-            showToast(err.message || '偏好同步失败');
-          }
+          persistUserCache();
+          enqueueSyncOp({ type: 'save_prefs' });
+          buildTodayQueue();
+          showToast(`每日保鲜上限已设为 ${state.prefs.daily_limit} 张`);
         };
 
         // Prefs: Mix backlog
-        document.getElementById('sw-mix').onclick = async () => {
+        document.getElementById('sw-mix').onclick = () => {
           state.prefs.mix_backlog = !state.prefs.mix_backlog;
+          persistUserCache();
+          enqueueSyncOp({ type: 'save_prefs' });
+          buildTodayQueue();
           renderSettingsTab();
-          try {
-            await saveUserPrefsToCloud();
-            buildTodayQueue();
-            showToast(state.prefs.mix_backlog ? '已开启静默混入半熟卡' : '已关闭静默混入');
-          } catch (err) {
-            showToast(err.message || '偏好同步失败');
-          }
+          showToast(state.prefs.mix_backlog ? '已开启静默混入蓄水池卡' : '已关闭静默混入');
         };
 
         // Prefs: Theme
-        document.getElementById('sw-theme').onclick = async () => {
+        document.getElementById('sw-theme').onclick = () => {
           state.prefs.theme = state.prefs.theme === 'dark' ? 'light' : 'dark';
           applyTheme(state.prefs.theme);
+          persistUserCache();
+          enqueueSyncOp({ type: 'save_prefs' });
           renderSettingsTab();
-          try {
-            await saveUserPrefsToCloud();
-          } catch (_) {}
         };
 
         // Export Markdown Diagnosis Report
@@ -3419,18 +4817,18 @@
         document.getElementById('btn-export-json').onclick = () => {
           const archive = {
             app: 'neihua-cognitive-assistant',
-            version: 1,
+            version: 2,
             exported_at: new Date().toISOString(),
             prefs: state.prefs,
             cards: state.cards,
-            activity_logs: state.activityLogs
+            activity_logs: state.activityLogs.filter(l => !l._undone)
           };
-          const day = new Date().toISOString().slice(0, 10);
+          const day = localDateKey();
           downloadFile(JSON.stringify(archive, null, 2), `内化完整存档-${day}.json`, 'application/json;charset=utf-8');
           showToast('完整存档已下载，可存入网盘兜底');
         };
 
-        // Import JSON Archive into Supabase
+        // Idempotent JSON Import (Preserves UUIDs, restores cross_link_id & activity_logs, zero duplicates)
         document.getElementById('input-import-json').onchange = async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
@@ -3438,62 +4836,105 @@
             const parsed = JSON.parse(await file.text());
             if (!Array.isArray(parsed.cards)) throw new Error('存档格式不正确');
 
-            showToast('正在将存档同步至云端...');
+            showToast('正在将存档恢复至云端...');
             const existingIds = new Set(state.cards.map(c => c.id));
-            let imported = 0;
+            const existingFingerprints = new Set(state.cards.map(c => `${c.front_fact}||${c.back_anchor}`));
+            const oldToNewId = new Map();
+            const pendingCrossLinks = [];
+            let importedCards = 0;
 
             for (const c of parsed.cards) {
               if (!c.front_fact || !c.back_anchor) continue;
-              if (c.id && existingIds.has(c.id)) continue; // Avoid duplicates
-              await insertCardToCloud({
+              const fp = `${c.front_fact}||${c.back_anchor}`;
+              if ((c.id && existingIds.has(c.id)) || existingFingerprints.has(fp)) {
+                if (c.id) oldToNewId.set(c.id, c.id);
+                continue;
+              }
+              const payload = {
                 front_fact: c.front_fact,
                 back_anchor: c.back_anchor,
                 evolution_tags: Array.isArray(c.evolution_tags) ? c.evolution_tags.slice(0, 3) : [],
                 evolution_history: Array.isArray(c.evolution_history) ? c.evolution_history : [],
-                domain_tag: DOMAINS.includes(c.domain_tag) ? c.domain_tag : '生活杂感',
+                domain_tag: normalizeDomainLabel(c.domain_tag),
                 fsrs_state: c.fsrs_state || createInitialFsrsState(),
                 due_at: c.due_at || createInitialFsrsState().due,
                 cross_link_id: null,
-                cross_link_hint: null
-              });
-              imported++;
+                cross_link_hint: c.cross_link_hint || null
+              };
+              if (isValidUuid(c.id)) payload.id = c.id;
+              const created = await insertCardToCloud(payload);
+              if (created?.id) {
+                existingIds.add(created.id);
+                existingFingerprints.add(fp);
+                if (c.id) oldToNewId.set(c.id, created.id);
+                if (c.cross_link_id) {
+                  pendingCrossLinks.push({ cardId: created.id, targetOldId: c.cross_link_id, hint: c.cross_link_hint || null });
+                }
+                importedCards++;
+              }
+            }
+
+            // Second pass: restore cross_link_id safely
+            for (const link of pendingCrossLinks) {
+              const targetId = oldToNewId.get(link.targetOldId) || (existingIds.has(link.targetOldId) ? link.targetOldId : null);
+              if (targetId && targetId !== link.cardId) {
+                updateCardOptimistic(link.cardId, {
+                  cross_link_id: targetId,
+                  cross_link_hint: link.hint
+                });
+              }
+            }
+
+            // Restore missing cloud activity_logs
+            let importedLogs = 0;
+            if (Array.isArray(parsed.activity_logs) && parsed.activity_logs.length > 0) {
+              const existingLogKeys = new Set(state.activityLogs.map(l => l.id || `${l.created_at}|${l.event_type}|${l.card_id}`));
+              for (const l of parsed.activity_logs.slice(0, 1500)) {
+                const key = l.id || `${l.created_at}|${l.event_type}|${l.card_id}`;
+                if (existingLogKeys.has(key)) continue;
+                const mappedCardId = l.card_id ? (oldToNewId.get(l.card_id) || (existingIds.has(l.card_id) ? l.card_id : null)) : null;
+                logActivityCloud(l.event_type || 'review', mappedCardId, l.payload || {});
+                existingLogKeys.add(key);
+                importedLogs++;
+              }
             }
 
             if (parsed.prefs) {
               state.prefs = { ...state.prefs, ...parsed.prefs };
               applyTheme(state.prefs.theme);
-              await saveUserPrefsToCloud();
+              enqueueSyncOp({ type: 'save_prefs' });
             }
 
+            persistUserCache();
             buildTodayQueue();
             renderSettingsTab();
             renderLibraryTab();
-            showToast(`成功恢复 ${imported} 张新卡片`);
+            showToast(`恢复完成：新增 ${importedCards} 张卡片` + (importedLogs ? `、${importedLogs} 条记录` : ''));
           } catch (err) {
-            showToast(err.message || '存档解析或导入失败');
+            showToast(err.message || '存档解析或导入失败', 3800);
           } finally {
             e.target.value = '';
           }
         };
 
-        // Logout
         document.getElementById('btn-logout').onclick = sbLogout;
       }
 
-      // --- Markdown Self-Diagnosis Report Builder ---
+      // --- Markdown Self-Diagnosis Report Builder (Outlier-capped & Full Cloud History) ---
       function buildDiagnosisMarkdown() {
-        const revLogs = state.activityLogs.filter(l => l.event_type === 'review');
+        const revLogs = state.activityLogs.filter(l => l.event_type === 'review' && !l._undone);
         const aiLogs = state.activityLogs.filter(l => l.event_type === 'ai_usage');
 
+        const capDur = (ms) => Math.min(180000, Math.max(0, Number(ms) || 0));
+
         const avgFront = revLogs.length
-          ? (revLogs.reduce((s, r) => s + (Number(r.payload?.front_ms) || 0), 0) / revLogs.length / 1000).toFixed(1)
+          ? (revLogs.reduce((s, r) => s + capDur(r.payload?.front_ms), 0) / revLogs.length / 1000).toFixed(1)
           : '0.0';
         const avgBack = revLogs.length
-          ? (revLogs.reduce((s, r) => s + (Number(r.payload?.back_ms) || 0), 0) / revLogs.length / 1000).toFixed(1)
+          ? (revLogs.reduce((s, r) => s + capDur(r.payload?.back_ms), 0) / revLogs.length / 1000).toFixed(1)
           : '0.0';
         const againTotal = revLogs.filter(r => r.payload?.rating === 'again').length;
 
-        // Fatigue curve by queue index bucket
         const buckets = { '1-10': [], '11-25': [], '26-50': [], '51+': [] };
         revLogs.forEach(r => {
           const i = Number(r.payload?.queue_index) || 1;
@@ -3504,44 +4945,41 @@
         });
         const fatigueLines = Object.entries(buckets).map(([k, arr]) => {
           if (!arr.length) return `- 第 ${k} 张：暂无样本`;
-          const s = (arr.reduce((sum, x) => sum + (Number(x.payload?.front_ms) || 0), 0) / arr.length / 1000).toFixed(1);
+          const s = (arr.reduce((sum, x) => sum + capDur(x.payload?.front_ms), 0) / arr.length / 1000).toFixed(1);
           const fuzz = Math.round((arr.filter(x => x.payload?.rating === 'again').length / arr.length) * 100);
           return `- 第 ${k} 张（${arr.length} 次）：平均正面耗时 ${s}s，模糊率 ${fuzz}%`;
         });
 
-        // Stubborn cards
-        const againByCard = {};
-        revLogs.forEach(r => {
-          if (r.payload?.rating === 'again' && r.card_id) {
-            againByCard[r.card_id] = (againByCard[r.card_id] || 0) + 1;
-          }
-        });
-        const stubborn = Object.entries(againByCard)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
-          .map(([cid, cnt]) => {
-            const c = state.cards.find(x => x.id === cid);
-            return c ? `- 「${c.front_fact.slice(0, 42)}」（模糊 ${cnt} 次 · ${c.domain_tag}）` : null;
+        // Stubborn cards ranked by lapse count & lapse rate
+        const stubborn = state.cards
+          .map(c => {
+            const reps = Number(c.fsrs_state?.reps) || 0;
+            const lapses = Number(c.fsrs_state?.lapses) || 0;
+            return { c, reps, lapses, rate: reps > 0 ? lapses / reps : 0 };
           })
-          .filter(Boolean);
+          .filter(x => x.lapses >= 2)
+          .sort((a, b) => b.lapses - a.lapses || b.rate - a.rate)
+          .slice(0, 6)
+          .map(x => `- 「${x.c.front_fact.slice(0, 42)}」（模糊 ${x.lapses}/${x.reps} 次 · ${normalizeDomainLabel(x.c.domain_tag)}）`);
 
-        // AI feature adoption
+        // AI feature adoption & split rewrite tracking
         const aiMap = {};
         aiLogs.forEach(l => {
           const f = l.payload?.feature || 'unknown';
-          if (!aiMap[f]) aiMap[f] = { total: 0, adopted: 0 };
+          if (!aiMap[f]) aiMap[f] = { total: 0, adopted: 0, modified: 0 };
           aiMap[f].total++;
           if (l.payload?.adopted) aiMap[f].adopted++;
+          if (l.payload?.modified) aiMap[f].modified++;
         });
-        const aiLines = Object.entries(aiMap).map(([k, v]) =>
-          `- ${k}：触发 ${v.total} 次，采纳 ${v.adopted} 次（${Math.round((v.adopted / v.total) * 100)}%）`
-        );
+        const aiLines = Object.entries(aiMap).map(([k, v]) => {
+          const modNote = v.modified ? `，其中手动微调 ${v.modified} 次` : '';
+          return `- ${k}：触发 ${v.total} 次，采纳 ${v.adopted} 次（${Math.round((v.adopted / v.total) * 100)}%${modNote}）`;
+        });
 
-        // Recent evolution snapshots
         const evoLines = [];
         state.cards.forEach(c => {
           (c.evolution_history || []).forEach(h => {
-            evoLines.push(`- [${formatTime(h.at)}] (${c.domain_tag}) 第 ${h.reps || 0} 次接触：${(h.before || []).join('/') || '无'} → ${(h.after || []).join('/') || '无'}`);
+            evoLines.push(`- [${formatTime(h.at)}] (${normalizeDomainLabel(c.domain_tag)}) 第 ${h.reps || 0} 次接触：${(h.before || []).join('/') || '无'} → ${(h.after || []).join('/') || '无'}`);
           });
         });
 
@@ -3550,12 +4988,12 @@
 > 请作为认知科学与效率产品顾问，分析以下真实行为日志并给出改进建议：
 > 1. 根据队列位置的耗时与模糊率，判断我当前的每日软上限（${state.prefs.daily_limit} 张）是否存在疲劳拐点？
 > 2. 顽固卡片有哪些共同的表述问题？该如何改进录入拆解规则？
-> 3. 结合进化快照与 AI 采纳率，我的脚手架和概念压缩提示词应如何迭代？
+> 3. 结合进化快照与 AI 采纳/改写率，我的脚手架和概念压缩提示词应如何迭代？
 
 ## 一、基础数据概览
-- 卡片总量：${state.cards.length} 张
-- 累计复习记录：${revLogs.length} 次（其中有点模糊 ${againTotal} 次）
-- 平均正面提取耗时：${avgFront} 秒
+- 卡片总量：${state.cards.length} 张（动态类别数：${getExistingDomains(false).length} 个）
+- 云端累计复习记录：${revLogs.length} 次（其中有点模糊 ${againTotal} 次）
+- 平均正面提取耗时：${avgFront} 秒（已剔除切后台与超长离屏异常）
 - 平均背面微加工耗时：${avgBack} 秒
 
 ## 二、队列位置与疲劳拐点
@@ -3591,13 +5029,13 @@ ${evoLines.length ? evoLines.slice(-25).join('\n') : '- 暂无进化层记录'}
         document.getElementById('m-close').onclick = closeModal;
         document.getElementById('m-md-copy').onclick = () => copyText(md);
         document.getElementById('m-md-dl').onclick = () => {
-          downloadFile(md, `内化AI体检报告-${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown;charset=utf-8');
+          downloadFile(md, `内化AI体检报告-${localDateKey()}.md`, 'text/markdown;charset=utf-8');
           showToast('体检报告已开始下载');
         };
       }
 
       // =====================================================================
-      // 14. APPLICATION BOOTSTRAP
+      // 15. APPLICATION BOOTSTRAP & LIFECYCLE LISTENERS
       // =====================================================================
       async function boot() {
         applyTheme(state.prefs.theme);
@@ -3609,13 +5047,32 @@ ${evoLines.length ? evoLines.slice(-25).join('\n') : '- 暂无进化层记录'}
           if (e.target.id === 'modal-root') closeModal();
         });
 
+        // Visibility-aware timer pause/resume (prevents phone calls / app switching skewing stats)
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) pauseActiveReviewTimer();
+          else resumeActiveReviewTimer();
+        });
+
+        // Auto-flush offline sync queue whenever mobile network reconnects
+        window.addEventListener('online', () => {
+          if (state.syncQueue.length > 0) {
+            flushSyncQueue();
+          }
+        });
+
         // Verify persisted Supabase session on load
         if (state.session?.access_token && state.sbConfig.url && state.sbConfig.anonKey) {
           try {
             await ensureValidAccessToken(false);
             await enterAuthenticatedApp();
           } catch (_) {
-            showAuthWall('上次登录已过期，请重新输入密码验证。');
+            // If offline with cached session & data, allow seamless offline review!
+            const uid = currentUserId();
+            if (!navigator.onLine && uid && loadUserCache(uid)) {
+              await enterAuthenticatedApp();
+            } else {
+              showAuthWall('上次登录已过期，请重新输入密码验证。');
+            }
           }
         } else {
           showAuthWall();
