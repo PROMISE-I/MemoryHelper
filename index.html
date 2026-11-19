@@ -644,19 +644,47 @@
     }
 
     .clue-kicker {
-      font-size: 11px;
-      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--ink-muted);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .clue-text {
       margin: 0;
       font-size: 18px;
-      line-height: 1.78;
+      font-weight: 500;
+      line-height: 1.76;
       color: var(--ink);
       white-space: pre-wrap;
       word-break: break-word;
+    }
+
+    .fact-hero-text {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1.72;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .muted-body-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.68;
+      color: var(--ink-muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .active-test-box {
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      background: var(--sage-soft);
+      border: 1px solid var(--sage-border);
     }
 
     .rating-grid {
@@ -674,25 +702,28 @@
       color: var(--ink-muted);
     }
 
-    /* 3 Fixed Capsule Slots for Evolution Layer */
+    /* 3 Fixed Single-Line Slots for Evolution Layer (Calm Muted Grey) */
     .evo-slots-grid {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 8px;
       margin-top: 10px;
     }
 
     .evo-capsule {
-      display: inline-flex;
+      width: 100%;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 13px;
-      border-radius: 999px;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      padding: 10px 13px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
-      font-weight: 500;
-      background: var(--sage-soft);
-      color: var(--sage);
-      border: 1px solid var(--sage-border);
+      font-weight: 400;
+      background: var(--surface);
+      color: var(--ink-secondary);
+      border: 1px solid var(--border);
       transition: transform 0.14s ease, border-color 0.18s ease;
     }
 
@@ -702,16 +733,17 @@
     }
 
     .evo-capsule:not(:disabled):active {
-      transform: scale(0.97);
+      transform: scale(0.99);
     }
 
     .evo-slot-empty {
-      display: inline-flex;
+      width: 100%;
+      display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 7px 13px;
-      border-radius: 999px;
-      font-size: 12px;
+      gap: 6px;
+      padding: 9px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
       color: var(--ink-muted);
       border: 1px dashed var(--border);
       background: transparent;
@@ -721,6 +753,31 @@
     .evo-slot-empty:hover:not(:disabled) {
       border-color: var(--sage);
       color: var(--sage);
+    }
+
+    .evo-row-readonly {
+      width: 100%;
+      padding: 9px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--ink-secondary);
+      background: var(--surface-soft);
+      border: 1px solid var(--border-soft);
+      word-break: break-word;
+    }
+
+    .settings-collapse-summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .settings-collapse-summary::-webkit-details-marker {
+      display: none;
     }
 
     .cross-shimmer {
@@ -1071,26 +1128,26 @@
             <circle cx="28" cy="34" r="3.5" fill="#4E6E5D"/>
           </svg>
         </div>
-        <h1 class="auth-title">内化 · 轻量认知助手</h1>
-        <p class="auth-subtitle">私有认知空间 · 仅限本人安全登录</p>
+        <h1 class="auth-title">内化</h1>
+        <p class="auth-subtitle">私有账号登录</p>
       </div>
 
       <form id="auth-form" class="card anim-up" autocomplete="on">
         <div style="margin-bottom: 14px;">
           <label class="field-label" for="auth-email">邮箱</label>
-          <input id="auth-email" class="input" type="email" inputmode="email" autocomplete="username" placeholder="输入你的专属账号邮箱" required />
+          <input id="auth-email" class="input" type="email" inputmode="email" autocomplete="username" placeholder="填写邮箱" required />
         </div>
 
         <div style="margin-bottom: 18px;">
           <label class="field-label" for="auth-password">密码</label>
           <div class="pw-wrap">
-            <input id="auth-password" class="input" type="password" autocomplete="current-password" placeholder="输入登录密码" required />
+            <input id="auth-password" class="input" type="password" autocomplete="current-password" placeholder="填写密码" required />
             <button type="button" class="pw-eye" id="btn-toggle-auth-pw" aria-label="显示或隐藏密码"></button>
           </div>
         </div>
 
         <button id="btn-auth-submit" type="submit" class="btn btn-primary btn-block">
-          安全登录
+          登录
         </button>
 
         <div id="auth-error-box" class="auth-error hidden" role="alert"></div>
@@ -1098,21 +1155,21 @@
         <!-- Collapsible Supabase Connection Configuration -->
         <details id="supabase-config-details" class="db-config-details">
           <summary class="db-config-summary">
-            <span>云端数据库配置 (Supabase)</span>
+            <span>云端数据库 (Supabase)</span>
             <span id="db-config-status" class="db-status-tag">未填写</span>
           </summary>
 
           <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
             <div>
-              <label class="field-label" for="cfg-sb-url">Supabase Project URL</label>
+              <label class="field-label" for="cfg-sb-url">Project URL</label>
               <input id="cfg-sb-url" class="input" type="url" placeholder="https://xxxxx.supabase.co" autocomplete="off" />
             </div>
             <div>
-              <label class="field-label" for="cfg-sb-anon">Anon Key (公开门牌号)</label>
-              <input id="cfg-sb-anon" class="input" type="text" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off" />
+              <label class="field-label" for="cfg-sb-anon">Anon Key</label>
+              <input id="cfg-sb-anon" class="input" type="text" placeholder="粘贴 Supabase Anon Key" autocomplete="off" />
             </div>
             <p style="margin: 0; font-size: 12px; color: var(--ink-muted); line-height: 1.5;">
-              仅需在本机填写一次，登录成功后会自动记住并收起。无账号者无法通过本页注册或查看任何内容。
+              仅保存在本机，填一次即可。
             </p>
           </div>
         </details>
@@ -1225,6 +1282,9 @@
           editedThisReview: false,
           editedSlotIndex: null,
           editedHistoryIdx: null,
+          activeTest: null, // { mode: string, prompt: string }
+          activeTestLoading: false,
+          activeTestTriggered: false,
           scaffoldQuestions: null,
           scaffoldLoading: false,
           scaffoldTriggered: false,
@@ -1970,6 +2030,9 @@
         state.review.editedThisReview = false;
         state.review.editedSlotIndex = null;
         state.review.editedHistoryIdx = null;
+        state.review.activeTest = null;
+        state.review.activeTestLoading = false;
+        state.review.activeTestTriggered = false;
         state.review.scaffoldQuestions = null;
         state.review.scaffoldLoading = false;
         state.review.scaffoldTriggered = false;
@@ -2415,15 +2478,15 @@
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <h3 style="margin:0;font-size:16px;font-weight:600;">尚未配置本机 AI 接口</h3>
+              <h3 style="margin:0;font-size:16px;font-weight:600;">先填一下 AI 接口</h3>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
             <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;">
-              为保护密钥安全，大模型 API Key 仅存放在你当前设备的浏览器本地，不会上传到任何托管平台。去「设置」页填一次即可开启智能拆解、自动归类、思维脚手架与概念压缩。
+              密钥只存在本机，去设置页填一次即可开启 AI 拆解、生成词条、测试与归类。
             </p>
             <div style="display:flex;gap:10px;padding-top:4px;">
-              <button type="button" class="btn btn-soft" style="flex:1;" id="m-later">先手动使用</button>
-              <button type="button" class="btn btn-primary" style="flex:1;" id="m-go-settings">去设置填 Key</button>
+              <button type="button" class="btn btn-soft" style="flex:1;" id="m-later">先手动用</button>
+              <button type="button" class="btn btn-primary" style="flex:1;" id="m-go-settings">去填写</button>
             </div>
           </div>
         `);
@@ -2432,7 +2495,13 @@
         document.getElementById('m-go-settings').onclick = () => {
           closeModal();
           switchTab('settings');
-          setTimeout(() => document.getElementById('ai-api-key')?.focus(), 180);
+          setTimeout(() => {
+            const det = document.getElementById('settings-ai-details');
+            if (det) det.open = true;
+            const keyEl = document.getElementById('ai-api-key');
+            keyEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            keyEl?.focus();
+          }, 160);
         };
       }
 
@@ -2557,7 +2626,53 @@ ${existingHint}`;
         }
       }
 
-      // AI 2: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
+      // AI 1c: Generate Editable Starter Evolution Tag (+ Dynamic Category) for Manual Capture
+      async function aiSuggestInitialTag(frontFact, backAnchor) {
+        const existing = getExistingDomains(false).map(d => d.name);
+        const existingHint = existing.length
+          ? `已有类别：${existing.join('、')}（合适优先复用，否则新起 2–6 字类别名）。`
+          : `根据内容起一个 2–6 字的简洁类别名。`;
+
+        const sys = `你是克制的认知词条助手。根据用户手动写下的客观事实与最初感受，帮他提炼 1 个简短的初始进化词条作为草稿（供用户自己再修改），并顺手归类。
+严格规则：
+1. 返回纯 JSON：{"initial_tag": "2到10字精炼短词或短句", "domain_tag": "2到6字类别名"}。
+2. initial_tag 必须克制凝练、抓住核心机制或直觉关键词，不要写鸡汤、不要写长句子。
+3. ${existingHint}`;
+        const prompt = `事实/原话：${frontFact}\n最初感受：${backAnchor || '未填写'}`;
+        const res = await callOpenAiCompatible(sys, prompt, true);
+        return {
+          initial_tag: String(res.initial_tag || '').trim().slice(0, 24),
+          domain_tag: normalizeDomainLabel(res.domain_tag)
+        };
+      }
+
+      // AI 2: Review Active Recall Micro-Test (Scientifically aligned: zero-scoring, low-load, context-transfer)
+      async function aiGenerateActiveTest(card) {
+        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags.filter(Boolean) : [];
+        const hasEvo = tags.length > 0;
+        const sys = hasEvo
+          ? `你是遵循认知科学的主动提取微测出题人。目标：打破“看原故事脸熟”的语境依赖，帮用户做一次极轻的跨场景提取测试。
+严格规则：
+1. 返回 JSON：{"mode": "场景迁移测", "prompt": "不超过45个中文字的一句话"}。
+2. 构造一个与原事实【完全不同领域】的日常/工作微场景（半句话），轻问“遇到这种情况，你会想起哪条规律或做法？”。
+3. 严禁泄露原卡片的词条或答案，严禁出选择题、严禁打分、严禁说教，把思考留白给用户 3 秒自测。`
+          : `你是遵循认知科学的主动提取微测出题人。目标：用极低认知负荷的侧面提示，帮用户真正主动回想起当初的感受与洞察，而不是机械扫读原话。
+严格规则：
+1. 返回 JSON：{"mode": "线索回忆测", "prompt": "不超过45个中文字的一句话"}。
+2. 基于原事实换一个轻巧的切入问法（比如追问当时最触动你的转折点、反常识点或隐性代价），不直接剧透用户的最初感受。
+3. 严禁泄露答案、严禁出选择题、严禁打分、严禁说教。`;
+
+        const prompt = `事实：${card.front_fact}\n最初感受：${card.back_anchor}\n已有认识：${tags.join('、') || '暂无'}`;
+        const res = await callOpenAiCompatible(sys, prompt, true);
+        const testPrompt = String(res.prompt || '').trim();
+        if (!testPrompt) throw new Error('未能生成测试题');
+        return {
+          mode: String(res.mode || (hasEvo ? '场景迁移测' : '线索回忆测')).trim().slice(0, 10),
+          prompt: testPrompt
+        };
+      }
+
+      // AI 2b: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
       async function aiFetchScaffolding(card) {
         const sys = `你是克制的思维脚手架出题人，只帮用户降低外在认知负荷。
 严格规则：
@@ -3045,25 +3160,25 @@ ${existingHint}`;
         if (total === 0 || idx >= total) {
           const stats = getTodayCloudStats();
           const headline = stats.reviewedTodayCount > 0
-            ? '今日已保鲜，交给后台潜意识'
-            : (state.cards.length === 0 ? '素材库还是空的，先去记第一条吧' : '今日暂无待保鲜卡片');
+            ? '今日已完成'
+            : (state.cards.length === 0 ? '还没有卡片，先记第一条吧' : '今日暂无待复习卡片');
           const subtext = stats.reviewedTodayCount > 0
-            ? '前台内存已留白。散步、洗澡或放空时，大脑默认模式网络会自动让已固化的素材发生跨界碰撞。'
-            : '随时记下打动你的对话、现象和第一感觉，明天起自动进入低压力遗忘曲线。';
+            ? '休息一下，交给大脑后台慢慢消化。'
+            : '记下你看到的事实和第一感觉，明天自动安排复习。';
 
           container.innerHTML = `
             ${renderReviewHeader()}
             <div class="done-stage anim-up">
               <div class="done-icon">${ICONS.sun}</div>
               <h2 style="margin:0 0 8px;font-size:18px;font-weight:600;">${headline}</h2>
-              <p style="margin:0 0 26px;font-size:13px;color:var(--ink-muted);max-width:295px;line-height:1.7;">
+              <p style="margin:0 0 26px;font-size:13px;color:var(--ink-muted);max-width:260px;line-height:1.65;">
                 ${subtext}
               </p>
-              <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:230px;">
-                <button type="button" class="btn btn-primary btn-block" id="btn-done-capture">去记一条新洞察</button>
+              <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:220px;">
+                <button type="button" class="btn btn-primary btn-block" id="btn-done-capture">记一条新的</button>
                 ${state.review.hasReservoir ? `
                   <button type="button" class="btn btn-soft btn-sm btn-block" id="btn-pull-ten" style="color:var(--ink-muted);">
-                    状态正好 · 顺手再捞 10 张
+                    顺手再捞 10 张
                   </button>
                 ` : ''}
               </div>
@@ -3083,30 +3198,64 @@ ${existingHint}`;
           return;
         }
 
-        // ---------------- FRONT PHASE (Pure recall -> Reveal first, rate after!) ----------------
+        // ---------------- FRONT PHASE (Hero Fact + On-Demand Scientific AI Micro-Test) ----------------
         if (state.review.phase === 'front') {
+          const testData = state.review.activeTest;
+          let testPanelHtml = '';
+          if (state.review.activeTestLoading) {
+            testPanelHtml = `
+              <div class="active-test-box anim-pulse" style="font-size:13px;color:var(--sage);">
+                正在出一条轻测试...
+              </div>
+            `;
+          } else if (testData) {
+            testPanelHtml = `
+              <div class="active-test-box anim-up">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                  <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ ${esc(testData.mode)} · 心里想 3 秒即可</span>
+                  <button type="button" class="btn-ghost btn-xs" id="btn-active-test-refresh" style="color:var(--sage);padding:2px 6px;">换一题</button>
+                </div>
+                <p style="margin:0;font-size:14px;line-height:1.65;color:var(--ink);">${esc(testData.prompt)}</p>
+              </div>
+            `;
+          }
+
           container.innerHTML = `
             ${renderReviewHeader()}
             <div class="review-stage anim-up">
               <div class="front-card" id="front-card-tap" role="button" tabindex="0" aria-label="点击翻看背面">
-                <div class="clue-kicker">测试线索 · 纯复述，零绩效</div>
+                <div class="clue-kicker">事实</div>
                 <p class="clue-text">${esc(card.front_fact)}</p>
-                <div style="margin-top:24px;font-size:12px;color:var(--ink-muted);opacity:0.78;">
-                  在脑海里自然想起最初感受或关键词即可，轻触翻看对照
+                <div style="margin-top:22px;font-size:12px;color:var(--ink-muted);opacity:0.75;">
+                  轻触卡片翻面对照
                 </div>
               </div>
-              <button type="button" class="btn btn-primary btn-block" id="btn-reveal-back">
-                翻看背面
-              </button>
+
+              ${testPanelHtml}
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                ${!testData && !state.review.activeTestLoading ? `
+                  <button type="button" class="btn btn-soft btn-sm btn-block" id="btn-active-test" style="color:var(--ink-secondary);">
+                    ${ICONS.sparkle} <span>AI 换个方式考我</span>
+                  </button>
+                ` : ''}
+                <button type="button" class="btn btn-primary btn-block" id="btn-reveal-back">
+                  翻看背面
+                </button>
+              </div>
             </div>
           `;
           wireReviewHeaderButtons();
           document.getElementById('btn-reveal-back').onclick = onRevealBack;
           document.getElementById('front-card-tap').onclick = onRevealBack;
+          const testBtn = document.getElementById('btn-active-test');
+          if (testBtn) testBtn.onclick = onRequestActiveTest;
+          const refreshTestBtn = document.getElementById('btn-active-test-refresh');
+          if (refreshTestBtn) refreshTestBtn.onclick = onRequestActiveTest;
           return;
         }
 
-        // ---------------- BACK PHASE (Anchor + 3 Evolution Slots + Gentle AI + Binary Rate) ----------------
+        // ---------------- BACK PHASE (Prominent Fact + Muted Grey Anchor & Single-Line Evolution) ----------------
         const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags : [];
         const isFull = tags.length >= 3;
         const edited = state.review.editedThisReview;
@@ -3115,22 +3264,22 @@ ${existingHint}`;
           ? state.cards.find(c => c.id === card.cross_link_id)
           : null;
 
-        // Build 3 fixed visual capsule slots (strictly max 1 edit, but allows typo-fix on the SAME slot just edited)
+        // Build 3 fixed single-line slots in calm grey
         let slotsHtml = '';
         for (let i = 0; i < 3; i++) {
           if (i < tags.length) {
             const canFixSameSlot = edited && editedSlot === i;
             const disabledAttr = (edited && !canFixSameSlot) ? 'disabled' : '';
             slotsHtml += `
-              <button type="button" class="evo-capsule ${canFixSameSlot ? 'just-edited' : ''}" data-slot="${i}" ${disabledAttr} title="${canFixSameSlot ? '刚改过此槽，可点此修正错别字' : '点击微调词条'}">
-                <span>${esc(tags[i])}</span>
-                ${(!edited || canFixSameSlot) ? `<span style="opacity:0.65;display:inline-flex;">${ICONS.edit}</span>` : ''}
+              <button type="button" class="evo-capsule ${canFixSameSlot ? 'just-edited' : ''}" data-slot="${i}" ${disabledAttr} title="${canFixSameSlot ? '可点此修正错别字' : '点击微调'}">
+                <span style="flex:1;line-height:1.5;">${esc(tags[i])}</span>
+                ${(!edited || canFixSameSlot) ? `<span style="opacity:0.55;display:inline-flex;flex-shrink:0;">${ICONS.edit}</span>` : ''}
               </button>
             `;
           } else {
             slotsHtml += `
               <button type="button" class="evo-slot-empty" data-add-slot="1" ${edited ? 'disabled' : ''}>
-                <span>+ 空槽位 ${i + 1}</span>
+                <span>+ 记一条认识 (${i + 1}/3)</span>
               </button>
             `;
           }
@@ -3140,13 +3289,13 @@ ${existingHint}`;
         if (state.review.scaffoldLoading) {
           scaffoldHtml = `
             <div class="scaffold-panel anim-pulse" style="font-size:12px;color:var(--ink-muted);">
-              正在生成轻量化切入角度...
+              正在想几个切入问题...
             </div>
           `;
         } else if (state.review.scaffoldQuestions && state.review.scaffoldQuestions.length > 0) {
           scaffoldHtml = `
-            <div class="scaffold-panel anim-up">
-              <div style="font-size:11px;font-weight:500;color:var(--ink-muted);">思维脚手架 · 轻触任一角度即可停手</div>
+            <div class="scaffold-panel anim-up" style="background:var(--surface);">
+              <div style="font-size:11px;font-weight:500;color:var(--ink-muted);">切入角度</div>
               <ul class="scaffold-list">
                 ${state.review.scaffoldQuestions.map(q => `<li><span style="color:var(--sage);">·</span><span>${esc(q)}</span></li>`).join('')}
               </ul>
@@ -3158,29 +3307,33 @@ ${existingHint}`;
           ${renderReviewHeader()}
           <div class="review-stage anim-up">
             <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
-              <!-- Dimmed Front Fact Reference (with unobtrusive edit shortcut) -->
-              <div class="card-soft" style="padding:12px 14px;">
-                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-                  <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.65;white-space:pre-wrap;flex:1;">${esc(card.front_fact)}</p>
-                  <button type="button" class="btn-ghost btn-xs" id="btn-review-edit-card" style="flex-shrink:0;margin:-4px -6px 0 0;" title="编辑或删除此卡片">
-                    ${ICONS.edit}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Back Anchor Layer (Immutable default) -->
+              <!-- Prominent Hero Fact Card -->
               <div class="card">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">锚点层 · 最初感受</span>
-                  <span class="lock-badge">${ICONS.lock} 原境锁定</span>
+                  <span style="font-size:12px;font-weight:600;color:var(--ink-secondary);">事实</span>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="lock-badge" aria-label="已锁定">${ICONS.lock}</span>
+                    <button type="button" class="btn-ghost btn-xs" id="btn-review-edit-card" style="padding:3px 6px;min-height:26px;" title="编辑或删除">
+                      ${ICONS.edit}
+                    </button>
+                  </div>
                 </div>
-                <p style="margin:0;font-size:15px;line-height:1.72;color:var(--ink);white-space:pre-wrap;">${esc(card.back_anchor)}</p>
+                <p class="fact-hero-text">${esc(card.front_fact)}</p>
               </div>
 
-              <!-- Evolution Layer (3 Fixed Capsule Slots) -->
-              <div class="card">
+              <!-- Muted Grey Initial Feeling -->
+              <div class="card-soft" style="padding:14px 16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">最初感受</span>
+                  <span class="lock-badge" aria-label="已锁定">${ICONS.lock}</span>
+                </div>
+                <p class="muted-body-text">${esc(card.back_anchor)}</p>
+              </div>
+
+              <!-- Muted Grey Evolution Layer (3 Single-Line Slots) -->
+              <div class="card-soft" style="padding:14px 16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
-                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">进化层 · 最新认识（限 3 槽）</span>
+                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">最新认识</span>
                   <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${tags.length} / 3</span>
                 </div>
 
@@ -3188,38 +3341,38 @@ ${existingHint}`;
 
                 ${!edited && isFull ? `
                   <div style="margin-top:10px;">
-                    <button type="button" class="btn btn-terra btn-sm" id="btn-open-compress">
-                      ${ICONS.sparkle} 槽位已满 · 压缩合并新感悟
+                    <button type="button" class="btn btn-terra btn-sm btn-block" id="btn-open-compress">
+                      ${ICONS.sparkle} 合并压缩新想法
                     </button>
                   </div>
                 ` : ''}
 
                 ${edited ? `
-                  <div style="margin-top:12px;padding:9px 12px;border-radius:12px;background:var(--sage-soft);color:var(--sage);font-size:12px;line-height:1.55;">
-                    微调已完成，留白给后台潜意识。${editedSlot !== null ? '（若刚打错字，可再点虚线词条修正）' : ''}
+                  <div style="margin-top:10px;padding:8px 11px;border-radius:10px;background:var(--sage-soft);color:var(--sage);font-size:12px;line-height:1.5;">
+                    已记下，留白给后台消化。${editedSlot !== null ? '点虚线行可改错字。' : ''}
                   </div>
                 ` : ''}
 
                 <!-- On-Demand Scaffolding Trigger -->
-                <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">
                   <button type="button" class="btn-ghost" id="btn-scaffold" style="margin-left:-8px;" ${state.review.scaffoldLoading ? 'disabled' : ''}>
-                    ${ICONS.bulb} 要个脚手架
+                    ${ICONS.bulb} 给点提问角度
                   </button>
-                  <span style="font-size:11px;color:var(--ink-muted);">无新感觉直接点下方进下一张</span>
+                  <span style="font-size:11px;color:var(--ink-muted);">直接点下方下一张</span>
                 </div>
 
                 ${scaffoldHtml}
 
                 ${linkedCard ? `
                   <button type="button" class="cross-shimmer" id="btn-cross-peek">
-                    <span>✦ 你曾在不同领域记过一张底层相似的卡片 · 点击查看</span>
+                    <span>✦ 发现一张跨领域相似卡</span>
                     <span style="flex-shrink:0;display:inline-flex;">${ICONS.chevronRight}</span>
                   </button>
                 ` : ''}
               </div>
             </div>
 
-            <!-- Binary Rating directly commits & advances cleanly (zero blocking wait!) -->
+            <!-- Binary Rating directly commits & advances cleanly -->
             <div class="rating-grid">
               <button type="button" class="btn btn-terra" id="btn-rate-again">有点模糊</button>
               <button type="button" class="btn btn-primary" id="btn-rate-good">想起来了</button>
@@ -3252,6 +3405,34 @@ ${existingHint}`;
         }
       }
 
+      async function onRequestActiveTest() {
+        const card = getCurrentReviewCard();
+        if (!card || state.review.activeTestLoading) return;
+        if (!isAiConfigured()) {
+          promptConfigureAi();
+          return;
+        }
+        state.review.activeTestLoading = true;
+        state.review.activeTestTriggered = true;
+        renderReviewTab();
+
+        try {
+          state.review.activeTest = await aiGenerateActiveTest(card);
+        } catch (err) {
+          showToast(err.message || '测试生成失败', 4000);
+          const hasEvo = Array.isArray(card.evolution_tags) && card.evolution_tags.length > 0;
+          state.review.activeTest = {
+            mode: hasEvo ? '场景迁移测' : '线索回忆测',
+            prompt: hasEvo
+              ? '如果把这件事换到工作或亲密关系里，你会先注意什么？'
+              : '当时看到这件事，最先戳中你的那一下是什么感觉？'
+          };
+        } finally {
+          state.review.activeTestLoading = false;
+          renderReviewTab();
+        }
+      }
+
       function onRevealBack() {
         if (state.review.phase !== 'front') return;
         state.review.frontAccMs = getCurrentPhaseElapsedMs();
@@ -3275,19 +3456,16 @@ ${existingHint}`;
         const prevStats = getTodayCloudStats();
         const dailyOrdinal = prevStats.reviewedTodayCount + 1;
 
-        // Snapshot for instant Undo
         const prevCardSnapshot = {
           fsrs_state: card.fsrs_state ? JSON.parse(JSON.stringify(card.fsrs_state)) : null,
           due_at: card.due_at
         };
 
-        // 1. Optimistically update card & enqueue cloud PATCH (zero wait!)
         updateCardOptimistic(card.id, {
           fsrs_state: nextFsrs,
           due_at: nextFsrs.due
         });
 
-        // 2. Cloud-persisted review usage log
         const reviewLogClientId = logActivityCloud('review', card.id, {
           session_date: localDateKey(),
           tier: qItem.tier,
@@ -3297,7 +3475,8 @@ ${existingHint}`;
           rating: ratingKey === 'good' ? 'good' : 'again',
           retrievability_r: R,
           queue_index: dailyOrdinal,
-          edited_evolution: state.review.editedThisReview
+          edited_evolution: state.review.editedThisReview,
+          used_active_test: state.review.activeTestTriggered
         });
 
         if (state.review.scaffoldTriggered) {
@@ -3306,8 +3485,13 @@ ${existingHint}`;
             adopted: state.review.editedThisReview
           });
         }
+        if (state.review.activeTestTriggered) {
+          logActivityCloud('ai_usage', card.id, {
+            feature: 'active_test',
+            adopted: true
+          });
+        }
 
-        // Push to undo stack (keep last 15)
         state.review.undoStack.push({
           cardId: card.id,
           prevCardSnapshot,
@@ -3316,7 +3500,6 @@ ${existingHint}`;
         });
         if (state.review.undoStack.length > 15) state.review.undoStack.shift();
 
-        // Advance immediately!
         state.review.index++;
         resetCardTurnState();
         renderReviewTab();
@@ -3380,18 +3563,18 @@ ${existingHint}`;
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <h3 style="margin:0;font-size:16px;font-weight:600;">${isFixingJustEdited ? '修正刚改的词条' : (isEdit ? '替换或微调词条' : '填入一个进化词条')}</h3>
+              <h3 style="margin:0;font-size:16px;font-weight:600;">${isFixingJustEdited ? '修正词条' : (isEdit ? '修改认识' : '记一条认识')}</h3>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
             <p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.55;">
               ${isFixingJustEdited
-                ? '仅修正本次刚刚填入的词条错别字，改完即可继续往下刷。'
-                : '像搬砖一样沉淀 1 个精炼短词或短句（建议 2–12 字），本次复习改完即止。'}
+                ? '可修改刚刚写下的错别字。'
+                : '用 1 个简短短词概括你的新认识，本次改完即止。'}
             </p>
-            <input id="m-evo-input" class="input" type="text" maxlength="24" value="${esc(currentText)}" placeholder="例如：隐性摩擦成本" />
+            <input id="m-evo-input" class="input" type="text" maxlength="24" value="${esc(currentText)}" placeholder="写下简短关键词或短句" />
             <div style="display:flex;gap:10px;">
-              ${isEdit ? `<button type="button" class="btn btn-soft btn-sm" id="m-evo-del" style="color:var(--ink-muted);">清空此槽</button>` : ''}
-              <button type="button" class="btn btn-primary" style="flex:1;" id="m-evo-save">保存微调</button>
+              ${isEdit ? `<button type="button" class="btn btn-soft btn-sm" id="m-evo-del" style="color:var(--ink-muted);">清空</button>` : ''}
+              <button type="button" class="btn btn-primary" style="flex:1;" id="m-evo-save">保存</button>
             </div>
           </div>
         `);
@@ -3450,28 +3633,25 @@ ${existingHint}`;
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div>
-                <h3 style="margin:0;font-size:16px;font-weight:600;">AI 概念压缩机</h3>
-                <p style="margin:3px 0 0;font-size:12px;color:var(--ink-muted);">对抗扇形效应 · 合并提炼新词并替换旧槽位</p>
-              </div>
+              <h3 style="margin:0;font-size:16px;font-weight:600;">合并压缩词条</h3>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
 
-            <div class="card-soft" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;">
-              ${tags.map((w, i) => `<span style="font-size:12px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);">${i + 1}. ${esc(w)}</span>`).join('')}
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              ${tags.map((w, i) => `<div class="evo-row-readonly" style="font-size:13px;">${i + 1}. ${esc(w)}</div>`).join('')}
             </div>
 
             <div>
-              <label class="field-label" for="m-comp-idea">写下刚冒出的新感悟</label>
-              <input id="m-comp-idea" class="input" type="text" maxlength="60" placeholder="例如：把规则定在前面比事后争吵省力..." />
+              <label class="field-label" for="m-comp-idea">新想法</label>
+              <input id="m-comp-idea" class="input" type="text" maxlength="60" placeholder="写下你想加进来的新感悟" />
             </div>
 
-            <button type="button" class="btn btn-primary btn-block" id="m-comp-run">${ICONS.sparkle} 提炼 2 个压缩替代词</button>
+            <button type="button" class="btn btn-primary btn-block" id="m-comp-run">${ICONS.sparkle} 生成 2 个合并词</button>
             <div id="m-comp-results" class="hidden" style="display:flex;flex-direction:column;gap:8px;"></div>
             <div id="m-comp-refine" class="hidden card-soft" style="display:flex;flex-direction:column;gap:10px;">
-              <div id="m-comp-refine-title" style="font-size:12px;color:var(--ink-muted);">可微调几个字后再落定替换</div>
+              <div id="m-comp-refine-title" style="font-size:12px;color:var(--ink-muted);">可直接确认或微调后再替换</div>
               <input id="m-comp-refine-input" class="input" type="text" maxlength="24" />
-              <button type="button" class="btn btn-ink btn-sm btn-block" id="m-comp-confirm">确认替换词条</button>
+              <button type="button" class="btn btn-ink btn-sm btn-block" id="m-comp-confirm">确认替换</button>
             </div>
           </div>
         `);
@@ -3650,16 +3830,13 @@ ${existingHint}`;
         const existingDoms = getExistingDomains(false);
         const displayDomain = state.capture.domainTag
           ? esc(state.capture.domainTag)
-          : (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
+          : (isAiConfigured() ? '自动归类' : UNCLASSIFIED_LABEL);
 
         container.innerHTML = `
           <div class="page-header">
-            <div>
-              <h1 class="page-title">速记录入</h1>
-              <p class="page-sub">随时语音口述或粘贴，原味大白话最保真</p>
-            </div>
-            ${(state.capture.raw || state.capture.front || state.capture.anchor) ? `
-              <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear">清空草稿</button>
+            <h1 class="page-title">速记录入</h1>
+            ${(state.capture.raw || state.capture.front || state.capture.anchor || state.capture.evoInit) ? `
+              <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear">清空</button>
             ` : ''}
           </div>
 
@@ -3667,67 +3844,69 @@ ${existingHint}`;
             ${state.capture.rawCollapsed ? `
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                 <span class="line-clamp-2" style="font-size:12px;color:var(--ink-muted);flex:1;">原文：${esc(state.capture.raw)}</span>
-                <button type="button" class="btn-ghost btn-xs" id="btn-cap-expand-raw" style="flex-shrink:0;">展开修改</button>
+                <button type="button" class="btn-ghost btn-xs" id="btn-cap-expand-raw" style="flex-shrink:0;">展开原文</button>
               </div>
             ` : `
-              <textarea id="cap-raw" class="textarea" rows="5" style="border:none;background:transparent;padding:0;min-height:110px;" placeholder="直接用手机语音输入法说出一段对话、现象和你的第一感觉，或粘贴看到的原话...">${esc(state.capture.raw)}</textarea>
+              <textarea id="cap-raw" class="textarea" rows="4" style="border:none;background:transparent;padding:0;min-height:100px;" placeholder="说出或粘贴你看到的事、听到的话，以及当时的感觉">${esc(state.capture.raw)}</textarea>
               <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:10px;border-top:1px solid var(--border-soft);">
-                <button type="button" class="btn-ghost" id="btn-cap-manual">手动填写</button>
+                <button type="button" class="btn-ghost" id="btn-cap-manual">${state.capture.formOpen ? '收起手动填写' : '手动填写'}</button>
                 <button type="button" class="btn btn-primary btn-sm" id="btn-cap-ai">
-                  ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 智能拆解并归类</span>
+                  ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 拆解</span>
                 </button>
               </div>
             `}
           </div>
 
           <div id="cap-form-panel" class="${state.capture.formOpen ? '' : 'hidden'} anim-up" style="display:flex;flex-direction:column;gap:12px;">
-            <div class="card">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <label class="field-label" style="margin:0;" for="cap-front">正面 · 客观事实 / 原话</label>
-                <span class="lock-badge">${ICONS.lock} 存入后默认锁定</span>
-              </div>
-              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录不可变的客观现象、原话或具体事件...">${esc(state.capture.front)}</textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+              <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">卡片内容</span>
+              <button type="button" class="btn-ghost btn-xs" id="btn-cap-collapse-form">收起</button>
             </div>
 
             <div class="card">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <label class="field-label" style="margin:0;" for="cap-anchor">背面锚点 · 最初感受（大白话）</label>
-                <span class="lock-badge">${ICONS.lock} 存入后默认锁定</span>
-              </div>
-              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="第一眼看到时的共鸣、惊讶或大白话直觉...">${esc(state.capture.anchor)}</textarea>
+              <label class="field-label" for="cap-front">事实 / 原话</label>
+              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录你看到或听到的原话、具体发生了什么">${esc(state.capture.front)}</textarea>
+            </div>
+
+            <div class="card">
+              <label class="field-label" for="cap-anchor">最初感受</label>
+              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="当时最直接的想法或情绪，用大白话写">${esc(state.capture.anchor)}</textarea>
               ${state.capture.anchorMissingHint ? `
                 <div class="inline-notice terra" style="margin-top:8px;">
-                  原文里没有包含你自己的感受，AI 没有替你编造——顺手补一句最真实的大白话直觉吧。
+                  原文里没写你的感受，补一句第一时间的直觉即可。
                 </div>
               ` : ''}
             </div>
 
             <div class="card">
-              <label class="field-label" for="cap-evo-init">初始进化词条（选填，留空更轻松）</label>
-              <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="如：隐性摩擦成本（可不填，复习时再慢慢磨）" />
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+                <label class="field-label" style="margin:0;" for="cap-evo-init">初始认识（选填）</label>
+                <button type="button" class="btn btn-sage-soft btn-xs" id="btn-cap-gen-evo">
+                  ${ICONS.sparkle} <span id="btn-cap-gen-evo-txt">AI 生成词条</span>
+                </button>
+              </div>
+              <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="用短词概括，可点右上角生成后再修改" />
             </div>
 
             <details class="card-soft">
               <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);">
-                <span>隐藏分类：<strong id="cap-domain-label" style="color:var(--ink);font-weight:500;">${displayDomain}</strong>（复习时隐藏）</span>
-                <span style="text-decoration:underline;">调整</span>
+                <span>分类：<strong id="cap-domain-label" style="color:var(--ink);font-weight:500;">${displayDomain}</strong></span>
+                <span style="text-decoration:underline;">修改</span>
               </summary>
               <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px;">
-                <input id="cap-domain-input" class="input" type="text" maxlength="14" value="${esc(state.capture.domainTag)}" placeholder="留空则由 AI 根据内容自动归类，也可手动输入类别名" />
+                <input id="cap-domain-input" class="input" type="text" maxlength="14" value="${esc(state.capture.domainTag)}" placeholder="留空自动归类，或手动输入类名" />
                 ${existingDoms.length ? `
                   <div style="display:flex;flex-wrap:wrap;gap:6px;" id="cap-domain-pills">
-                    <button type="button" class="preset-chip ${!state.capture.domainTag ? 'active' : ''}" data-dom="">AI 自动归类</button>
+                    <button type="button" class="preset-chip ${!state.capture.domainTag ? 'active' : ''}" data-dom="">自动归类</button>
                     ${existingDoms.map(d => `
                       <button type="button" class="preset-chip ${d.name === state.capture.domainTag ? 'active' : ''}" data-dom="${esc(d.name)}">${esc(d.name)}</button>
                     `).join('')}
                   </div>
-                ` : `
-                  <div style="font-size:11px;color:var(--ink-muted);">卡片库还没有已有类别，AI 会根据这段内容为你自然命名。</div>
-                `}
+                ` : ''}
               </div>
             </details>
 
-            <button type="button" class="btn btn-ink btn-block" id="btn-cap-save">锁定并存入云端</button>
+            <button type="button" class="btn btn-ink btn-block" id="btn-cap-save">保存卡片</button>
           </div>
         `;
 
@@ -3737,7 +3916,7 @@ ${existingHint}`;
           clearBtn.onclick = () => {
             clearCaptureDraft();
             renderCaptureTab();
-            showToast('草稿已清空');
+            showToast('已清空');
           };
         }
 
@@ -3745,6 +3924,17 @@ ${existingHint}`;
         const expandBtn = document.getElementById('btn-cap-expand-raw');
         if (expandBtn) {
           expandBtn.onclick = () => {
+            state.capture.rawCollapsed = false;
+            persistCaptureDraft();
+            renderCaptureTab();
+          };
+        }
+
+        // Wire Collapse Form (fixes manual form unable to close!)
+        const collapseFormBtn = document.getElementById('btn-cap-collapse-form');
+        if (collapseFormBtn) {
+          collapseFormBtn.onclick = () => {
+            state.capture.formOpen = false;
             state.capture.rawCollapsed = false;
             persistCaptureDraft();
             renderCaptureTab();
@@ -3780,7 +3970,7 @@ ${existingHint}`;
         };
         domInput.oninput = () => {
           state.capture.domainTag = domInput.value.trim();
-          domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
+          domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '自动归类' : UNCLASSIFIED_LABEL);
           persistCaptureDraft();
         };
 
@@ -3790,16 +3980,23 @@ ${existingHint}`;
             btn.onclick = () => {
               state.capture.domainTag = btn.getAttribute('data-dom') || '';
               domInput.value = state.capture.domainTag;
-              domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '保存时由 AI 自动归类' : UNCLASSIFIED_LABEL);
+              domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '自动归类' : UNCLASSIFIED_LABEL);
               pillsBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
               persistCaptureDraft();
             };
           });
         }
 
+        // Manual toggle open / close
         const manualBtn = document.getElementById('btn-cap-manual');
         if (manualBtn) {
           manualBtn.onclick = () => {
+            if (state.capture.formOpen) {
+              state.capture.formOpen = false;
+              persistCaptureDraft();
+              renderCaptureTab();
+              return;
+            }
             state.capture.formOpen = true;
             if (state.capture.raw.trim() && !state.capture.front.trim()) {
               state.capture.front = state.capture.raw.trim();
@@ -3812,12 +4009,58 @@ ${existingHint}`;
           };
         }
 
+        // AI Generate Editable Initial Evolution Tag (after manual fill of fact & feeling)
+        const genEvoBtn = document.getElementById('btn-cap-gen-evo');
+        if (genEvoBtn) {
+          genEvoBtn.onclick = async () => {
+            const front = frontEl.value.trim();
+            const anchor = anchorEl.value.trim();
+            if (!front) {
+              showToast('先填一下事实 / 原话');
+              frontEl.focus();
+              return;
+            }
+            if (!anchor) {
+              showToast('先填一下最初感受，生成的词条更贴合');
+              anchorEl.focus();
+              return;
+            }
+            if (!isAiConfigured()) {
+              promptConfigureAi();
+              return;
+            }
+            genEvoBtn.disabled = true;
+            const txtEl = document.getElementById('btn-cap-gen-evo-txt');
+            if (txtEl) txtEl.textContent = '生成中...';
+            try {
+              const res = await aiSuggestInitialTag(front, anchor);
+              if (!res.initial_tag) throw new Error('未能生成词条');
+              state.capture.evoInit = res.initial_tag;
+              evoEl.value = res.initial_tag;
+              if (!state.capture.domainTag && res.domain_tag && res.domain_tag !== UNCLASSIFIED_LABEL) {
+                state.capture.domainTag = res.domain_tag;
+                domInput.value = res.domain_tag;
+                domLabel.textContent = res.domain_tag;
+              }
+              persistCaptureDraft();
+              logActivityCloud('ai_usage', null, { feature: 'gen_init_tag', adopted: true });
+              showToast('已生成初始词条，可直接编辑修改');
+              evoEl.focus();
+            } catch (err) {
+              showToast(err.message || '生成词条失败', 4000);
+            } finally {
+              genEvoBtn.disabled = false;
+              if (txtEl) txtEl.textContent = 'AI 生成词条';
+            }
+          };
+        }
+
         const aiBtn = document.getElementById('btn-cap-ai');
         if (aiBtn) {
           aiBtn.onclick = async () => {
             const raw = (rawEl ? rawEl.value : state.capture.raw).trim();
             if (!raw) {
-              showToast('请先输入或口述一段内容');
+              showToast('先输入或口述一段内容');
               return;
             }
             if (!isAiConfigured()) {
@@ -3826,7 +4069,7 @@ ${existingHint}`;
             }
             aiBtn.disabled = true;
             const aiTxt = document.getElementById('btn-cap-ai-txt');
-            if (aiTxt) aiTxt.textContent = '拆解归类中...';
+            if (aiTxt) aiTxt.textContent = '拆解中...';
 
             try {
               const res = await aiSplitCapture(raw);
@@ -3846,10 +4089,10 @@ ${existingHint}`;
               persistCaptureDraft();
               renderCaptureTab();
               if (!res.back_anchor) {
-                showToast('事实已拆出，请补一句你自己的第一感觉');
+                showToast('事实已拆出，补一句最初感受即可');
                 setTimeout(() => document.getElementById('cap-anchor')?.focus(), 80);
               } else {
-                showToast(`已保留原味拆解 · 归入「${res.domain_tag}」`);
+                showToast(`已拆解 · 归入「${res.domain_tag}」`);
               }
             } catch (err) {
               showToast(err.message || 'AI 拆解失败，可先手动填写', 4200);
@@ -3868,17 +4111,17 @@ ${existingHint}`;
           const chosenDomain = domInput.value.trim();
 
           if (!front) {
-            showToast('请填写正面的客观事实或原话');
+            showToast('请先填写事实 / 原话');
             return;
           }
           if (!anchor) {
-            showToast('请留下一句最初的大白话感受作为锚点');
+            showToast('请写一句最初感受');
             return;
           }
 
           const saveBtn = document.getElementById('btn-cap-save');
           saveBtn.disabled = true;
-          saveBtn.textContent = '正在锁定存入...';
+          saveBtn.textContent = '保存中...';
 
           const nowIso = new Date().toISOString();
           const fsrs = createInitialFsrsState();
@@ -3915,8 +4158,8 @@ ${existingHint}`;
             renderLibraryTab();
 
             showToast(needsSilentClassify
-              ? '已存入云端，后台正为你自动归类，明天起进入保鲜曲线'
-              : '已锁定存入云端，明天起进入保鲜曲线');
+              ? '已保存，后台自动归类中'
+              : '已保存，明天开始复习');
 
             // Non-blocking background auto-classify (if blank) + cross-domain match
             if (created) {
@@ -3929,9 +4172,9 @@ ${existingHint}`;
               })();
             }
           } catch (err) {
-            showToast(err.message || '存入云端失败，请稍后重试', 3600);
+            showToast(err.message || '保存失败，请稍后重试', 3600);
             saveBtn.disabled = false;
-            saveBtn.textContent = '锁定并存入云端';
+            saveBtn.textContent = '保存卡片';
           }
         };
       }
@@ -3947,23 +4190,20 @@ ${existingHint}`;
         if (!existingSearch) {
           container.innerHTML = `
             <div class="page-header">
-              <div>
-                <h1 class="page-title">卡片库</h1>
-                <p class="page-sub">动态主题池、进化词条与完整编辑管理</p>
-              </div>
+              <h1 class="page-title">卡片库</h1>
               <button type="button" class="btn btn-sage-soft btn-xs" id="btn-ai-reorg">
                 ${ICONS.sparkle} <span>整理归类</span>
               </button>
             </div>
 
             <div class="seg-bar" role="tablist">
-              <button type="button" class="seg-btn ${state.library.viewMode === 'domain' ? 'active' : ''}" data-lib-mode="domain">按动态类别</button>
-              <button type="button" class="seg-btn ${state.library.viewMode === 'evolution' ? 'active' : ''}" data-lib-mode="evolution">按进化词条</button>
+              <button type="button" class="seg-btn ${state.library.viewMode === 'domain' ? 'active' : ''}" data-lib-mode="domain">按分类</button>
+              <button type="button" class="seg-btn ${state.library.viewMode === 'evolution' ? 'active' : ''}" data-lib-mode="evolution">按认识</button>
             </div>
 
             <div style="position:relative;margin-bottom:12px;">
               <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-muted);display:inline-flex;pointer-events:none;">${ICONS.search}</span>
-              <input id="lib-search-input" class="input" type="search" style="padding-left:38px;" placeholder="搜索事实线索、感受、类别或进化词条..." value="${esc(state.library.search)}" />
+              <input id="lib-search-input" class="input" type="search" style="padding-left:38px;" placeholder="搜事实、感受、认识或分类" value="${esc(state.library.search)}" />
             </div>
 
             <div id="lib-pills" class="pills-scroll"></div>
@@ -4295,56 +4535,54 @@ ${existingHint}`;
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:14px;font-weight:600;color:var(--ink);">卡片详情与进化轨迹</span>
+              <span style="font-size:15px;font-weight:600;color:var(--ink);">卡片详情</span>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
 
-            <div class="card-soft">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
-                <span>正面 · 客观事实</span>
-                <span class="lock-badge">${ICONS.lock} 原境默认锁定</span>
+            <!-- Front Fact: Prominent -->
+            <div class="card" style="padding:15px 16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-secondary);margin-bottom:6px;">
+                <span style="font-weight:600;">正面</span>
+                <span class="lock-badge" aria-label="已锁定">${ICONS.lock}</span>
               </div>
-              <p style="margin:0;font-size:14px;line-height:1.68;white-space:pre-wrap;">${esc(latest.front_fact)}</p>
+              <p class="fact-hero-text" style="font-size:15px;">${esc(latest.front_fact)}</p>
             </div>
 
-            <div class="card" style="padding:14px;">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
-                <span>背面锚点 · 最初感受</span>
-                <span class="lock-badge">${ICONS.lock} 原境默认锁定</span>
+            <!-- Back Anchor: Calm Muted Grey -->
+            <div class="card-soft" style="padding:14px 16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);margin-bottom:6px;">
+                <span>背面锚点</span>
+                <span class="lock-badge" aria-label="已锁定">${ICONS.lock}</span>
               </div>
-              <p style="margin:0;font-size:14px;color:var(--ink-secondary);line-height:1.65;white-space:pre-wrap;">${esc(latest.back_anchor)}</p>
+              <p class="muted-body-text">${esc(latest.back_anchor)}</p>
             </div>
 
+            <!-- Latest Understanding: Each on its own line -->
             <div>
-              <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px;">进化层 · 最新认识 (${tags.length}/3)</div>
-              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px;">最新认识 (${tags.length}/3)</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
                 ${tags.length
-                  ? tags.map(w => `<span style="font-size:12px;padding:5px 11px;border-radius:999px;background:var(--sage-soft);color:var(--sage);font-weight:500;">${esc(w)}</span>`).join('')
-                  : `<span style="font-size:12px;color:var(--ink-muted);">尚未沉淀进化词条</span>`
+                  ? tags.map(w => `<div class="evo-row-readonly">${esc(w)}</div>`).join('')
+                  : `<span style="font-size:12px;color:var(--ink-muted);">暂无认识词条</span>`
                 }
               </div>
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);font-size:12px;">
-              <span style="color:var(--ink-muted);">所属隐藏类别</span>
-              <span style="padding:3px 10px;border-radius:999px;background:var(--surface-soft);color:var(--ink);font-weight:500;">${esc(dom)}</span>
-            </div>
-
             ${linked ? `
               <div role="button" tabindex="0" id="m-detail-cross" style="padding:12px 13px;border-radius:14px;background:var(--terra-soft);border:1px solid var(--terra-border);cursor:pointer;">
-                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨界关联（${esc(normalizeDomainLabel(linked.domain_tag))}）· 点击查看</div>
+                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨领域相似卡 · 点击查看</div>
                 <p class="line-clamp-2" style="margin:0;font-size:12px;color:var(--ink-secondary);">${esc(linked.front_fact)}</p>
               </div>
             ` : ''}
 
             <div style="padding-top:10px;border-top:1px solid var(--border-soft);">
-              <div style="font-size:12px;font-weight:500;color:var(--ink-muted);margin-bottom:10px;">进化历史时间线</div>
-              ${history.length === 0 ? `<p style="margin:0;font-size:12px;color:var(--ink-muted);">暂无演化记录</p>` : `
+              <div style="font-size:12px;font-weight:500;color:var(--ink-muted);margin-bottom:10px;">认识演变</div>
+              ${history.length === 0 ? `<p style="margin:0;font-size:12px;color:var(--ink-muted);">暂无记录</p>` : `
                 <div class="timeline">
                   ${history.slice().reverse().map(h => `
                     <div class="timeline-item">
                       <span class="timeline-dot"></span>
-                      <div style="font-size:11px;color:var(--ink-muted);margin-bottom:2px;">${formatTime(h.at)} · 第 ${h.reps || 0} 次接触</div>
+                      <div style="font-size:11px;color:var(--ink-muted);margin-bottom:2px;">${formatTime(h.at)} · 第 ${h.reps || 0} 次</div>
                       <div>
                         <span style="color:var(--ink-muted);">${esc((h.before || []).join(' / ') || '空白')}</span>
                         <span style="color:var(--sage);margin:0 4px;">→</span>
@@ -4357,16 +4595,16 @@ ${existingHint}`;
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-soft);font-size:11px;color:var(--ink-muted);">
-              <span>已保鲜 ${fsrs.reps || 0} 次 · 间隔 ${fsrs.scheduled_days || 1} 天</span>
-              <span>创建于 ${formatTime(latest.created_at).slice(0, 10)}</span>
+              <span>已复习 ${fsrs.reps || 0} 次 · 间隔 ${fsrs.scheduled_days || 1} 天</span>
+              <span>${formatTime(latest.created_at).slice(0, 10)}</span>
             </div>
 
             <div id="m-detail-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
               <button type="button" class="btn btn-soft btn-sm" id="m-btn-edit">
-                ${ICONS.edit} <span>编辑卡片</span>
+                ${ICONS.edit} <span>编辑</span>
               </button>
               <button type="button" class="btn btn-terra btn-sm" id="m-btn-del">
-                ${ICONS.trash} <span>删除卡片</span>
+                ${ICONS.trash} <span>删除</span>
               </button>
             </div>
           </div>
@@ -4412,36 +4650,34 @@ ${existingHint}`;
             </div>
 
             <div>
-              <label class="field-label" for="ed-front">正面 · 客观事实 / 原话</label>
-              <textarea id="ed-front" class="textarea" rows="3">${esc(latest.front_fact)}</textarea>
-              <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;">建议仅修正错别字或补充关键语境，保持原始事实客观。</div>
+              <label class="field-label" for="ed-front">事实 / 原话</label>
+              <textarea id="ed-front" class="textarea" rows="3" placeholder="记录你看到或听到的原话、具体发生了什么">${esc(latest.front_fact)}</textarea>
             </div>
 
             <div>
-              <label class="field-label" for="ed-anchor">背面锚点 · 最初感受（大白话）</label>
-              <textarea id="ed-anchor" class="textarea" rows="3">${esc(latest.back_anchor)}</textarea>
-              <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;">尽量保留当时的大白话直觉，不刻意改写成说教。</div>
+              <label class="field-label" for="ed-anchor">最初感受</label>
+              <textarea id="ed-anchor" class="textarea" rows="3" placeholder="当时最直接的想法或情绪，用大白话写">${esc(latest.back_anchor)}</textarea>
             </div>
 
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label class="field-label" style="margin:0;">进化层 · 最新认识（硬性上限 3 槽）</label>
+                <label class="field-label" style="margin:0;">最新认识（最多 3 条）</label>
                 ${tags.length >= 3 && isAiConfigured() ? `
                   <button type="button" class="btn-ghost btn-xs" id="ed-btn-compress" style="color:var(--terra);">
-                    ${ICONS.sparkle} 概念压缩
+                    ${ICONS.sparkle} 合并压缩
                   </button>
                 ` : ''}
               </div>
               <div style="display:flex;flex-direction:column;gap:8px;">
-                <input id="ed-evo-0" class="input" type="text" maxlength="24" value="${esc(tags[0] || '')}" placeholder="槽位 1（选填，2–12 字精炼词条）" />
-                <input id="ed-evo-1" class="input" type="text" maxlength="24" value="${esc(tags[1] || '')}" placeholder="槽位 2（选填）" />
-                <input id="ed-evo-2" class="input" type="text" maxlength="24" value="${esc(tags[2] || '')}" placeholder="槽位 3（选填）" />
+                <input id="ed-evo-0" class="input" type="text" maxlength="24" value="${esc(tags[0] || '')}" placeholder="第 1 条认识（选填）" />
+                <input id="ed-evo-1" class="input" type="text" maxlength="24" value="${esc(tags[1] || '')}" placeholder="第 2 条认识（选填）" />
+                <input id="ed-evo-2" class="input" type="text" maxlength="24" value="${esc(tags[2] || '')}" placeholder="第 3 条认识（选填）" />
               </div>
             </div>
 
             <div>
-              <label class="field-label" for="ed-domain">所属隐藏类别（复习时隐藏）</label>
-              <input id="ed-domain" class="input" type="text" maxlength="14" value="${esc(curDom === UNCLASSIFIED_LABEL ? '' : curDom)}" placeholder="输入自定义类别或点下方已有类别" />
+              <label class="field-label" for="ed-domain">分类</label>
+              <input id="ed-domain" class="input" type="text" maxlength="14" value="${esc(curDom === UNCLASSIFIED_LABEL ? '' : curDom)}" placeholder="输入分类名或点下方已有分类" />
               ${existingDoms.length ? `
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="ed-dom-pills">
                   ${existingDoms.map(d => `
@@ -4453,12 +4689,12 @@ ${existingHint}`;
 
             <div style="display:flex;gap:10px;padding-top:6px;">
               <button type="button" class="btn btn-soft" style="flex:1;" id="ed-cancel">取消</button>
-              <button type="button" class="btn btn-primary" style="flex:1.4;" id="ed-save">保存修改</button>
+              <button type="button" class="btn btn-primary" style="flex:1.4;" id="ed-save">保存</button>
             </div>
 
             <div id="ed-del-wrap" style="padding-top:10px;border-top:1px solid var(--border-soft);text-align:center;">
               <button type="button" class="btn-ghost btn-xs" id="ed-btn-del" style="color:var(--terra);">
-                ${ICONS.trash} <span>删除这张卡片</span>
+                ${ICONS.trash} <span>删除卡片</span>
               </button>
             </div>
           </div>
@@ -4581,77 +4817,36 @@ ${existingHint}`;
         const evoLogCount = state.cards.reduce((sum, c) => sum + ((c.evolution_history || []).length), 0);
         const aiLogCount = state.activityLogs.filter(l => l.event_type === 'ai_usage').length;
         const sbHost = cleanBaseUrl(state.sbConfig.url).replace(/^https?:\/\//i, '');
+        const aiReady = isAiConfigured();
+        const aiBadgeText = aiReady ? `已配置 · ${state.aiConfig.model}` : '未配置';
 
         container.innerHTML = `
           <div class="page-header">
-            <div>
-              <h1 class="page-title">设置与实验室</h1>
-              <p class="page-sub">本机 AI 引擎、云端节律与自我诊断原料</p>
-            </div>
+            <h1 class="page-title">设置</h1>
           </div>
 
           <div class="settings-stack">
-            <!-- 1. Local AI Settings -->
-            <div class="card">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <h2 style="margin:0;font-size:15px;font-weight:600;">AI 接口设置</h2>
-                <span style="font-size:11px;color:var(--sage);background:var(--sage-soft);padding:2px 8px;border-radius:999px;">仅存本机</span>
-              </div>
-              <p style="margin:0 0 12px;font-size:12px;color:var(--ink-muted);">
-                密钥只保留在当前手机浏览器本地，绝不写入网页源码或上传托管平台。
-              </p>
-
-              <div class="preset-grid" id="ai-presets">
-                ${AI_PRESETS.map(p => `
-                  <button type="button" class="preset-chip ${state.aiConfig.preset === p.id ? 'active' : ''}" data-preset="${p.id}">${p.label}</button>
-                `).join('')}
-              </div>
-
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                <div>
-                  <label class="field-label" for="ai-base-url">Base URL</label>
-                  <input id="ai-base-url" class="input" type="url" value="${esc(state.aiConfig.baseUrl)}" placeholder="https://api.openai.com/v1" />
-                </div>
-                <div>
-                  <label class="field-label" for="ai-api-key">API Key</label>
-                  <div class="pw-wrap">
-                    <input id="ai-api-key" class="input" type="password" value="${esc(state.aiConfig.apiKey)}" placeholder="sk-..." autocomplete="off" />
-                    <button type="button" class="pw-eye" id="btn-eye-ai-key" aria-label="显示或隐藏密钥">${ICONS.eye}</button>
-                  </div>
-                </div>
-                <div>
-                  <label class="field-label" for="ai-model">Model Name</label>
-                  <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="gpt-6.1-terra" />
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
-                  <button type="button" class="btn btn-primary btn-sm" id="btn-save-ai">保存本机配置</button>
-                  <button type="button" class="btn btn-soft btn-sm" id="btn-test-ai">测试连通性</button>
-                </div>
-                <div id="ai-test-feedback" class="inline-notice hidden"></div>
-              </div>
-            </div>
-
-            <!-- 2. Rhythm & Theme (Synced to user_prefs) -->
+            <!-- 1. Rhythm & Theme (High-frequency, Synced to user_prefs) -->
             <div class="card">
               <h2 style="margin:0 0 12px;font-size:15px;font-weight:600;">节律与外观</h2>
 
               <div style="margin-bottom:14px;">
                 <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
-                  <span style="color:var(--ink-secondary);">每日保鲜软上限</span>
+                  <span style="color:var(--ink-secondary);">每日复习上限</span>
                   <strong style="font-variant-numeric:tabular-nums;"><span id="pref-limit-val">${state.prefs.daily_limit}</span> 张 / 天</strong>
                 </div>
                 <input id="pref-limit-range" type="range" min="10" max="100" step="5" value="${state.prefs.daily_limit}" />
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted);margin-top:4px;">
                   <span>10 张</span>
-                  <span>50 张（稳态推荐）</span>
+                  <span>50 张推荐</span>
                   <span>100 张</span>
                 </div>
               </div>
 
               <div class="setting-row">
                 <div>
-                  <div style="font-size:14px;">静默混入蓄水池卡</div>
-                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">每刷 4 张当天卡混入 1 张半熟卡，并每天慢捞 1–2 张沉底卡</div>
+                  <div style="font-size:14px;">顺带清理积压卡</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">复习时悄悄混入少量历史未刷卡片</div>
                 </div>
                 <button type="button" class="switch ${state.prefs.mix_backlog ? 'on' : ''}" id="sw-mix" role="switch" aria-checked="${state.prefs.mix_backlog}">
                   <span class="switch-knob"></span>
@@ -4660,8 +4855,8 @@ ${existingHint}`;
 
               <div class="setting-row" style="padding-bottom:2px;">
                 <div>
-                  <div style="font-size:14px;">深色护眼模式</div>
-                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">低眩光夜间阅读配色</div>
+                  <div style="font-size:14px;">深色模式</div>
+                  <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">夜间护眼配色</div>
                 </div>
                 <button type="button" class="switch ${state.prefs.theme === 'dark' ? 'on' : ''}" id="sw-theme" role="switch" aria-checked="${state.prefs.theme === 'dark'}">
                   <span class="switch-knob"></span>
@@ -4669,42 +4864,88 @@ ${existingHint}`;
               </div>
             </div>
 
-            <!-- 3. Silent Activity Lab & Cold Backup -->
+            <!-- 2. Cloud Activity & Backup -->
             <div class="card">
-              <h2 style="margin:0 0 4px;font-size:15px;font-weight:600;">云端使用记录与冷备份</h2>
-              <p style="margin:0;font-size:12px;color:var(--ink-muted);">所有复习进度与行为日志均实时存于云端，刷新或换设备不丢失；随时导出体检或存进网盘兜底。</p>
+              <h2 style="margin:0 0 4px;font-size:15px;font-weight:600;">记录与备份</h2>
+              <p style="margin:0;font-size:12px;color:var(--ink-muted);">使用记录实时同步云端，刷新不丢失。</p>
 
               <div class="stat-grid">
-                <div class="stat-box"><div class="stat-val">${state.cards.length}</div><div class="stat-lbl">卡片总数</div></div>
-                <div class="stat-box"><div class="stat-val">${reviewLogCount}</div><div class="stat-lbl">云端复习</div></div>
-                <div class="stat-box"><div class="stat-val">${evoLogCount}</div><div class="stat-lbl">进化快照</div></div>
+                <div class="stat-box"><div class="stat-val">${state.cards.length}</div><div class="stat-lbl">卡片</div></div>
+                <div class="stat-box"><div class="stat-val">${reviewLogCount}</div><div class="stat-lbl">复习</div></div>
+                <div class="stat-box"><div class="stat-val">${evoLogCount}</div><div class="stat-lbl">演变</div></div>
                 <div class="stat-box"><div class="stat-val">${aiLogCount}</div><div class="stat-lbl">AI 协助</div></div>
               </div>
 
               <div style="display:flex;flex-direction:column;gap:9px;">
                 <button type="button" class="btn btn-sage-soft btn-sm btn-block" id="btn-export-md">
-                  一键导出 AI 体检报告 (Markdown)
+                  导出 AI 体检报告
                 </button>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-                  <button type="button" class="btn btn-soft btn-sm" id="btn-export-json">导出完整存档</button>
+                  <button type="button" class="btn btn-soft btn-sm" id="btn-export-json">导出存档</button>
                   <label class="btn btn-soft btn-sm" style="margin:0;cursor:pointer;">
-                    导入恢复存档
+                    导入存档
                     <input id="input-import-json" type="file" accept="application/json" class="hidden" />
                   </label>
                 </div>
               </div>
             </div>
 
+            <!-- 3. Local AI Settings (Collapsed by default, placed right before Account & Cloud) -->
+            <details id="settings-ai-details" class="card">
+              <summary class="settings-collapse-summary">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                  <h2 style="margin:0;font-size:15px;font-weight:600;flex-shrink:0;">AI 接口设置</h2>
+                  <span id="settings-ai-status-badge" class="db-status-tag ${aiReady ? 'ready' : ''}" style="max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(aiBadgeText)}</span>
+                </div>
+                <span style="color:var(--ink-muted);display:inline-flex;flex-shrink:0;">${ICONS.chevronRight}</span>
+              </summary>
+
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft);">
+                <p style="margin:0 0 12px;font-size:12px;color:var(--ink-muted);">
+                  仅保存在本机浏览器，不上传云端。
+                </p>
+
+                <div class="preset-grid" id="ai-presets">
+                  ${AI_PRESETS.map(p => `
+                    <button type="button" class="preset-chip ${state.aiConfig.preset === p.id ? 'active' : ''}" data-preset="${p.id}">${p.label}</button>
+                  `).join('')}
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div>
+                    <label class="field-label" for="ai-base-url">Base URL</label>
+                    <input id="ai-base-url" class="input" type="url" value="${esc(state.aiConfig.baseUrl)}" placeholder="https://api.openai.com/v1" />
+                  </div>
+                  <div>
+                    <label class="field-label" for="ai-api-key">API Key</label>
+                    <div class="pw-wrap">
+                      <input id="ai-api-key" class="input" type="password" value="${esc(state.aiConfig.apiKey)}" placeholder="sk-..." autocomplete="off" />
+                      <button type="button" class="pw-eye" id="btn-eye-ai-key" aria-label="显示或隐藏密钥">${ICONS.eye}</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="field-label" for="ai-model">Model Name</label>
+                    <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="gpt-6.1-terra" />
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-save-ai">保存配置</button>
+                    <button type="button" class="btn btn-soft btn-sm" id="btn-test-ai">测试连通</button>
+                  </div>
+                  <div id="ai-test-feedback" class="inline-notice hidden"></div>
+                </div>
+              </div>
+            </details>
+
             <!-- 4. Account Management -->
             <div class="card">
               <h2 style="margin:0 0 10px;font-size:15px;font-weight:600;">私有账号与云端</h2>
               <div class="card-soft" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;">
                 <div style="display:flex;justify-content:space-between;gap:10px;">
-                  <span style="color:var(--ink-muted);">当前登录邮箱</span>
+                  <span style="color:var(--ink-muted);">账号邮箱</span>
                   <span style="font-weight:500;word-break:break-all;">${esc(state.session?.user?.email || '-')}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;gap:10px;">
-                  <span style="color:var(--ink-muted);">云端数据库</span>
+                  <span style="color:var(--ink-muted);">数据库</span>
                   <span style="font-family:var(--font-mono);font-size:11px;word-break:break-all;">${esc(sbHost || '-')}</span>
                 </div>
               </div>
@@ -4749,15 +4990,25 @@ ${existingHint}`;
           fbBox.textContent = msg;
         };
 
+        const updateAiStatusBadge = () => {
+          const badge = document.getElementById('settings-ai-status-badge');
+          if (!badge) return;
+          const ok = isAiConfigured();
+          badge.textContent = ok ? `已配置 · ${state.aiConfig.model}` : '未配置';
+          badge.className = `db-status-tag ${ok ? 'ready' : ''}`;
+        };
+
         document.getElementById('btn-save-ai').onclick = () => {
           readAiInputs();
           saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
-          showToast('AI 配置已安全保存在本机');
+          updateAiStatusBadge();
+          showToast('AI 配置已保存在本机');
         };
 
         document.getElementById('btn-test-ai').onclick = async () => {
           readAiInputs();
           saveJsonStorage(STORAGE_KEYS.AI_LOCAL, state.aiConfig);
+          updateAiStatusBadge();
           if (!isAiConfigured()) {
             showAiFeedback(false, '请先完整填写 Base URL、API Key 与 Model Name');
             return;
@@ -4772,10 +5023,10 @@ ${existingHint}`;
             showToast('AI 接口连通成功');
           } catch (err) {
             showAiFeedback(false, err.message || '连通测试失败');
-            showToast('连通测试未通过，请查看下方详细报错', 3400);
+            showToast('连通测试未通过，请看下方报错', 3400);
           } finally {
             btn.disabled = false;
-            btn.textContent = '测试连通性';
+            btn.textContent = '测试连通';
           }
         };
 
