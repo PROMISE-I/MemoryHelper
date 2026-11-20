@@ -492,6 +492,133 @@
       color: var(--ink-muted);
     }
 
+    /* Clickable Direct-Edit Node Wrapper inside Markmap SVG */
+    .rm-node-wrap {
+      display: inline-block;
+      cursor: pointer;
+      padding: 1px 6px;
+      margin: -1px -6px;
+      border-radius: 7px;
+      transition: background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .rm-node-wrap:hover {
+      background: var(--accent-soft);
+    }
+
+    .rm-node-wrap.rm-node-selected {
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 1.5px var(--accent);
+    }
+
+    /* Floating Direct Node Action Panel */
+    .node-action-card {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--safe-bottom) + 14px);
+      transform: translateX(-50%);
+      width: calc(100% - 20px);
+      max-width: 580px;
+      z-index: 28;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .na-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .na-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .na-edit-row .input {
+      height: 36px;
+      font-size: 13.5px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .na-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .na-status-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--ink-secondary);
+      transition: all 0.14s ease;
+    }
+
+    .na-status-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .na-status-btn.st-locked.active {
+      background: var(--locked-bg);
+      color: var(--locked-fg);
+      border-color: var(--locked-bg);
+    }
+
+    .na-status-btn.st-exploring.active {
+      background: var(--exploring-bg);
+      color: var(--exploring-fg);
+      border-color: var(--exploring-border);
+    }
+
+    .na-status-btn.st-falsified.active {
+      background: var(--falsified-bg);
+      color: var(--falsified-fg);
+      border-color: var(--falsified-border);
+    }
+
+    .na-ops-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .na-subform {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+    }
+
     /* Empty / Loading Overlay on Canvas */
     .canvas-overlay {
       position: absolute;
@@ -826,11 +953,18 @@
           <span id="btn-filter-label">隐藏已证伪</span>
         </button>
 
-        <button type="button" id="btn-open-editor" class="tool-chip primary-chip" title="打开纯文本 Markdown 抽屉并写回云端">
+        <button type="button" id="btn-undo" class="tool-chip hidden" title="撤回上一步节点操作">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+          </svg>
+          <span>撤回</span>
+        </button>
+
+        <button type="button" id="btn-open-editor" class="tool-chip" title="查看或批量编辑原始 Markdown">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
           </svg>
-          <span>编辑原文</span>
+          <span>原文</span>
         </button>
 
         <div class="tool-spacer"></div>
@@ -854,6 +988,57 @@
       <svg id="markmap-svg"></svg>
 
       <div id="canvas-status-pill" class="canvas-status-pill hidden"></div>
+
+      <!-- Direct Node Quick Action Floating Panel -->
+      <section id="node-action-card" class="node-action-card hidden" aria-label="节点快捷操作">
+        <div class="na-header">
+          <span id="na-meta-label">已选中节点</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="na-sync-badge" style="color:var(--accent);"></span>
+            <button type="button" id="na-btn-close" style="color:var(--ink-muted);font-size:18px;line-height:1;padding:0 4px;" aria-label="关闭节点面板">×</button>
+          </div>
+        </div>
+
+        <div class="na-edit-row">
+          <input id="na-text-input" class="input" type="text" placeholder="输入节点内容（无需手写 Markdown 符号）" />
+          <button type="button" id="na-btn-rename" class="btn btn-primary" style="height:36px;padding:0 13px;font-size:12.5px;flex-shrink:0;">保存文字</button>
+        </div>
+
+        <div class="na-pills-row" role="group" aria-label="切换科研状态标签">
+          <span style="font-size:11px;color:var(--ink-muted);margin-right:2px;">状态：</span>
+          <button type="button" class="na-status-btn" data-na-status="">无标签</button>
+          <button type="button" class="na-status-btn st-locked" data-na-status="[已锁定共识]">✓ 已锁定共识</button>
+          <button type="button" class="na-status-btn st-exploring" data-na-status="[小范围试探中]">◔ 小范围试探中</button>
+          <button type="button" class="na-status-btn st-falsified" data-na-status="[已证伪/留档]">✕ 已证伪/留档</button>
+        </div>
+
+        <div id="na-add-form" class="na-subform hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:500;color:var(--ink-secondary);">
+            <span id="na-add-title">添加子节点</span>
+            <button type="button" id="na-add-cancel" style="font-size:12px;color:var(--ink-muted);">取消</button>
+          </div>
+          <div class="na-edit-row">
+            <input id="na-add-input" class="input" type="text" placeholder="写下新节点内容..." />
+            <button type="button" id="na-add-confirm" class="btn btn-primary" style="height:36px;padding:0 13px;font-size:12.5px;flex-shrink:0;">添加</button>
+          </div>
+          <div class="na-pills-row">
+            <span style="font-size:11px;color:var(--ink-muted);">初始状态：</span>
+            <button type="button" class="na-status-btn active" data-add-status="">无标签</button>
+            <button type="button" class="na-status-btn st-locked" data-add-status="[已锁定共识]">✓ 共识</button>
+            <button type="button" class="na-status-btn st-exploring" data-add-status="[小范围试探中]">◔ 试探</button>
+            <button type="button" class="na-status-btn st-falsified" data-add-status="[已证伪/留档]">✕ 证伪</button>
+          </div>
+        </div>
+
+        <div class="na-ops-row">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <button type="button" id="na-btn-add-child" class="tool-chip active" style="height:28px;font-size:12px;">+ 添加子节点</button>
+            <button type="button" id="na-btn-add-sibling" class="tool-chip" style="height:28px;font-size:12px;">+ 同级节点</button>
+            <button type="button" id="na-btn-fold-node" class="tool-chip hidden" style="height:28px;font-size:12px;">折叠此分支</button>
+          </div>
+          <button type="button" id="na-btn-delete" class="tool-chip" style="height:28px;font-size:12px;color:var(--danger-fg);border-color:var(--danger-border);background:var(--danger-bg);">删除</button>
+        </div>
+      </section>
 
       <!-- Empty / Loading State Overlay -->
       <div id="canvas-overlay" class="canvas-overlay">
@@ -968,7 +1153,17 @@
         loading: false,
         saving: false,
         mm: null,
-        transformer: null
+        transformer: null,
+        // Direct Node Operations State
+        selectedLineIdx: null,
+        nodeMetaByLine: new Map(),
+        manualFoldMap: {},
+        addMode: null, // 'child' | 'sibling' | null
+        addStatusTag: '',
+        deleteArmedLine: null,
+        undoStack: [],
+        autoSaving: false,
+        pendingAutoSave: false
       };
 
       const $ = (id) => document.getElementById(id);
@@ -1269,16 +1464,30 @@
         return `<span class="rm-node-falsified">${wrapped}</span>`;
       }
 
+      function parseLineIndex(payloadLines) {
+        if (typeof payloadLines === 'string') {
+          const n = parseInt(payloadLines.split(',')[0], 10);
+          return Number.isFinite(n) ? n : -1;
+        }
+        if (Array.isArray(payloadLines) && payloadLines.length > 0) {
+          const n = Number(payloadLines[0]);
+          return Number.isFinite(n) ? n : -1;
+        }
+        return -1;
+      }
+
       /**
        * Deep-process the Markmap AST:
        * 1. Count status badges across the full consensus tree
        * 2. Optionally prune every [已证伪/留档] node together with its entire subtree
        * 3. Style falsified node text with faded strikethrough (and muted descendants when visible)
-       * 4. Apply explicit fold state (Expand All vs Fold to Level 2)
+       * 4. Wrap every node with its exact 0-based source line index for lossless direct node editing
+       * 5. Apply explicit fold state (Expand All vs Fold to Level 2 + per-node overrides)
        */
       function buildProcessedTree(rawRoot, options) {
         const { hideFalsified, foldedToLevel2 } = options;
         const stats = { locked: 0, exploring: 0, falsified: 0, hiddenBranches: 0 };
+        const nodeMetaByLine = new Map();
 
         function countStats(node) {
           if (!node) return;
@@ -1294,6 +1503,7 @@
           const st = detectNodeStatus(node.content);
           const isFalsifiedSelf = st === 'falsified';
           const isFalsifiedBranch = insideFalsifiedAncestor || isFalsifiedSelf;
+          const lineIdx = parseLineIndex(node.payload?.lines);
 
           let nextContent = node.content;
           if (isFalsifiedSelf) {
@@ -1315,10 +1525,23 @@
           }
 
           const nextPayload = { ...(node.payload || {}), _rmStatus: isFalsifiedBranch ? 'falsified' : st };
-          if (foldedToLevel2) {
+          const hasOverride = lineIdx >= 0 && Object.prototype.hasOwnProperty.call(state.manualFoldMap, lineIdx);
+          if (hasOverride && nextChildren.length > 0) {
+            nextPayload.fold = state.manualFoldMap[lineIdx] ? 1 : 0;
+          } else if (foldedToLevel2) {
             nextPayload.fold = (depth >= 2 && nextChildren.length > 0) ? 1 : 0;
           } else {
             nextPayload.fold = 0;
+          }
+
+          if (lineIdx >= 0) {
+            nodeMetaByLine.set(lineIdx, {
+              depth,
+              hasChildren: nextChildren.length > 0,
+              folded: nextPayload.fold === 1
+            });
+            const isSel = state.selectedLineIdx === lineIdx;
+            nextContent = `<span class="rm-node-wrap${isSel ? ' rm-node-selected' : ''}" data-rm-line="${lineIdx}" data-rm-depth="${depth}">${nextContent}</span>`;
           }
 
           return {
@@ -1330,7 +1553,7 @@
         }
 
         const tree = cloneAndDecorate(rawRoot, 0, false);
-        return { tree, stats };
+        return { tree, stats, nodeMetaByLine };
       }
 
       function branchColorForNode(node) {
@@ -1356,6 +1579,12 @@
         $('btn-filter-falsified').disabled = !hasDoc;
         $('btn-open-editor').disabled = !state.currentFile;
 
+        const undoBtn = $('btn-undo');
+        if (undoBtn) {
+          undoBtn.classList.toggle('hidden', state.undoStack.length === 0);
+          undoBtn.disabled = state.undoStack.length === 0;
+        }
+
         $('btn-fold-toggle').classList.toggle('active', state.foldedToLevel2);
         $('btn-fold-label').textContent = state.foldedToLevel2 ? '全部展开' : '折叠至第 2 层';
 
@@ -1370,9 +1599,10 @@
         $('legend-counts').classList.toggle('hidden', !hasDoc);
 
         const pill = $('canvas-status-pill');
-        if (hasDoc) {
+        if (hasDoc && state.selectedLineIdx === null) {
           pill.classList.remove('hidden');
           const parts = [
+            '点击任意节点直接编辑',
             `共识 ${state.stats.locked}`,
             `试探 ${state.stats.exploring}`,
             state.hideFalsified ? `已隐证伪 ${state.stats.hiddenBranches} 支` : `证伪 ${state.stats.falsified}`
@@ -1397,16 +1627,17 @@
 
         const highlightedMd = highlightResearchTags(state.rawMarkdown);
         const { root } = state.transformer.transform(highlightedMd);
-        const { tree, stats } = buildProcessedTree(root, {
+        const { tree, stats, nodeMetaByLine } = buildProcessedTree(root, {
           hideFalsified: state.hideFalsified,
           foldedToLevel2: state.foldedToLevel2
         });
         state.stats = stats;
+        state.nodeMetaByLine = nodeMetaByLine;
 
         const svgEl = $('markmap-svg');
         const mmOptions = {
           autoFit: false,
-          duration: 320,
+          duration: 280,
           maxWidth: 340,
           spacingHorizontal: 78,
           spacingVertical: 10,
@@ -1432,6 +1663,370 @@
             try { state.mm.fit(); } catch (_) {}
           });
         }
+      }
+
+      // =====================================================================
+      // 6B. DIRECT NODE OPERATIONS ENGINE (LOSSLESS LINE-ACCURATE MARKDOWN MUTATIONS)
+      // =====================================================================
+      const STATUS_TAG_RE = /\s*\[(已锁定共识|小范围试探中|已证伪\/留档)\]\s*/g;
+
+      function parseMarkdownLine(line) {
+        const s = String(line || '');
+        const hMatch = s.match(/^(\s*)(#{1,6})\s+(.*)$/);
+        if (hMatch) {
+          return {
+            kind: 'heading',
+            indent: hMatch[1].length,
+            headingLevel: hMatch[2].length,
+            prefix: `${hMatch[1]}${hMatch[2]} `,
+            body: hMatch[3]
+          };
+        }
+        const ulMatch = s.match(/^(\s*)([-*+])\s+(.*)$/);
+        if (ulMatch) {
+          return {
+            kind: 'list',
+            indent: ulMatch[1].length,
+            headingLevel: 0,
+            prefix: `${ulMatch[1]}${ulMatch[2]} `,
+            body: ulMatch[3]
+          };
+        }
+        const olMatch = s.match(/^(\s*)(\d+\.)\s+(.*)$/);
+        if (olMatch) {
+          return {
+            kind: 'list',
+            indent: olMatch[1].length,
+            headingLevel: 0,
+            prefix: `${olMatch[1]}${olMatch[2]} `,
+            body: olMatch[3]
+          };
+        }
+        return {
+          kind: 'plain',
+          indent: (s.match(/^(\s*)/)?.[1] || '').length,
+          headingLevel: 0,
+          prefix: '',
+          body: s.trim()
+        };
+      }
+
+      function extractStatusFromBody(body) {
+        const b = String(body || '');
+        if (b.includes('[已证伪/留档]')) return '[已证伪/留档]';
+        if (b.includes('[已锁定共识]')) return '[已锁定共识]';
+        if (b.includes('[小范围试探中]')) return '[小范围试探中]';
+        return '';
+      }
+
+      function stripStatusFromBody(body) {
+        return String(body || '').replace(STATUS_TAG_RE, ' ').replace(/\s{2,}/g, ' ').trim();
+      }
+
+      function composeNodeLine(prefix, cleanText, statusTag) {
+        const core = String(cleanText || '').trim();
+        return statusTag ? `${prefix}${core} ${statusTag}` : `${prefix}${core}`;
+      }
+
+      function findSubtreeEndExclusive(lines, startIdx) {
+        const startMeta = parseMarkdownLine(lines[startIdx]);
+        let inFence = false;
+        let end = lines.length;
+
+        for (let i = startIdx + 1; i < lines.length; i++) {
+          const raw = lines[i];
+          if (/^\s*```/.test(raw)) {
+            inFence = !inFence;
+            continue;
+          }
+          if (inFence) continue;
+          if (!raw.trim()) continue;
+
+          const cur = parseMarkdownLine(raw);
+          if (startMeta.kind === 'heading') {
+            if (cur.kind === 'heading' && cur.headingLevel <= startMeta.headingLevel) {
+              end = i;
+              break;
+            }
+          } else if (startMeta.kind === 'list') {
+            if (cur.kind === 'heading') {
+              end = i;
+              break;
+            }
+            if (cur.indent <= startMeta.indent) {
+              end = i;
+              break;
+            }
+          } else {
+            end = i;
+            break;
+          }
+        }
+
+        // Trim trailing blank lines so insertions stay snug with the branch
+        while (end > startIdx + 1 && !lines[end - 1].trim()) {
+          end--;
+        }
+        return end;
+      }
+
+      function countDirectOrNestedNodes(lines, startIdx) {
+        const end = findSubtreeEndExclusive(lines, startIdx);
+        let cnt = 0;
+        for (let i = startIdx + 1; i < end; i++) {
+          if (lines[i].trim()) cnt++;
+        }
+        return cnt;
+      }
+
+      function mutateRenameLine(rawMd, lineIdx, newCleanText) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx < 0 || lineIdx >= lines.length) return null;
+        const meta = parseMarkdownLine(lines[lineIdx]);
+        const curStatus = extractStatusFromBody(meta.body);
+        const clean = stripStatusFromBody(newCleanText);
+        if (!clean) return null;
+        lines[lineIdx] = composeNodeLine(meta.prefix, clean, curStatus);
+        return { markdown: lines.join('\n'), focusLine: lineIdx };
+      }
+
+      function mutateStatusLine(rawMd, lineIdx, newStatusTag) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx < 0 || lineIdx >= lines.length) return null;
+        const meta = parseMarkdownLine(lines[lineIdx]);
+        const clean = stripStatusFromBody(meta.body);
+        lines[lineIdx] = composeNodeLine(meta.prefix, clean, newStatusTag);
+        return { markdown: lines.join('\n'), focusLine: lineIdx };
+      }
+
+      function mutateAddChild(rawMd, lineIdx, childText, statusTag) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx < 0 || lineIdx >= lines.length) return null;
+        const clean = stripStatusFromBody(childText);
+        if (!clean) return null;
+
+        const parentMeta = parseMarkdownLine(lines[lineIdx]);
+        const insertAt = findSubtreeEndExclusive(lines, lineIdx);
+        let childPrefix = '- ';
+
+        if (parentMeta.kind === 'heading') {
+          if (parentMeta.headingLevel === 1) {
+            // Root title -> add a major ## branch
+            childPrefix = '## ';
+          } else {
+            // Inspect existing immediate children: if sub-headings are used without bullets, follow heading style; else bullet
+            let hasSubHeading = false;
+            let hasDirectBullet = false;
+            for (let i = lineIdx + 1; i < insertAt; i++) {
+              if (!lines[i].trim()) continue;
+              const m = parseMarkdownLine(lines[i]);
+              if (m.kind === 'heading' && m.headingLevel > parentMeta.headingLevel) {
+                hasSubHeading = true;
+                break;
+              }
+              if (m.kind === 'list') {
+                hasDirectBullet = true;
+                break;
+              }
+            }
+            if (hasSubHeading && !hasDirectBullet) {
+              childPrefix = `${'#'.repeat(Math.min(6, parentMeta.headingLevel + 1))} `;
+            } else {
+              childPrefix = '- ';
+            }
+          }
+        } else if (parentMeta.kind === 'list') {
+          childPrefix = `${' '.repeat(parentMeta.indent + 2)}- `;
+        }
+
+        const newLine = composeNodeLine(childPrefix, clean, statusTag);
+        lines.splice(insertAt, 0, newLine);
+        return { markdown: lines.join('\n'), focusLine: insertAt };
+      }
+
+      function mutateAddSibling(rawMd, lineIdx, siblingText, statusTag) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx < 0 || lineIdx >= lines.length) return null;
+        const clean = stripStatusFromBody(siblingText);
+        if (!clean) return null;
+
+        const meta = parseMarkdownLine(lines[lineIdx]);
+        const insertAt = findSubtreeEndExclusive(lines, lineIdx);
+        let prefix = meta.prefix || '- ';
+        if (meta.kind === 'list' && /^\s*\d+\./.test(prefix)) {
+          prefix = `${' '.repeat(meta.indent)}- `;
+        }
+        const newLine = composeNodeLine(prefix, clean, statusTag);
+        lines.splice(insertAt, 0, newLine);
+        return { markdown: lines.join('\n'), focusLine: insertAt };
+      }
+
+      function mutateDeleteSubtree(rawMd, lineIdx) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx < 0 || lineIdx >= lines.length) return null;
+        const end = findSubtreeEndExclusive(lines, lineIdx);
+        lines.splice(lineIdx, Math.max(1, end - lineIdx));
+        return { markdown: lines.join('\n'), focusLine: null };
+      }
+
+      async function persistMarkdownToCloud() {
+        if (!state.currentFile || !isConfigured()) return;
+        if (state.autoSaving) {
+          state.pendingAutoSave = true;
+          return;
+        }
+        state.autoSaving = true;
+        updateSyncBadge('同步云端中...');
+        hideErrorBanner();
+
+        try {
+          const snapshot = state.rawMarkdown;
+          const data = await callGasApi({
+            action: 'save',
+            fileId: state.currentFile.id,
+            markdown: snapshot
+          });
+          if (data.updatedAt) {
+            state.currentFile.updatedAt = data.updatedAt;
+            const listItem = state.files.find(f => f.id === state.currentFile.id);
+            if (listItem) listItem.updatedAt = data.updatedAt;
+            updateCurrentFileHeader();
+          }
+          updateSyncBadge('已自动保存至 Drive');
+        } catch (err) {
+          updateSyncBadge('同步失败');
+          showErrorBanner(`节点修改已本地生效，但写回云端失败：${err.message}`);
+        } finally {
+          state.autoSaving = false;
+          if (state.pendingAutoSave) {
+            state.pendingAutoSave = false;
+            persistMarkdownToCloud();
+          }
+        }
+      }
+
+      function updateSyncBadge(text) {
+        const el = $('na-sync-badge');
+        if (el) el.textContent = text || '';
+      }
+
+      async function applyDirectNodeMutation(nextMd, opts = {}) {
+        const { focusLine = null, toastMsg = '', pushUndo = true, refit = false } = opts;
+        if (pushUndo && state.rawMarkdown !== nextMd) {
+          state.undoStack.push(state.rawMarkdown);
+          if (state.undoStack.length > 20) state.undoStack.shift();
+        }
+        state.rawMarkdown = nextMd;
+        state.manualFoldMap = {};
+        state.addMode = null;
+        state.deleteArmedLine = null;
+        state.selectedLineIdx = (typeof focusLine === 'number' && focusLine >= 0) ? focusLine : null;
+
+        await renderMindmap(refit);
+        renderNodeActionPanel();
+        if (toastMsg) showToast(toastMsg);
+        persistMarkdownToCloud();
+      }
+
+      async function selectNodeByLine(lineIdx) {
+        if (typeof lineIdx !== 'number' || lineIdx < 0) return;
+        const lines = String(state.rawMarkdown || '').replace(/\r\n/g, '\n').split('\n');
+        if (lineIdx >= lines.length) return;
+        state.selectedLineIdx = lineIdx;
+        state.addMode = null;
+        state.deleteArmedLine = null;
+        await renderMindmap(false);
+        renderNodeActionPanel();
+      }
+
+      function closeNodeActionPanel() {
+        if (state.selectedLineIdx === null) return;
+        state.selectedLineIdx = null;
+        state.addMode = null;
+        state.deleteArmedLine = null;
+        $('node-action-card').classList.add('hidden');
+        renderMindmap(false);
+      }
+
+      function renderNodeActionPanel() {
+        const card = $('node-action-card');
+        if (state.selectedLineIdx === null || !state.rawMarkdown) {
+          card.classList.add('hidden');
+          updateToolbarState();
+          return;
+        }
+        const lines = String(state.rawMarkdown || '').replace(/\r\n/g, '\n').split('\n');
+        if (state.selectedLineIdx >= lines.length) {
+          closeNodeActionPanel();
+          return;
+        }
+
+        const lineText = lines[state.selectedLineIdx];
+        const parsed = parseMarkdownLine(lineText);
+        const curStatus = extractStatusFromBody(parsed.body);
+        const cleanText = stripStatusFromBody(parsed.body);
+        const nodeMeta = state.nodeMetaByLine.get(state.selectedLineIdx) || { depth: 1, hasChildren: false, folded: false };
+        const isRoot = nodeMeta.depth === 0;
+
+        $('na-meta-label').textContent = isRoot
+          ? '已选中：课题根节点'
+          : `已选中：第 ${nodeMeta.depth} 级节点`;
+
+        const input = $('na-text-input');
+        input.value = cleanText;
+
+        // Highlight active status pill
+        card.querySelectorAll('[data-na-status]').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-na-status') === curStatus);
+        });
+
+        // Root cannot add sibling or be deleted
+        $('na-btn-add-sibling').classList.toggle('hidden', isRoot);
+        $('na-btn-delete').classList.toggle('hidden', isRoot);
+
+        // Fold/unfold single branch button
+        const foldBtn = $('na-btn-fold-node');
+        if (nodeMeta.hasChildren) {
+          foldBtn.classList.remove('hidden');
+          foldBtn.textContent = nodeMeta.folded ? '展开此分支' : '折叠此分支';
+        } else {
+          foldBtn.classList.add('hidden');
+        }
+
+        // Delete button confirm state
+        const delBtn = $('na-btn-delete');
+        if (state.deleteArmedLine === state.selectedLineIdx) {
+          const childCount = countDirectOrNestedNodes(lines, state.selectedLineIdx);
+          delBtn.textContent = childCount > 0 ? `确认删除 (含 ${childCount} 子项)` : '确认删除';
+        } else {
+          delBtn.textContent = '删除';
+        }
+
+        // Inline Add Child / Sibling Subform
+        const addForm = $('na-add-form');
+        if (state.addMode) {
+          addForm.classList.remove('hidden');
+          $('na-add-title').textContent = state.addMode === 'sibling' ? '添加同级节点' : '添加子节点';
+          $('na-add-input').placeholder = state.addMode === 'sibling' ? '输入同级节点内容...' : '输入子节点内容...';
+          addForm.querySelectorAll('[data-add-status]').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-add-status') === state.addStatusTag);
+          });
+        } else {
+          addForm.classList.add('hidden');
+        }
+
+        card.classList.remove('hidden');
+        updateToolbarState();
+      }
+
+      async function undoLastDirectEdit() {
+        if (state.undoStack.length === 0) return;
+        const prevMd = state.undoStack.pop();
+        await applyDirectNodeMutation(prevMd, {
+          focusLine: null,
+          toastMsg: '已撤回上一步并同步云端',
+          pushUndo: false
+        });
       }
 
       // =====================================================================
@@ -1528,6 +2123,12 @@
             url: data.url || metaFromList.url || ''
           };
           state.rawMarkdown = String(data.markdown || `# ${state.currentFile.name}\n- 空白共识树`);
+          state.selectedLineIdx = null;
+          state.manualFoldMap = {};
+          state.undoStack = [];
+          state.addMode = null;
+          state.deleteArmedLine = null;
+          $('node-action-card').classList.add('hidden');
 
           renderFileDropdown();
           updateCurrentFileHeader();
@@ -1573,6 +2174,10 @@
         state.currentFileId = '';
         state.currentFile = null;
         state.rawMarkdown = '';
+        state.selectedLineIdx = null;
+        state.manualFoldMap = {};
+        state.undoStack = [];
+        $('node-action-card').classList.add('hidden');
         if (state.mm) {
           $('markmap-svg').innerHTML = '';
           state.mm = null;
@@ -1720,16 +2325,178 @@
         };
 
         // Tool 2: Fold to Level 2 / Expand All
-        $('btn-fold-toggle').onclick = () => {
+        $('btn-fold-toggle').onclick = async () => {
           state.foldedToLevel2 = !state.foldedToLevel2;
-          renderMindmap(true);
+          state.manualFoldMap = {};
+          await renderMindmap(true);
+          renderNodeActionPanel();
         };
 
         // Tool 3: Hide / Show [已证伪/留档] branches & subtrees
-        $('btn-filter-falsified').onclick = () => {
+        $('btn-filter-falsified').onclick = async () => {
           state.hideFalsified = !state.hideFalsified;
-          renderMindmap(true);
+          if (state.hideFalsified && state.selectedLineIdx !== null) {
+            const lines = state.rawMarkdown.split('\n');
+            if (extractStatusFromBody(parseMarkdownLine(lines[state.selectedLineIdx] || '').body) === '[已证伪/留档]') {
+              state.selectedLineIdx = null;
+            }
+          }
+          await renderMindmap(true);
+          renderNodeActionPanel();
         };
+
+        // Undo last direct node edit
+        $('btn-undo').onclick = undoLastDirectEdit;
+
+        // Direct Click-to-Select Node on Markmap SVG (preserves drag-pan & circle-fold!)
+        const svgEl = $('markmap-svg');
+        let ptrDownX = 0;
+        let ptrDownY = 0;
+        svgEl.addEventListener('pointerdown', (e) => {
+          ptrDownX = e.clientX;
+          ptrDownY = e.clientY;
+        });
+        svgEl.addEventListener('click', (e) => {
+          if (Math.hypot(e.clientX - ptrDownX, e.clientY - ptrDownY) > 6) return;
+          if (e.target.closest('circle') || e.target.closest('a')) return;
+          const wrap = e.target.closest('.rm-node-wrap[data-rm-line]');
+          if (wrap) {
+            const lineIdx = Number(wrap.getAttribute('data-rm-line'));
+            if (Number.isFinite(lineIdx) && lineIdx >= 0) {
+              selectNodeByLine(lineIdx);
+            }
+          } else {
+            closeNodeActionPanel();
+          }
+        });
+
+        // Wire Floating Node Action Panel Controls
+        $('na-btn-close').onclick = closeNodeActionPanel;
+
+        const commitRename = () => {
+          if (state.selectedLineIdx === null) return;
+          const nextText = $('na-text-input').value.trim();
+          if (!nextText) {
+            showToast('节点内容不能为空');
+            return;
+          }
+          const res = mutateRenameLine(state.rawMarkdown, state.selectedLineIdx, nextText);
+          if (!res || res.markdown === state.rawMarkdown) {
+            showToast('内容未变化');
+            return;
+          }
+          applyDirectNodeMutation(res.markdown, { focusLine: res.focusLine, toastMsg: '已更新节点文字' });
+        };
+        $('na-btn-rename').onclick = commitRename;
+        $('na-text-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commitRename();
+          }
+        });
+
+        // 1-Tap Status Switcher Pills
+        $('node-action-card').querySelectorAll('[data-na-status]').forEach(btn => {
+          btn.onclick = () => {
+            if (state.selectedLineIdx === null) return;
+            const nextTag = btn.getAttribute('data-na-status') || '';
+            const res = mutateStatusLine(state.rawMarkdown, state.selectedLineIdx, nextTag);
+            if (!res || res.markdown === state.rawMarkdown) return;
+            const hiddenImmediately = state.hideFalsified && nextTag === '[已证伪/留档]';
+            applyDirectNodeMutation(res.markdown, {
+              focusLine: hiddenImmediately ? null : res.focusLine,
+              toastMsg: hiddenImmediately
+                ? '已标为「已证伪/留档」（当前已开启隐藏）'
+                : (nextTag ? `状态已切换为 ${nextTag}` : '已清除状态标签')
+            });
+          };
+        });
+
+        // Add Child / Add Sibling inline subform
+        const openAddForm = (mode) => {
+          state.addMode = mode;
+          state.addStatusTag = '';
+          state.deleteArmedLine = null;
+          renderNodeActionPanel();
+          const addInput = $('na-add-input');
+          addInput.value = '';
+          setTimeout(() => addInput.focus(), 30);
+        };
+        $('na-btn-add-child').onclick = () => openAddForm('child');
+        $('na-btn-add-sibling').onclick = () => openAddForm('sibling');
+        $('na-add-cancel').onclick = () => {
+          state.addMode = null;
+          renderNodeActionPanel();
+        };
+
+        $('na-add-form').querySelectorAll('[data-add-status]').forEach(btn => {
+          btn.onclick = () => {
+            state.addStatusTag = btn.getAttribute('data-add-status') || '';
+            $('na-add-form').querySelectorAll('[data-add-status]').forEach(b => b.classList.toggle('active', b === btn));
+          };
+        });
+
+        const commitAddNode = () => {
+          if (state.selectedLineIdx === null || !state.addMode) return;
+          const text = $('na-add-input').value.trim();
+          if (!text) {
+            showToast('请先输入新节点内容');
+            $('na-add-input').focus();
+            return;
+          }
+          const res = state.addMode === 'sibling'
+            ? mutateAddSibling(state.rawMarkdown, state.selectedLineIdx, text, state.addStatusTag)
+            : mutateAddChild(state.rawMarkdown, state.selectedLineIdx, text, state.addStatusTag);
+          if (!res) return;
+          const label = state.addMode === 'sibling' ? '已添加同级节点' : '已添加子节点';
+          const hiddenImmediately = state.hideFalsified && state.addStatusTag === '[已证伪/留档]';
+          applyDirectNodeMutation(res.markdown, {
+            focusLine: hiddenImmediately ? state.selectedLineIdx : res.focusLine,
+            toastMsg: label
+          });
+        };
+        $('na-add-confirm').onclick = commitAddNode;
+        $('na-add-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commitAddNode();
+          }
+        });
+
+        // Single-Branch Fold / Unfold toggle
+        $('na-btn-fold-node').onclick = async () => {
+          if (state.selectedLineIdx === null) return;
+          const meta = state.nodeMetaByLine.get(state.selectedLineIdx);
+          if (!meta || !meta.hasChildren) return;
+          state.manualFoldMap[state.selectedLineIdx] = meta.folded ? 0 : 1;
+          await renderMindmap(false);
+          renderNodeActionPanel();
+        };
+
+        // 2-Step Safe Delete Node & Subtree
+        $('na-btn-delete').onclick = () => {
+          if (state.selectedLineIdx === null) return;
+          if (state.deleteArmedLine !== state.selectedLineIdx) {
+            state.deleteArmedLine = state.selectedLineIdx;
+            renderNodeActionPanel();
+            return;
+          }
+          const res = mutateDeleteSubtree(state.rawMarkdown, state.selectedLineIdx);
+          if (!res) return;
+          applyDirectNodeMutation(res.markdown, { focusLine: null, toastMsg: '已删除节点（点顶部「撤回」可恢复）' });
+        };
+
+        // Escape shortcut closes subform / node panel
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (!$('na-add-form').classList.contains('hidden')) {
+              state.addMode = null;
+              renderNodeActionPanel();
+            } else if (state.selectedLineIdx !== null) {
+              closeNodeActionPanel();
+            }
+          }
+        });
 
         // Tool 4: Markdown Editor Drawer
         $('btn-open-editor').onclick = openEditorDrawer;
