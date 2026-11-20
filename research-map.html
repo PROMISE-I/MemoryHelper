@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="共识树" />
+  <meta name="theme-color" content="#F7F6F2" id="meta-theme-color" />
+  <title>科研共识树 · Research Consensus Map</title>
+
+  <!-- Inline SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230F766E'/%3E%3Ccircle cx='18' cy='32' r='5' fill='%23F7F6F2'/%3E%3Ccircle cx='46' cy='18' r='4.5' fill='%2399F6E4'/%3E%3Ccircle cx='46' cy='32' r='4.5' fill='%23FDE68A'/%3E%3Ccircle cx='46' cy='46' r='4.5' fill='%23CBD5E1'/%3E%3Cpath d='M23 32 C31 32 32 18 41.5 18 M23 32 L41.5 32 M23 32 C31 32 32 46 41.5 46' stroke='%23F7F6F2' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+
+  <!-- Lightweight CDN: D3 + Markmap Lib + Markmap View (with automatic fallback in script) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
+
+  <style>
+    /* =====================================================================
+       DESIGN TOKENS: Serene Research Paper Light Mode & Deep Slate Dark Mode
+       ===================================================================== */
+    :root {
+      --bg: #F7F6F2;
+      --canvas-dot: rgba(15, 118, 110, 0.10);
+      --surface: #FFFFFF;
+      --surface-soft: #EFECE6;
+      --surface-subtle: #F4F2EC;
+      --border: #E2DDD4;
+      --border-soft: rgba(226, 221, 212, 0.72);
+      --ink: #1E2422;
+      --ink-secondary: #4D5754;
+      --ink-muted: #7C8682;
+
+      --accent: #0F766E;
+      --accent-hover: #0D5F59;
+      --accent-soft: #E6F4F2;
+      --accent-border: rgba(15, 118, 110, 0.25);
+
+      /* Research Consensus Status Palette */
+      --locked-bg: #0F766E;
+      --locked-fg: #FFFFFF;
+      --locked-line: #0F766E;
+
+      --exploring-bg: #FEF3C7;
+      --exploring-fg: #B45309;
+      --exploring-border: #F59E0B;
+      --exploring-line: #D97706;
+
+      --falsified-bg: #E2E8F0;
+      --falsified-fg: #64748B;
+      --falsified-border: #CBD5E1;
+      --falsified-line: #94A3B8;
+
+      --danger-bg: #FEF2F2;
+      --danger-fg: #B91C1C;
+      --danger-border: rgba(185, 28, 28, 0.24);
+
+      --shadow-sm: 0 2px 10px rgba(24, 32, 29, 0.05);
+      --shadow-md: 0 12px 32px rgba(24, 32, 29, 0.12);
+      --backdrop: rgba(18, 24, 22, 0.45);
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html.dark {
+      --bg: #131615;
+      --canvas-dot: rgba(148, 163, 184, 0.11);
+      --surface: #1B201E;
+      --surface-soft: #242B28;
+      --surface-subtle: #171C1A;
+      --border: #2E3633;
+      --border-soft: rgba(46, 54, 51, 0.8);
+      --ink: #E8ECEA;
+      --ink-secondary: #BAC4C0;
+      --ink-muted: #88948F;
+
+      --accent: #2DD4BF;
+      --accent-hover: #5EEAD4;
+      --accent-soft: rgba(45, 212, 191, 0.14);
+      --accent-border: rgba(45, 212, 191, 0.30);
+
+      --locked-bg: #0D9488;
+      --locked-fg: #F0FDFA;
+      --locked-line: #2DD4BF;
+
+      --exploring-bg: rgba(245, 158, 11, 0.20);
+      --exploring-fg: #FCD34D;
+      --exploring-border: rgba(245, 158, 11, 0.50);
+      --exploring-line: #F59E0B;
+
+      --falsified-bg: #2A3138;
+      --falsified-fg: #94A3B8;
+      --falsified-border: #3E4852;
+      --falsified-line: #64748B;
+
+      --danger-bg: rgba(220, 38, 38, 0.15);
+      --danger-fg: #FCA5A5;
+      --danger-border: rgba(248, 113, 113, 0.30);
+
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.30);
+      --shadow-md: 0 14px 36px rgba(0, 0, 0, 0.55);
+      --backdrop: rgba(0, 0, 0, 0.65);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    button, input, textarea, select {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =====================================================================
+       APP LAYOUT (FULL VIEWPORT MINDMAP SHELL)
+       ===================================================================== */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding-top: var(--safe-top);
+      z-index: 20;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      min-height: 46px;
+    }
+
+    .topbar-row.tools-row {
+      padding: 0 12px 8px;
+      min-height: 36px;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      justify-content: flex-start;
+    }
+
+    .topbar-row.tools-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #FFFFFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    html.dark .brand-dot {
+      color: #0F1716;
+    }
+
+    .file-select {
+      flex: 1;
+      min-width: 110px;
+      max-width: 320px;
+      height: 34px;
+      padding: 0 28px 0 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%), linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .file-select:focus {
+      border-color: var(--accent);
+    }
+
+    .updated-meta {
+      font-size: 11px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      display: none;
+    }
+
+    @media (min-width: 680px) {
+      .updated-meta {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
+    .actions-right {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    /* Buttons & Chips */
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 34px;
+      min-width: 34px;
+      padding: 0 9px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .icon-btn:hover:not(:disabled) {
+      border-color: var(--accent-border);
+      color: var(--ink);
+    }
+
+    .icon-btn .btn-lbl {
+      display: none;
+    }
+
+    @media (min-width: 760px) {
+      .icon-btn .btn-lbl {
+        display: inline;
+      }
+    }
+
+    .tool-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+      color: var(--ink-secondary);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+
+    @media (max-width: 440px) {
+      .tool-chip {
+        padding: 0 8px;
+        gap: 3px;
+        font-size: 11.5px;
+      }
+      .tool-chip svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    .tool-chip:hover:not(:disabled) {
+      border-color: var(--accent-border);
+      color: var(--ink);
+    }
+
+    .tool-chip.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent-border);
+    }
+
+    .tool-chip.primary-chip {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    html.dark .tool-chip.primary-chip {
+      color: #0F1716;
+    }
+
+    .tool-spacer {
+      flex: 1;
+      min-width: 8px;
+    }
+
+    .legend-counts {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 900px) {
+      .legend-counts {
+        display: inline-flex;
+      }
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+
+    /* Error Banner */
+    .error-banner {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--danger-bg);
+      border-bottom: 1px solid var(--danger-border);
+      color: var(--danger-fg);
+      font-size: 13px;
+      line-height: 1.45;
+      z-index: 19;
+    }
+
+    /* =====================================================================
+       MARKMAP CANVAS & RESEARCH STATUS BADGES
+       ===================================================================== */
+    .canvas-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      background-color: var(--bg);
+      background-image: radial-gradient(var(--canvas-dot) 1.2px, transparent 1.2px);
+      background-size: 22px 22px;
+      overflow: hidden;
+    }
+
+    #markmap-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Markmap internal styling overrides for serene readability in light & dark mode */
+    #markmap-svg {
+      --markmap-text-color: var(--ink);
+      --markmap-code-bg: var(--surface-soft);
+      --markmap-code-color: var(--ink);
+      --markmap-a-color: var(--accent);
+      --markmap-a-hover-color: var(--accent-hover);
+      --markmap-circle-open-bg: var(--surface);
+      color: var(--ink);
+    }
+
+    .markmap-foreign {
+      font-family: var(--font-sans) !important;
+      color: var(--ink) !important;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .markmap-foreign div {
+      color: inherit;
+    }
+
+    /* 3 Research Consensus Status Badges */
+    .rm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 7px;
+      margin: 0 4px 0 1px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.55;
+      vertical-align: 1px;
+      white-space: nowrap;
+      text-decoration: none !important;
+      letter-spacing: 0.01em;
+    }
+
+    .rm-badge-locked {
+      background: var(--locked-bg);
+      color: var(--locked-fg);
+      box-shadow: 0 1px 3px rgba(15, 118, 110, 0.25);
+    }
+
+    .rm-badge-exploring {
+      background: var(--exploring-bg);
+      color: var(--exploring-fg);
+      border: 1px solid var(--exploring-border);
+    }
+
+    .rm-badge-falsified {
+      background: var(--falsified-bg);
+      color: var(--falsified-fg);
+      border: 1px solid var(--falsified-border);
+      opacity: 1;
+    }
+
+    .rm-node-falsified {
+      opacity: 0.56;
+      color: var(--ink-muted);
+    }
+
+    .rm-node-falsified .rm-falsified-text {
+      text-decoration: line-through;
+      text-decoration-color: var(--falsified-fg);
+    }
+
+    .rm-node-falsified-child {
+      opacity: 0.62;
+      color: var(--ink-muted);
+    }
+
+    /* Empty / Loading Overlay on Canvas */
+    .canvas-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background: var(--bg);
+      z-index: 5;
+    }
+
+    .overlay-card {
+      max-width: 380px;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Mobile bottom status pill */
+    .canvas-status-pill {
+      position: absolute;
+      left: 12px;
+      bottom: calc(var(--safe-bottom) + 12px);
+      z-index: 8;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      font-size: 11px;
+      color: var(--ink-muted);
+      pointer-events: none;
+    }
+
+    /* =====================================================================
+       COMMON FORM CONTROLS, MODAL & EDITOR DRAWER
+       ===================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 15px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity 0.15s ease, background-color 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+    }
+
+    html.dark .btn-primary {
+      color: #0F1716;
+    }
+
+    .btn-soft {
+      background: var(--surface-soft);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger-fg);
+      border: 1px solid var(--danger-border);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--ink);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .pw-wrap {
+      position: relative;
+    }
+
+    .pw-wrap .input {
+      padding-right: 40px;
+    }
+
+    .pw-eye {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-muted);
+      border-radius: 8px;
+    }
+
+    /* Config Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: var(--backdrop);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 440px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Slide-over Markdown Editor Drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 35;
+      background: var(--backdrop);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .editor-drawer {
+      width: 100%;
+      max-width: 560px;
+      height: 100dvh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-tagbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-soft);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .drawer-tagbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .editor-textarea {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 14px 16px;
+      background: var(--surface-subtle);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.68;
+      tab-size: 2;
+    }
+
+    .drawer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    /* Toast */
+    .toast-wrap {
+      position: fixed;
+      top: calc(var(--safe-top) + 14px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      max-width: 90%;
+    }
+
+    .toast-wrap.show {
+      opacity: 1;
+    }
+
+    .toast-pill {
+      background: var(--ink);
+      color: var(--bg);
+      padding: 8px 15px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning svg {
+      animation: spin 0.9s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header & Compact Action Toolbar -->
+    <header class="topbar">
+      <div class="topbar-row">
+        <div class="brand-group">
+          <div class="brand-dot" aria-hidden="true" title="科研共识树">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="19" cy="18" r="2.2"/>
+              <path d="M7.5 12h9.3M7.5 12c4 0 4-6 9.3-6M7.5 12c4 0 4 6 9.3 6"/>
+            </svg>
+          </div>
+          <select id="file-select" class="file-select" aria-label="选择科研共识树课题" disabled>
+            <option value="">尚未连接云端课题</option>
+          </select>
+          <span id="updated-meta" class="updated-meta"></span>
+        </div>
+
+        <div class="actions-right">
+          <button type="button" id="btn-refresh" class="icon-btn" title="刷新当前共识树">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>
+            </svg>
+            <span class="btn-lbl">刷新</span>
+          </button>
+
+          <a id="btn-drive-link" class="icon-btn hidden" href="#" target="_blank" rel="noopener noreferrer" title="在 Google Drive 中打开原文档">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            <span class="btn-lbl">Drive 打开</span>
+          </a>
+
+          <button type="button" id="btn-theme" class="icon-btn" title="切换浅色 / 深色模式" aria-label="切换深色模式">
+            <span id="theme-icon-slot"></span>
+          </button>
+
+          <button type="button" id="btn-settings" class="icon-btn" title="连接设置">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span class="btn-lbl">连接设置</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: 4 Research Mindmap Quick Tools -->
+      <div class="topbar-row tools-row">
+        <button type="button" id="btn-fit" class="tool-chip" title="居中适配整个画面">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+          </svg>
+          <span>居中适配</span>
+        </button>
+
+        <button type="button" id="btn-fold-toggle" class="tool-chip" title="在折叠至第 2 层与全部展开之间切换">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+          <span id="btn-fold-label">折叠至第 2 层</span>
+        </button>
+
+        <button type="button" id="btn-filter-falsified" class="tool-chip" title="隐藏或显示已证伪/留档分支及其子树">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          <span id="btn-filter-label">隐藏已证伪</span>
+        </button>
+
+        <button type="button" id="btn-open-editor" class="tool-chip primary-chip" title="打开纯文本 Markdown 抽屉并写回云端">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+          </svg>
+          <span>编辑原文</span>
+        </button>
+
+        <div class="tool-spacer"></div>
+
+        <div id="legend-counts" class="legend-counts hidden">
+          <span><span class="legend-dot" style="background:var(--locked-bg);"></span>锁定 <strong id="cnt-locked">0</strong></span>
+          <span><span class="legend-dot" style="background:var(--exploring-line);"></span>试探 <strong id="cnt-exploring">0</strong></span>
+          <span><span class="legend-dot" style="background:var(--falsified-line);"></span>证伪 <strong id="cnt-falsified">0</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Error Banner (Shown whenever Apps Script returns ok:false or network fails) -->
+    <div id="error-banner" class="error-banner hidden" role="alert">
+      <span id="error-banner-text"></span>
+      <button type="button" id="btn-error-dismiss" style="color:inherit;padding:2px 6px;font-size:16px;line-height:1;" aria-label="关闭提示">×</button>
+    </div>
+
+    <!-- Main Interactive Markmap Canvas -->
+    <main class="canvas-wrap">
+      <svg id="markmap-svg"></svg>
+
+      <div id="canvas-status-pill" class="canvas-status-pill hidden"></div>
+
+      <!-- Empty / Loading State Overlay -->
+      <div id="canvas-overlay" class="canvas-overlay">
+        <div class="overlay-card" id="overlay-card-content">
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;">科研共识树</div>
+          <p style="margin:0 0 16px;font-size:13px;color:var(--ink-muted);line-height:1.6;">
+            实时拉取你在 Google Drive 中维护的 Markdown 科研共识树，自动高亮共识、试探与证伪留档分支。
+          </p>
+          <button type="button" id="btn-overlay-config" class="btn btn-primary btn-block">配置云端连接</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Connection Settings Modal -->
+  <div id="config-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="cfg-modal-title">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 id="cfg-modal-title" style="margin:0;font-size:16px;font-weight:600;">云端连接设置</h2>
+        <button type="button" id="btn-cfg-close" style="color:var(--ink-muted);font-size:20px;line-height:1;padding:2px 6px;" aria-label="关闭">×</button>
+      </div>
+
+      <p style="margin:0 0 14px;font-size:12px;color:var(--ink-muted);line-height:1.6;">
+        配置信息仅保存在当前浏览器的本地存储中，所有请求统一走 POST 请求体传输口令，口令绝不会出现在网址中。
+      </p>
+
+      <form id="config-form" style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label class="field-label" for="cfg-url">Apps Script Web App URL</label>
+          <input id="cfg-url" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" required />
+        </div>
+
+        <div>
+          <label class="field-label" for="cfg-token">访问口令（SECRET_TOKEN）</label>
+          <div class="pw-wrap">
+            <input id="cfg-token" class="input" type="password" placeholder="填写你的访问口令" autocomplete="off" required />
+            <button type="button" id="btn-toggle-token" class="pw-eye" aria-label="显示或隐藏口令">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-cfg-save" class="btn btn-primary btn-block" style="margin-top:4px;">保存并拉取课题列表</button>
+
+        <div id="cfg-clear-wrap" class="hidden" style="padding-top:10px;border-top:1px solid var(--border-soft);">
+          <button type="button" id="btn-cfg-clear" class="btn btn-danger btn-block">清除本地配置（退出本设备）</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Slide-Over Markdown Editor Drawer -->
+  <div id="editor-backdrop" class="drawer-backdrop hidden" role="dialog" aria-modal="true" aria-label="纯文本 Markdown 编辑">
+    <div class="editor-drawer">
+      <div class="drawer-header">
+        <div style="min-width:0;">
+          <div id="editor-filename" style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">编辑共识树原文</div>
+          <div id="editor-dirty-hint" style="font-size:11px;color:var(--ink-muted);margin-top:2px;">原始 Markdown 文本</div>
+        </div>
+        <button type="button" id="btn-editor-close" class="icon-btn" style="padding:0 10px;">收起</button>
+      </div>
+
+      <div class="drawer-tagbar">
+        <span style="font-size:11px;color:var(--ink-muted);white-space:nowrap;">快速插入标签：</span>
+        <button type="button" class="tool-chip" data-insert-tag="[已锁定共识]" style="height:26px;font-size:11px;">+ [已锁定共识]</button>
+        <button type="button" class="tool-chip" data-insert-tag="[小范围试探中]" style="height:26px;font-size:11px;">+ [小范围试探中]</button>
+        <button type="button" class="tool-chip" data-insert-tag="[已证伪/留档]" style="height:26px;font-size:11px;">+ [已证伪/留档]</button>
+      </div>
+
+      <textarea id="editor-textarea" class="editor-textarea" spellcheck="false" placeholder="# 课题标题&#10;## 核心共识 [已锁定共识]&#10;- ..."></textarea>
+
+      <div class="drawer-footer">
+        <button type="button" id="btn-editor-preview" class="btn btn-soft" style="height:34px;font-size:12px;">先预览导图</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="btn-editor-revert" class="btn btn-soft" style="height:34px;font-size:12px;">还原</button>
+          <button type="button" id="btn-editor-save" class="btn btn-primary" style="height:34px;font-size:12px;">保存回云端</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gentle Toast -->
+  <div id="toast-wrap" class="toast-wrap" aria-live="polite">
+    <div id="toast-pill" class="toast-pill"></div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =====================================================================
+      // 1. STORAGE KEYS & APPLICATION STATE (ZERO HARDCODED CREDENTIALS)
+      // =====================================================================
+      const KEYS = {
+        CONFIG: 'research_map_cfg_v1',
+        LAST_FILE: 'research_map_last_file_v1',
+        THEME: 'research_map_theme_v1'
+      };
+
+      const state = {
+        config: loadJson(KEYS.CONFIG, { scriptUrl: '', token: '' }),
+        theme: loadInitialTheme(),
+        files: [],
+        currentFileId: localStorage.getItem(KEYS.LAST_FILE) || '',
+        currentFile: null, // { id, name, updatedAt, url, markdown }
+        rawMarkdown: '',
+        hideFalsified: false,
+        foldedToLevel2: false,
+        stats: { locked: 0, exploring: 0, falsified: 0, hiddenBranches: 0 },
+        loading: false,
+        saving: false,
+        mm: null,
+        transformer: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function loadJson(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (_) {
+          return fallback;
+        }
+      }
+
+      function saveJson(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (_) {}
+      }
+
+      function loadInitialTheme() {
+        const saved = localStorage.getItem(KEYS.THEME);
+        if (saved === 'dark' || saved === 'light') return saved;
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      // =====================================================================
+      // 2. STANDALONE PWA ICON & MANIFEST (INDEPENDENT HOME-SCREEN ICON)
+      // =====================================================================
+      function initPwaAssets() {
+        try {
+          const drawIcon = (size) => {
+            const c = document.createElement('canvas');
+            c.width = size;
+            c.height = size;
+            const ctx = c.getContext('2d');
+            if (!ctx) return '';
+            const r = size * 0.24;
+            ctx.fillStyle = '#0F766E';
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#F7F6F2';
+            ctx.lineWidth = size * 0.045;
+            ctx.lineCap = 'round';
+            const sx = size * 0.30, sy = size * 0.50;
+            const targets = [
+              { x: size * 0.72, y: size * 0.28, color: '#99F6E4' },
+              { x: size * 0.72, y: size * 0.50, color: '#FDE68A' },
+              { x: size * 0.72, y: size * 0.72, color: '#CBD5E1' }
+            ];
+            targets.forEach(t => {
+              ctx.beginPath();
+              ctx.moveTo(sx, sy);
+              ctx.bezierCurveTo(size * 0.50, sy, size * 0.52, t.y, t.x, t.y);
+              ctx.stroke();
+            });
+            ctx.fillStyle = '#F7F6F2';
+            ctx.beginPath();
+            ctx.arc(sx, sy, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            targets.forEach(t => {
+              ctx.fillStyle = t.color;
+              ctx.beginPath();
+              ctx.arc(t.x, t.y, size * 0.072, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            return c.toDataURL('image/png');
+          };
+
+          const icon180 = drawIcon(180);
+          const icon512 = drawIcon(512);
+          if (icon180) {
+            const link = document.createElement('link');
+            link.rel = 'apple-touch-icon';
+            link.sizes = '180x180';
+            link.href = icon180;
+            document.head.appendChild(link);
+          }
+          if (icon512) {
+            const manifest = {
+              name: '科研共识树',
+              short_name: '共识树',
+              description: '实时同步 Google Drive 的交互式科研共识树思维导图',
+              start_url: './research-map.html',
+              display: 'standalone',
+              background_color: '#F7F6F2',
+              theme_color: '#0F766E',
+              icons: [
+                { src: icon180, sizes: '180x180', type: 'image/png' },
+                { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+              ]
+            };
+            const url = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }));
+            const mLink = document.createElement('link');
+            mLink.rel = 'manifest';
+            mLink.href = url;
+            document.head.appendChild(mLink);
+          }
+        } catch (_) {}
+      }
+
+      // =====================================================================
+      // 3. THEME, TOAST, ERROR BANNER & TIME FORMATTING
+      // =====================================================================
+      function applyTheme(theme) {
+        state.theme = theme === 'dark' ? 'dark' : 'light';
+        document.documentElement.classList.toggle('dark', state.theme === 'dark');
+        localStorage.setItem(KEYS.THEME, state.theme);
+        const metaTheme = $('meta-theme-color');
+        if (metaTheme) metaTheme.setAttribute('content', state.theme === 'dark' ? '#131615' : '#F7F6F2');
+        $('theme-icon-slot').innerHTML = state.theme === 'dark'
+          ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>'
+          : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+        // Re-render colors cleanly if map is active
+        if (state.mm && state.rawMarkdown) {
+          renderMindmap(false);
+        }
+      }
+
+      let toastTimer = null;
+      function showToast(msg, ms = 2600) {
+        $('toast-pill').textContent = msg;
+        $('toast-wrap').classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => $('toast-wrap').classList.remove('show'), ms);
+      }
+
+      function showErrorBanner(msg) {
+        $('error-banner-text').textContent = msg;
+        $('error-banner').classList.remove('hidden');
+      }
+
+      function hideErrorBanner() {
+        $('error-banner').classList.add('hidden');
+        $('error-banner-text').textContent = '';
+      }
+
+      function formatUpdatedAt(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return String(iso);
+        const pad = (n) => String(n).padStart(2, '0');
+        return `更新于 ${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function isConfigured() {
+        return Boolean(state.config.scriptUrl && state.config.scriptUrl.trim() && state.config.token && state.config.token.trim());
+      }
+
+      function showCanvasOverlay(title, desc, showConfigBtn = false, showSpinner = false) {
+        const el = $('canvas-overlay');
+        el.classList.remove('hidden');
+        $('overlay-card-content').innerHTML = `
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;${showSpinner ? 'opacity:0.85;' : ''}">${esc(title)}</div>
+          <p style="margin:0${showConfigBtn ? ' 0 16px' : ''};font-size:13px;color:var(--ink-muted);line-height:1.6;">${esc(desc)}</p>
+          ${showConfigBtn ? '<button type="button" id="btn-overlay-config" class="btn btn-primary btn-block">打开连接设置</button>' : ''}
+        `;
+        const btn = $('btn-overlay-config');
+        if (btn) btn.onclick = () => openConfigModal(true);
+      }
+
+      function hideCanvasOverlay() {
+        $('canvas-overlay').classList.add('hidden');
+      }
+
+      function esc(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // =====================================================================
+      // 4. CDN FALLBACK LOADER FOR D3 / MARKMAP
+      // =====================================================================
+      function loadScriptOnce(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error(`脚本加载失败: ${src}`));
+          document.head.appendChild(s);
+        });
+      }
+
+      async function ensureMarkmapReady() {
+        if (!window.d3) {
+          await loadScriptOnce('https://unpkg.com/d3@7.9.0/dist/d3.min.js');
+        }
+        if (!window.markmap || !window.markmap.Transformer) {
+          await loadScriptOnce('https://unpkg.com/markmap-lib@0.18.12/dist/browser/index.iife.js');
+        }
+        if (!window.markmap || !window.markmap.Markmap) {
+          await loadScriptOnce('https://unpkg.com/markmap-view@0.18.12/dist/browser/index.js');
+        }
+        if (!window.markmap?.Transformer || !window.markmap?.Markmap) {
+          throw new Error('思维导图渲染引擎（Markmap）加载失败，请检查网络后刷新重试。');
+        }
+        if (!state.transformer) {
+          state.transformer = new window.markmap.Transformer();
+        }
+      }
+
+      // =====================================================================
+      // 5. ALL-POST APPS SCRIPT CLIENT (TOKEN STRICTLY IN POST BODY, ZERO PREFLIGHT)
+      // =====================================================================
+      async function callGasApi(payload) {
+        if (!isConfigured()) {
+          throw new Error('尚未配置 Apps Script URL 与访问口令。');
+        }
+        const endpoint = state.config.scriptUrl.trim();
+        let resp;
+        try {
+          resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              token: state.config.token.trim(),
+              ...payload
+            }),
+            redirect: 'follow'
+          });
+        } catch (err) {
+          throw new Error(`无法连接到云端接口，请检查网络或 Web App URL 是否正确（${err?.message || '网络异常'}）`);
+        }
+
+        const rawText = await resp.text();
+        let data = null;
+        try {
+          data = JSON.parse(rawText);
+        } catch (_) {
+          throw new Error(`接口返回了非 JSON 内容（HTTP ${resp.status}），请确认 Apps Script 已部署为“任何人可访问”的 Web App。`);
+        }
+
+        if (!resp.ok || !data || data.ok === false) {
+          throw new Error(data?.error || data?.message || `请求失败（HTTP ${resp.status}）`);
+        }
+        return data;
+      }
+
+      // =====================================================================
+      // 6. RESEARCH STATUS HIGHLIGHTING, AST FALSIFIED SUBTREE FILTER & FOLDING
+      // =====================================================================
+      function highlightResearchTags(rawMd) {
+        const lines = String(rawMd || '').replace(/\r\n/g, '\n').split('\n');
+        let inCodeFence = false;
+
+        const replaceOutsideInlineCode = (line) => {
+          // Split by inline backtick code spans so code examples stay untouched
+          const segments = line.split(/(`[^`]*`)/g);
+          return segments.map((seg, idx) => {
+            if (idx % 2 === 1) return seg;
+            return seg
+              .replace(/\[已锁定共识\]/g, '<span class="rm-badge rm-badge-locked" data-rm-status="locked">✓ 已锁定共识</span>')
+              .replace(/\[小范围试探中\]/g, '<span class="rm-badge rm-badge-exploring" data-rm-status="exploring">◔ 小范围试探中</span>')
+              .replace(/\[已证伪\/留档\]/g, '<span class="rm-badge rm-badge-falsified" data-rm-status="falsified">✕ 已证伪/留档</span>');
+          }).join('');
+        };
+
+        return lines.map((line) => {
+          if (/^\s*```/.test(line)) {
+            inCodeFence = !inCodeFence;
+            return line;
+          }
+          if (inCodeFence) return line;
+          return replaceOutsideInlineCode(line);
+        }).join('\n');
+      }
+
+      function detectNodeStatus(htmlContent) {
+        const c = String(htmlContent || '');
+        if (c.includes('data-rm-status="falsified"')) return 'falsified';
+        if (c.includes('data-rm-status="locked"')) return 'locked';
+        if (c.includes('data-rm-status="exploring"')) return 'exploring';
+        return 'normal';
+      }
+
+      function wrapFalsifiedContent(htmlContent) {
+        const badgeRe = /(<span class="rm-badge rm-badge-falsified"[^>]*>.*?<\/span>)/g;
+        const parts = String(htmlContent || '').split(badgeRe);
+        const wrapped = parts.map(part => {
+          if (!part) return '';
+          if (part.startsWith('<span class="rm-badge rm-badge-falsified"')) return part;
+          return `<span class="rm-falsified-text">${part}</span>`;
+        }).join('');
+        return `<span class="rm-node-falsified">${wrapped}</span>`;
+      }
+
+      /**
+       * Deep-process the Markmap AST:
+       * 1. Count status badges across the full consensus tree
+       * 2. Optionally prune every [已证伪/留档] node together with its entire subtree
+       * 3. Style falsified node text with faded strikethrough (and muted descendants when visible)
+       * 4. Apply explicit fold state (Expand All vs Fold to Level 2)
+       */
+      function buildProcessedTree(rawRoot, options) {
+        const { hideFalsified, foldedToLevel2 } = options;
+        const stats = { locked: 0, exploring: 0, falsified: 0, hiddenBranches: 0 };
+
+        function countStats(node) {
+          if (!node) return;
+          const st = detectNodeStatus(node.content);
+          if (st === 'locked') stats.locked++;
+          else if (st === 'exploring') stats.exploring++;
+          else if (st === 'falsified') stats.falsified++;
+          if (Array.isArray(node.children)) node.children.forEach(countStats);
+        }
+        countStats(rawRoot);
+
+        function cloneAndDecorate(node, depth, insideFalsifiedAncestor) {
+          const st = detectNodeStatus(node.content);
+          const isFalsifiedSelf = st === 'falsified';
+          const isFalsifiedBranch = insideFalsifiedAncestor || isFalsifiedSelf;
+
+          let nextContent = node.content;
+          if (isFalsifiedSelf) {
+            nextContent = wrapFalsifiedContent(node.content);
+          } else if (insideFalsifiedAncestor) {
+            nextContent = `<span class="rm-node-falsified-child">${node.content}</span>`;
+          }
+
+          let nextChildren = [];
+          if (Array.isArray(node.children) && node.children.length > 0) {
+            for (const child of node.children) {
+              const childStatus = detectNodeStatus(child.content);
+              if (hideFalsified && childStatus === 'falsified') {
+                stats.hiddenBranches++;
+                continue; // Prune dead-end node AND its entire subtree!
+              }
+              nextChildren.push(cloneAndDecorate(child, depth + 1, isFalsifiedBranch));
+            }
+          }
+
+          const nextPayload = { ...(node.payload || {}), _rmStatus: isFalsifiedBranch ? 'falsified' : st };
+          if (foldedToLevel2) {
+            nextPayload.fold = (depth >= 2 && nextChildren.length > 0) ? 1 : 0;
+          } else {
+            nextPayload.fold = 0;
+          }
+
+          return {
+            ...node,
+            content: nextContent,
+            payload: nextPayload,
+            children: nextChildren
+          };
+        }
+
+        const tree = cloneAndDecorate(rawRoot, 0, false);
+        return { tree, stats };
+      }
+
+      function branchColorForNode(node) {
+        const st = node?.payload?._rmStatus || detectNodeStatus(node?.content);
+        const isDark = state.theme === 'dark';
+        if (st === 'locked') return isDark ? '#2DD4BF' : '#0F766E';
+        if (st === 'exploring') return isDark ? '#F59E0B' : '#D97706';
+        if (st === 'falsified') return isDark ? '#64748B' : '#94A3B8';
+        const palette = isDark
+          ? ['#38BDF8', '#818CF8', '#34D399', '#A78BFA', '#60A5FA']
+          : ['#0369A1', '#4338CA', '#0F766E', '#6D28D9', '#1D4ED8'];
+        const depth = Number(node?.state?.depth || 0);
+        const pathKey = String(node?.state?.path || node?.content || '');
+        let hash = depth;
+        for (let i = 0; i < Math.min(pathKey.length, 24); i++) hash += pathKey.charCodeAt(i);
+        return palette[Math.abs(hash) % palette.length];
+      }
+
+      function updateToolbarState() {
+        const hasDoc = Boolean(state.rawMarkdown);
+        $('btn-fit').disabled = !hasDoc;
+        $('btn-fold-toggle').disabled = !hasDoc;
+        $('btn-filter-falsified').disabled = !hasDoc;
+        $('btn-open-editor').disabled = !state.currentFile;
+
+        $('btn-fold-toggle').classList.toggle('active', state.foldedToLevel2);
+        $('btn-fold-label').textContent = state.foldedToLevel2 ? '全部展开' : '折叠至第 2 层';
+
+        $('btn-filter-falsified').classList.toggle('active', state.hideFalsified);
+        $('btn-filter-label').textContent = state.hideFalsified
+          ? (state.stats.hiddenBranches > 0 ? `显示已证伪 (已隐藏 ${state.stats.hiddenBranches})` : '显示已证伪')
+          : '隐藏已证伪';
+
+        $('cnt-locked').textContent = state.stats.locked;
+        $('cnt-exploring').textContent = state.stats.exploring;
+        $('cnt-falsified').textContent = state.stats.falsified;
+        $('legend-counts').classList.toggle('hidden', !hasDoc);
+
+        const pill = $('canvas-status-pill');
+        if (hasDoc) {
+          pill.classList.remove('hidden');
+          const parts = [
+            `共识 ${state.stats.locked}`,
+            `试探 ${state.stats.exploring}`,
+            state.hideFalsified ? `已隐证伪 ${state.stats.hiddenBranches} 支` : `证伪 ${state.stats.falsified}`
+          ];
+          pill.textContent = parts.join(' · ');
+        } else {
+          pill.classList.add('hidden');
+        }
+      }
+
+      async function renderMindmap(shouldFit = true) {
+        if (!state.rawMarkdown) {
+          updateToolbarState();
+          return;
+        }
+        try {
+          await ensureMarkmapReady();
+        } catch (err) {
+          showErrorBanner(err.message);
+          return;
+        }
+
+        const highlightedMd = highlightResearchTags(state.rawMarkdown);
+        const { root } = state.transformer.transform(highlightedMd);
+        const { tree, stats } = buildProcessedTree(root, {
+          hideFalsified: state.hideFalsified,
+          foldedToLevel2: state.foldedToLevel2
+        });
+        state.stats = stats;
+
+        const svgEl = $('markmap-svg');
+        const mmOptions = {
+          autoFit: false,
+          duration: 320,
+          maxWidth: 340,
+          spacingHorizontal: 78,
+          spacingVertical: 10,
+          paddingX: 12,
+          zoom: true,
+          pan: true,
+          color: branchColorForNode
+        };
+
+        if (!state.mm) {
+          svgEl.innerHTML = '';
+          state.mm = window.markmap.Markmap.create(svgEl, mmOptions, tree);
+        } else {
+          state.mm.setOptions(mmOptions);
+          state.mm.setData(tree);
+        }
+
+        hideCanvasOverlay();
+        updateToolbarState();
+
+        if (shouldFit) {
+          requestAnimationFrame(() => {
+            try { state.mm.fit(); } catch (_) {}
+          });
+        }
+      }
+
+      // =====================================================================
+      // 7. CLOUD DATA LOADING & SAVING FLOWS
+      // =====================================================================
+      function renderFileDropdown() {
+        const sel = $('file-select');
+        if (!state.files.length) {
+          sel.innerHTML = '<option value="">未找到科研共识树文件</option>';
+          sel.disabled = true;
+          return;
+        }
+        sel.disabled = false;
+        sel.innerHTML = state.files.map(f =>
+          `<option value="${esc(f.id)}" ${f.id === state.currentFileId ? 'selected' : ''}>${esc(f.name)}</option>`
+        ).join('');
+      }
+
+      function updateCurrentFileHeader() {
+        const f = state.currentFile;
+        $('updated-meta').textContent = f?.updatedAt ? formatUpdatedAt(f.updatedAt) : '';
+        const driveBtn = $('btn-drive-link');
+        if (f?.url) {
+          driveBtn.href = f.url;
+          driveBtn.classList.remove('hidden');
+        } else {
+          driveBtn.classList.add('hidden');
+          driveBtn.href = '#';
+        }
+      }
+
+      async function loadFileList(autoOpen = true) {
+        if (!isConfigured()) {
+          showCanvasOverlay('尚未连接 Google Drive', '请先配置你的 Apps Script Web App URL 与访问口令。', true);
+          return;
+        }
+        hideErrorBanner();
+        setRefreshing(true);
+        if (!state.rawMarkdown) {
+          showCanvasOverlay('正在拉取课题列表...', '通过安全 POST 接口连接云端共识树。', false, true);
+        }
+
+        try {
+          const data = await callGasApi({ action: 'list' });
+          state.files = Array.isArray(data.files) ? data.files : [];
+          if (state.files.length === 0) {
+            state.currentFileId = '';
+            state.currentFile = null;
+            state.rawMarkdown = '';
+            renderFileDropdown();
+            updateCurrentFileHeader();
+            updateToolbarState();
+            showCanvasOverlay('暂无科研共识树文档', '云端目录里还没有共识树文件，创建后点右上角刷新即可。', false);
+            return;
+          }
+
+          // Auto-remember last viewed file if still present
+          const matchLast = state.files.find(f => f.id === state.currentFileId);
+          state.currentFileId = matchLast ? matchLast.id : state.files[0].id;
+          localStorage.setItem(KEYS.LAST_FILE, state.currentFileId);
+          renderFileDropdown();
+
+          if (autoOpen && state.currentFileId) {
+            await loadFileContent(state.currentFileId);
+          }
+        } catch (err) {
+          showErrorBanner(err.message || '拉取课题列表失败');
+          if (!state.rawMarkdown) {
+            showCanvasOverlay('连接未成功', err.message || '请核对连接设置后重试。', true);
+          }
+        } finally {
+          setRefreshing(false);
+        }
+      }
+
+      async function loadFileContent(fileId) {
+        if (!fileId) return;
+        hideErrorBanner();
+        setRefreshing(true);
+        if (!state.rawMarkdown) {
+          showCanvasOverlay('正在加载共识树...', '解析结构并渲染思维导图。', false, true);
+        }
+
+        try {
+          const data = await callGasApi({ action: 'read', fileId });
+          state.currentFileId = data.id || fileId;
+          localStorage.setItem(KEYS.LAST_FILE, state.currentFileId);
+
+          const metaFromList = state.files.find(f => f.id === state.currentFileId) || {};
+          state.currentFile = {
+            id: state.currentFileId,
+            name: data.name || metaFromList.name || '未命名共识树',
+            updatedAt: data.updatedAt || metaFromList.updatedAt || '',
+            url: data.url || metaFromList.url || ''
+          };
+          state.rawMarkdown = String(data.markdown || `# ${state.currentFile.name}\n- 空白共识树`);
+
+          renderFileDropdown();
+          updateCurrentFileHeader();
+          await renderMindmap(true);
+        } catch (err) {
+          showErrorBanner(err.message || '读取共识树失败');
+          if (!state.rawMarkdown) {
+            showCanvasOverlay('读取失败', err.message || '请检查网络或口令。', true);
+          }
+        } finally {
+          setRefreshing(false);
+        }
+      }
+
+      function setRefreshing(active) {
+        state.loading = active;
+        $('btn-refresh').disabled = active;
+        $('btn-refresh').classList.toggle('spinning', active);
+      }
+
+      // =====================================================================
+      // 8. CONNECTION SETTINGS MODAL
+      // =====================================================================
+      function openConfigModal(allowClose = true) {
+        $('cfg-url').value = state.config.scriptUrl || '';
+        $('cfg-token').value = state.config.token || '';
+        $('cfg-token').type = 'password';
+        $('cfg-clear-wrap').classList.toggle('hidden', !isConfigured());
+        $('btn-cfg-close').classList.toggle('hidden', !allowClose && !isConfigured());
+        $('config-modal').classList.remove('hidden');
+        setTimeout(() => ($('cfg-url').value ? $('cfg-token') : $('cfg-url')).focus(), 50);
+      }
+
+      function closeConfigModal() {
+        $('config-modal').classList.add('hidden');
+      }
+
+      function clearLocalConfig() {
+        localStorage.removeItem(KEYS.CONFIG);
+        localStorage.removeItem(KEYS.LAST_FILE);
+        state.config = { scriptUrl: '', token: '' };
+        state.files = [];
+        state.currentFileId = '';
+        state.currentFile = null;
+        state.rawMarkdown = '';
+        if (state.mm) {
+          $('markmap-svg').innerHTML = '';
+          state.mm = null;
+        }
+        hideErrorBanner();
+        renderFileDropdown();
+        updateCurrentFileHeader();
+        updateToolbarState();
+        closeConfigModal();
+        showCanvasOverlay('已清除本机配置', '本地保存的 URL 与访问口令已彻底移除，随时可重新连接。', true);
+        showToast('本地配置已清除');
+      }
+
+      // =====================================================================
+      // 9. PURE-TEXT MARKDOWN EDITOR DRAWER
+      // =====================================================================
+      function openEditorDrawer() {
+        if (!state.currentFile) return;
+        $('editor-filename').textContent = state.currentFile.name || '编辑共识树原文';
+        $('editor-textarea').value = state.rawMarkdown;
+        updateEditorDirtyHint();
+        $('editor-backdrop').classList.remove('hidden');
+        setTimeout(() => $('editor-textarea').focus(), 40);
+      }
+
+      function closeEditorDrawer() {
+        $('editor-backdrop').classList.add('hidden');
+      }
+
+      function updateEditorDirtyHint() {
+        const dirty = $('editor-textarea').value !== state.rawMarkdown;
+        $('editor-dirty-hint').textContent = dirty
+          ? '● 有尚未保存的改动（Ctrl/Cmd+S 可保存）'
+          : '与云端原文一致';
+        $('editor-dirty-hint').style.color = dirty ? 'var(--exploring-line)' : 'var(--ink-muted)';
+      }
+
+      function insertAtCursor(textarea, snippet) {
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        const before = textarea.value.slice(0, start);
+        const needSpace = before.length > 0 && !/\s$/.test(before);
+        const text = (needSpace ? ' ' : '') + snippet;
+        textarea.value = before + text + textarea.value.slice(end);
+        const pos = start + text.length;
+        textarea.selectionStart = textarea.selectionEnd = pos;
+        textarea.focus();
+        updateEditorDirtyHint();
+      }
+
+      async function saveEditorToCloud() {
+        if (!state.currentFile || state.saving) return;
+        const nextMd = $('editor-textarea').value;
+        const saveBtn = $('btn-editor-save');
+        state.saving = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+        hideErrorBanner();
+
+        try {
+          const data = await callGasApi({
+            action: 'save',
+            fileId: state.currentFile.id,
+            markdown: nextMd
+          });
+          state.rawMarkdown = nextMd;
+          if (data.updatedAt) {
+            state.currentFile.updatedAt = data.updatedAt;
+            const listItem = state.files.find(f => f.id === state.currentFile.id);
+            if (listItem) listItem.updatedAt = data.updatedAt;
+          }
+          updateCurrentFileHeader();
+          updateEditorDirtyHint();
+          await renderMindmap(false);
+          closeEditorDrawer();
+          showToast('已保存回 Google Drive');
+        } catch (err) {
+          showErrorBanner(err.message || '保存失败');
+          showToast('保存未成功，请看顶部提示', 3200);
+        } finally {
+          state.saving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = '保存回云端';
+        }
+      }
+
+      // =====================================================================
+      // 10. EVENT WIRING & BOOTSTRAP
+      // =====================================================================
+      function initEvents() {
+        $('btn-theme').onclick = () => applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+        $('btn-settings').onclick = () => openConfigModal(true);
+        $('btn-cfg-close').onclick = closeConfigModal;
+        $('btn-error-dismiss').onclick = hideErrorBanner;
+        $('btn-cfg-clear').onclick = clearLocalConfig;
+
+        $('config-modal').addEventListener('click', (e) => {
+          if (e.target.id === 'config-modal' && isConfigured()) closeConfigModal();
+        });
+
+        $('btn-toggle-token').onclick = () => {
+          const inp = $('cfg-token');
+          inp.type = inp.type === 'password' ? 'text' : 'password';
+        };
+
+        $('config-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const url = $('cfg-url').value.trim();
+          const token = $('cfg-token').value.trim();
+          if (!/^https?:\/\//i.test(url)) {
+            showToast('Web App URL 应以 https:// 开头');
+            return;
+          }
+          if (!token) {
+            showToast('请填写访问口令');
+            return;
+          }
+          state.config = { scriptUrl: url, token };
+          saveJson(KEYS.CONFIG, state.config);
+          closeConfigModal();
+          await loadFileList(true);
+        });
+
+        $('file-select').addEventListener('change', (e) => {
+          const id = e.target.value;
+          if (id) loadFileContent(id);
+        });
+
+        $('btn-refresh').onclick = async () => {
+          if (!isConfigured()) {
+            openConfigModal(true);
+            return;
+          }
+          if (state.currentFileId) {
+            await loadFileContent(state.currentFileId);
+            showToast('已刷新最新共识树');
+          } else {
+            await loadFileList(true);
+          }
+        };
+
+        // Tool 1: Fit
+        $('btn-fit').onclick = () => {
+          if (state.mm) state.mm.fit();
+        };
+
+        // Tool 2: Fold to Level 2 / Expand All
+        $('btn-fold-toggle').onclick = () => {
+          state.foldedToLevel2 = !state.foldedToLevel2;
+          renderMindmap(true);
+        };
+
+        // Tool 3: Hide / Show [已证伪/留档] branches & subtrees
+        $('btn-filter-falsified').onclick = () => {
+          state.hideFalsified = !state.hideFalsified;
+          renderMindmap(true);
+        };
+
+        // Tool 4: Markdown Editor Drawer
+        $('btn-open-editor').onclick = openEditorDrawer;
+        $('btn-editor-close').onclick = closeEditorDrawer;
+        $('editor-backdrop').addEventListener('click', (e) => {
+          if (e.target.id === 'editor-backdrop') closeEditorDrawer();
+        });
+
+        const ta = $('editor-textarea');
+        ta.addEventListener('input', updateEditorDirtyHint);
+        ta.addEventListener('keydown', (e) => {
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            insertAtCursor(ta, '  ');
+          } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            saveEditorToCloud();
+          }
+        });
+
+        document.querySelectorAll('[data-insert-tag]').forEach(btn => {
+          btn.onclick = () => insertAtCursor(ta, btn.getAttribute('data-insert-tag'));
+        });
+
+        $('btn-editor-preview').onclick = async () => {
+          const prev = state.rawMarkdown;
+          state.rawMarkdown = ta.value;
+          await renderMindmap(true);
+          state.rawMarkdown = prev;
+          showToast('已在画布预览改动（尚未写入云端）');
+        };
+
+        $('btn-editor-revert').onclick = () => {
+          ta.value = state.rawMarkdown;
+          updateEditorDirtyHint();
+          showToast('已还原为云端内容');
+        };
+
+        $('btn-editor-save').onclick = saveEditorToCloud;
+
+        // Refit gently when orientation / window size changes
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          if (!state.mm) return;
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            try { state.mm.fit(); } catch (_) {}
+          }, 220);
+        });
+      }
+
+      async function boot() {
+        applyTheme(state.theme);
+        initPwaAssets();
+        initEvents();
+        updateToolbarState();
+
+        if (!isConfigured()) {
+          showCanvasOverlay('欢迎使用科研共识树', '输入你的 Apps Script 地址与访问口令即可实时浏览和编辑。', true);
+          openConfigModal(false);
+        } else {
+          await loadFileList(true);
+        }
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+</html>
