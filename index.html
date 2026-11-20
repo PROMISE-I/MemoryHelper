@@ -780,6 +780,43 @@
       display: none;
     }
 
+    /* Optional Collapsed Custom AI Prompt Drawer (Default Closed, Zero Clutter) */
+    .ai-extra-details {
+      margin-top: 8px;
+    }
+
+    .ai-extra-summary {
+      list-style: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--ink-muted);
+      padding: 2px 2px;
+      user-select: none;
+      transition: color 0.16s ease;
+    }
+
+    .ai-extra-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .ai-extra-summary:hover {
+      color: var(--sage);
+    }
+
+    .ai-extra-details[open] .ai-extra-summary {
+      color: var(--sage);
+    }
+
+    .ai-extra-input {
+      margin-top: 7px;
+      min-height: 58px;
+      font-size: 14px;
+      padding: 9px 11px;
+    }
+
     .cross-shimmer {
       display: flex;
       align-items: center;
@@ -1285,9 +1322,11 @@
           activeTest: null, // { mode: string, prompt: string }
           activeTestLoading: false,
           activeTestTriggered: false,
+          activeTestExtraPrompt: '',
           scaffoldQuestions: null,
           scaffoldLoading: false,
           scaffoldTriggered: false,
+          scaffoldExtraPrompt: '',
           undoStack: []
         },
 
@@ -1298,6 +1337,8 @@
           anchor: '',
           evoInit: '',
           domainTag: '', // Empty = AI auto-classify based on content
+          aiExtraPrompt: '',
+          evoExtraPrompt: '',
           formOpen: false,
           rawCollapsed: false,
           anchorMissingHint: false,
@@ -1480,6 +1521,8 @@
         state.capture.anchor = '';
         state.capture.evoInit = '';
         state.capture.domainTag = '';
+        state.capture.aiExtraPrompt = '';
+        state.capture.evoExtraPrompt = '';
         state.capture.formOpen = false;
         state.capture.rawCollapsed = false;
         state.capture.anchorMissingHint = false;
@@ -2033,9 +2076,11 @@
         state.review.activeTest = null;
         state.review.activeTestLoading = false;
         state.review.activeTestTriggered = false;
+        state.review.activeTestExtraPrompt = '';
         state.review.scaffoldQuestions = null;
         state.review.scaffoldLoading = false;
         state.review.scaffoldTriggered = false;
+        state.review.scaffoldExtraPrompt = '';
       }
 
       // =====================================================================
@@ -2580,22 +2625,70 @@
         return expectJson ? extractJsonObject(content) : content.trim();
       }
 
-      // AI 1: Quick Capture Split + Dynamic Content-Driven Auto-Categorization
-      async function aiSplitCapture(rawText) {
-        const existing = getExistingDomains(false).map(d => d.name);
-        const existingHint = existing.length
-          ? `用户卡片库中已有以下类别：${existing.join('、')}。\n归类原则：如果本条内容自然契合已有类别，优先复用该类别名称（保持类别简洁不碎片化）；如果确实属于全新的主题领域，请根据输入内容自动提炼一个 2–6 字的简洁宽泛新类别名。`
-          : `用户卡片库目前还没有任何类别。请根据这段输入内容本身的主题场景，自动提炼一个 2–6 字的简洁、自然、宽泛的类别名称（如“沟通协作”“投资决策”“情绪觉察”“产品思维”等，不要机械敷衍）。`;
+      // Shared UI helper: Collapsed-by-default custom AI prompt drawer
+      function renderAiExtraPromptHtml(id, placeholder, currentValue = '') {
+        const val = String(currentValue || '');
+        const hasVal = Boolean(val.trim());
+        return `
+          <details class="ai-extra-details" id="${id}-details">
+            <summary class="ai-extra-summary">
+              <span>+ 补充提示词${hasVal ? '（已填）' : ''}</span>
+            </summary>
+            <textarea id="${id}" class="textarea ai-extra-input" rows="2" placeholder="${esc(placeholder)}">${esc(val)}</textarea>
+          </details>
+        `;
+      }
 
-        const sys = `你是“非结构化洞察内化系统”的克制录入助手。将用户输入拆分成如下 JSON 字段：
+      function readAiExtraPrompt(id, fallback = '') {
+        const el = document.getElementById(id);
+        return (el ? el.value : fallback || '').trim();
+      }
+
+      // Shared Prompt Helper: Elevate user's custom prompt as TOP priority alongside full card context
+      function applyUserPriorityPrompt(systemPrompt, userPrompt, customPrompt = '') {
+        const extra = String(customPrompt || '').trim();
+        if (!extra) return { sys: systemPrompt, user: userPrompt };
+        const prioritySys = `【最高优先级准则】用户本次输入了自定义补充提示词。你必须把【用户本次最高优先级要求】视为比默认偏好更重要的首要指令，一切视角、学科维度、措辞风格与分类粒度优先按用户本次要求执行（仅需保持合法纯 JSON 格式，且绝不替用户编造未写过的个人感受）。\n\n${systemPrompt}`;
+        const priorityUser = `【用户本次最高优先级要求（务必以此为主）】\n${extra}\n\n---\n【当前卡片完整信息】\n${userPrompt}`;
+        return { sys: prioritySys, user: priorityUser };
+      }
+
+      // Shared Classification Rule: Classify by underlying discipline / core mechanism, NOT narrow surface topics!
+      function buildDomainClassificationRule(existingDomains, isReorg = false) {
+        const baseRule = `分类核心原则（极其重要）：
+- 【穿透表层话题，按底层学科或核心机制归类】：严禁按具体故事、表层事件或过窄的动作话题起名（例如绝不要起“关系分层”“开会技巧”“买房踩坑”“社交指南”这类紧贴表层话题的窄词）。
+- 【抽象层级参考】：先判断这段内容背后的底层原理属于哪门基础学科或高阶认知框架，提炼 2–5 字的上位学科/机制大类。参考颗粒度如：心理学、社会学、经济学、认知与决策、博弈与人性、组织与管理、商业逻辑、传播与表达、哲学与方法论等（仅作颗粒度参考，绝非固定列表，仍完全根据用户真实内容动态生长）。
+- 【典型反例纠正】：例如内容虽然在聊“关系分层怎么处理”，但底层在展开“凡勃伦效应 / 炫耀性消费 / 社会地位信号”，就应该归入「经济学」「社会学」或「心理学」，而绝不能归入「关系分层」。`;
+
+        if (isReorg) {
+          return `${baseRule}\n- 【整理旧类】：如果卡片库里原本的旧类别偏表层、太碎（如“关系分层”），请主动向上抽象合并为更稳定、可跨场景复用的上位学科/机制大类。`;
+        }
+        if (existingDomains.length > 0) {
+          return `${baseRule}\n- 【复用已有上位类】：用户当前已有类别：${existingDomains.join('、')}。如果其中已有贴合底层学科/机制的上位类别，优先复用避免碎片化；如果现有类别覆盖不了（或过于表层），请新建一个 2–5 字的上位学科/机制大类。`;
+        }
+        return `${baseRule}\n- 用户卡片库目前为空，请直接按上述底层学科/机制原则起一个 2–5 字的上位大类名称。`;
+      }
+
+      // AI 1: Quick Capture Split + Discipline/Mechanism Auto-Categorization
+      async function aiSplitCapture(rawText, customPrompt = '', cardDraft = null) {
+        const existing = getExistingDomains(false).map(d => d.name);
+        const domainRule = buildDomainClassificationRule(existing, false);
+
+        const baseSys = `你是“非结构化洞察内化系统”的克制录入助手。将用户输入拆分成如下 JSON 字段：
 {
   "front_fact": "剥离出的客观事实、原话、对话或具体现象（精炼清晰）",
   "back_anchor": "用户第一眼看到该现象时的直觉、情绪与感触。铁律：1）严格保留用户的原话大白话口吻，严禁润色成书面语、严禁说教；2）如果用户输入里只贴了一段客观事实或他人原话、完全没有表达自己的感受，必须返回空字符串 \"\"，严禁替用户编造假感受！",
-  "domain_tag": "根据输入内容自动归类的 2–6 字大类名称"
+  "domain_tag": "按底层学科或核心机制归类的 2–5 字上位大类名称"
 }
-${existingHint}`;
+${domainRule}`;
 
-        const res = await callOpenAiCompatible(sys, `请拆解并归类这段随手记录：\n${rawText}`, true);
+        let baseUser = `原始输入：\n${rawText}`;
+        if (cardDraft && (cardDraft.front || cardDraft.anchor || cardDraft.evoInit)) {
+          baseUser += `\n\n已有卡片草稿：\n事实：${cardDraft.front || '空'}\n最初感受：${cardDraft.anchor || '空'}\n初始认识：${cardDraft.evoInit || '空'}`;
+        }
+
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
         return {
           front_fact: String(res.front_fact || rawText).trim(),
           back_anchor: String(res.back_anchor || '').trim(),
@@ -2603,19 +2696,24 @@ ${existingHint}`;
         };
       }
 
-      // AI 1b: Silent Auto-Classify for manually entered cards left blank
+      // AI 1b: Single-Card Auto-Classify (used silently on save OR on-demand in Edit Modal with custom prompt)
+      async function aiClassifySingleCard(cardInfo, customPrompt = '') {
+        const existing = getExistingDomains(false).map(d => d.name);
+        const domainRule = buildDomainClassificationRule(existing, false);
+        const baseSys = `你是卡片分类助手。只返回纯 JSON：{"domain_tag": "2到5字上位类别名"}。\n${domainRule}`;
+        const evoStr = Array.isArray(cardInfo.evolution_tags)
+          ? cardInfo.evolution_tags.filter(Boolean).join('、') || '暂无'
+          : (cardInfo.evolution_tags || '暂无');
+        const baseUser = `事实 / 原话：${cardInfo.front_fact || ''}\n最初感受：${cardInfo.back_anchor || ''}\n最新认识：${evoStr}\n当前分类：${cardInfo.domain_tag || '未分类'}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
+        return normalizeDomainLabel(res.domain_tag);
+      }
+
       async function runSilentAutoClassify(card) {
         if (!isAiConfigured() || !card?.id) return;
-        const existing = getExistingDomains(false).map(d => d.name);
-        const existingHint = existing.length
-          ? `优先从用户已有类别中选择最匹配的一项：${existing.join('、')}；若都不合适，再生成一个新的 2–6 字宽泛大类名称。`
-          : `请根据内容提炼一个 2–6 字的简洁宽泛大类名称。`;
-
         try {
-          const sys = `你是卡片静默归类助手。只返回 JSON：{"domain_tag": "2到6字类别名"}。\n${existingHint}`;
-          const prompt = `事实：${card.front_fact}\n感受：${card.back_anchor}\n词条：${(card.evolution_tags || []).join('、') || '暂无'}`;
-          const res = await callOpenAiCompatible(sys, prompt, true);
-          const tag = normalizeDomainLabel(res.domain_tag);
+          const tag = await aiClassifySingleCard(card, '');
           if (tag && tag !== UNCLASSIFIED_LABEL) {
             updateCardOptimistic(card.id, { domain_tag: tag });
             logActivityCloud('ai_usage', card.id, { feature: 'auto_classify', adopted: true });
@@ -2626,20 +2724,20 @@ ${existingHint}`;
         }
       }
 
-      // AI 1c: Generate Editable Starter Evolution Tag (+ Dynamic Category) for Manual Capture
-      async function aiSuggestInitialTag(frontFact, backAnchor) {
+      // AI 1c: Generate Editable Starter Evolution Tag (+ Discipline/Mechanism Category) for Manual Capture
+      async function aiSuggestInitialTag(frontFact, backAnchor, currentDomain = '', customPrompt = '') {
         const existing = getExistingDomains(false).map(d => d.name);
-        const existingHint = existing.length
-          ? `已有类别：${existing.join('、')}（合适优先复用，否则新起 2–6 字类别名）。`
-          : `根据内容起一个 2–6 字的简洁类别名。`;
+        const domainRule = buildDomainClassificationRule(existing, false);
 
-        const sys = `你是克制的认知词条助手。根据用户手动写下的客观事实与最初感受，帮他提炼 1 个简短的初始进化词条作为草稿（供用户自己再修改），并顺手归类。
+        const baseSys = `你是克制的认知词条助手。根据用户写下的事实与最初感受，提炼 1 个简短的初始进化词条作为草稿（供用户再编辑），并按底层学科/机制归类。
 严格规则：
-1. 返回纯 JSON：{"initial_tag": "2到10字精炼短词或短句", "domain_tag": "2到6字类别名"}。
-2. initial_tag 必须克制凝练、抓住核心机制或直觉关键词，不要写鸡汤、不要写长句子。
-3. ${existingHint}`;
-        const prompt = `事实/原话：${frontFact}\n最初感受：${backAnchor || '未填写'}`;
-        const res = await callOpenAiCompatible(sys, prompt, true);
+1. 返回纯 JSON：{"initial_tag": "2到10字精炼短词或短句", "domain_tag": "2到5字上位类别名"}。
+2. initial_tag 必须克制凝练、抓住核心机制或直觉关键词，不要写鸡汤或长句。
+3. ${domainRule}`;
+
+        const baseUser = `事实 / 原话：${frontFact}\n最初感受：${backAnchor || '未填写'}\n当前分类：${currentDomain || '未分类'}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
         return {
           initial_tag: String(res.initial_tag || '').trim().slice(0, 24),
           domain_tag: normalizeDomainLabel(res.domain_tag)
@@ -2647,14 +2745,14 @@ ${existingHint}`;
       }
 
       // AI 2: Review Active Recall Micro-Test (Scientifically aligned: zero-scoring, low-load, context-transfer)
-      async function aiGenerateActiveTest(card) {
+      async function aiGenerateActiveTest(card, customPrompt = '') {
         const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags.filter(Boolean) : [];
         const hasEvo = tags.length > 0;
-        const sys = hasEvo
+        const baseSys = hasEvo
           ? `你是遵循认知科学的主动提取微测出题人。目标：打破“看原故事脸熟”的语境依赖，帮用户做一次极轻的跨场景提取测试。
 严格规则：
 1. 返回 JSON：{"mode": "场景迁移测", "prompt": "不超过45个中文字的一句话"}。
-2. 构造一个与原事实【完全不同领域】的日常/工作微场景（半句话），轻问“遇到这种情况，你会想起哪条规律或做法？”。
+2. 构造一个与原事实【不同领域】的日常/工作微场景（半句话），轻问“遇到这种情况，你会想起哪条规律或做法？”。
 3. 严禁泄露原卡片的词条或答案，严禁出选择题、严禁打分、严禁说教，把思考留白给用户 3 秒自测。`
           : `你是遵循认知科学的主动提取微测出题人。目标：用极低认知负荷的侧面提示，帮用户真正主动回想起当初的感受与洞察，而不是机械扫读原话。
 严格规则：
@@ -2662,8 +2760,9 @@ ${existingHint}`;
 2. 基于原事实换一个轻巧的切入问法（比如追问当时最触动你的转折点、反常识点或隐性代价），不直接剧透用户的最初感受。
 3. 严禁泄露答案、严禁出选择题、严禁打分、严禁说教。`;
 
-        const prompt = `事实：${card.front_fact}\n最初感受：${card.back_anchor}\n已有认识：${tags.join('、') || '暂无'}`;
-        const res = await callOpenAiCompatible(sys, prompt, true);
+        const baseUser = `事实 / 原话：${card.front_fact}\n最初感受：${card.back_anchor}\n最新认识：${tags.join('、') || '暂无'}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
         const testPrompt = String(res.prompt || '').trim();
         if (!testPrompt) throw new Error('未能生成测试题');
         return {
@@ -2673,23 +2772,24 @@ ${existingHint}`;
       }
 
       // AI 2b: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
-      async function aiFetchScaffolding(card) {
-        const sys = `你是克制的思维脚手架出题人，只帮用户降低外在认知负荷。
+      async function aiFetchScaffolding(card, customPrompt = '') {
+        const baseSys = `你是克制的思维脚手架出题人，只帮用户降低外在认知负荷。
 严格规则：
 1. 返回 JSON：{"questions": ["问题1", "问题2", "问题3"]}（2 到 3 个问题）。
 2. 每个问题不超过 20 个中文字，提供结构化切入角度（如本质机制、适用边界、反常识点、隐性成本等）。
 3. 严禁回答问题、严禁帮用户写出结论或关键词，把留白留给用户潜意识。`;
         const tags = (card.evolution_tags || []).join('、') || '暂无';
-        const prompt = `事实线索：${card.front_fact}\n最初感受：${card.back_anchor}\n已有进化词条：${tags}`;
-        const res = await callOpenAiCompatible(sys, prompt, true);
+        const baseUser = `事实 / 原话：${card.front_fact}\n最初感受：${card.back_anchor}\n最新认识：${tags}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
         const qs = Array.isArray(res.questions) ? res.questions.slice(0, 3) : [];
         if (qs.length === 0) throw new Error('未能生成切入问题');
         return qs;
       }
 
       // AI 3: Concept Compressor (Anti-Fan-Effect when 3 slots are full)
-      async function aiCompressTags(card, newIdea) {
-        const sys = `你是“概念压缩机”，用于对抗认知科学中的扇形效应。
+      async function aiCompressTags(card, newIdea, customPrompt = '') {
+        const baseSys = `你是“概念压缩机”，用于对抗认知科学中的扇形效应。
 卡片的进化层已有 3 个词条（硬性上限），现在用户产生了 1 个新想法。
 请返回 JSON：
 {
@@ -2700,8 +2800,9 @@ ${existingHint}`;
 }
 其中 replace_index 必须是 0、1 或 2。`;
         const tags = card.evolution_tags || [];
-        const prompt = `原事实：${card.front_fact}\n现有 3 个词条：\n[0] ${tags[0] || ''}\n[1] ${tags[1] || ''}\n[2] ${tags[2] || ''}\n新想法：${newIdea}`;
-        const res = await callOpenAiCompatible(sys, prompt, true);
+        const baseUser = `事实 / 原话：${card.front_fact}\n最初感受：${card.back_anchor || ''}\n现有 3 条认识：\n[0] ${tags[0] || ''}\n[1] ${tags[1] || ''}\n[2] ${tags[2] || ''}\n新想法：${newIdea}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const res = await callOpenAiCompatible(sys, user, true);
         return Array.isArray(res.options) ? res.options.slice(0, 2) : [];
       }
 
@@ -2714,7 +2815,6 @@ ${existingHint}`;
         );
         if (pool.length <= maxCandidates) return pool;
 
-        // Stratified pool: prioritize cards with mature evolution_tags + spread across old & new cards
         const withEvo = pool.filter(c => Array.isArray(c.evolution_tags) && c.evolution_tags.length > 0);
         const withoutEvo = pool.filter(c => !Array.isArray(c.evolution_tags) || c.evolution_tags.length === 0);
 
@@ -2725,7 +2825,6 @@ ${existingHint}`;
             arr.forEach(c => { if (!pickedIds.has(c.id)) { picked.push(c); pickedIds.add(c.id); } });
             return;
           }
-          // Evenly sample across the entire timeline so old cards collide with new ones!
           const step = arr.length / quota;
           for (let i = 0; i < quota; i++) {
             const c = arr[Math.min(arr.length - 1, Math.floor(i * step))];
@@ -2764,7 +2863,6 @@ ${existingHint}`;
               cross_link_id: match.id,
               cross_link_hint: normalizeDomainLabel(match.domain_tag)
             });
-            // Bidirectionally link the matched card if it doesn't have one yet
             if (!match.cross_link_id) {
               updateCardOptimistic(match.id, {
                 cross_link_id: targetCard.id,
@@ -2778,15 +2876,14 @@ ${existingHint}`;
         }
       }
 
-      // AI 5: Batch Re-Categorize Existing Cards by Latest Understanding
-      async function aiReorganizeLibraryDomains(cardsList) {
+      // AI 5: Batch Re-Categorize Existing Cards by Latest Understanding & Underlying Discipline
+      async function aiReorganizeLibraryDomains(cardsList, customPrompt = '') {
         const formatCardForPrompt = (c) => {
           const evo = (c.evolution_tags || []).join(' / ') || '暂无';
-          return `ID:${c.id} | 现类别:${normalizeDomainLabel(c.domain_tag)} | 最新理解(进化词条):${evo} | 事实:${String(c.front_fact).slice(0, 75)} | 最初感受:${String(c.back_anchor).slice(0, 45)}`;
+          return `ID:${c.id} | 现类别:${normalizeDomainLabel(c.domain_tag)} | 最新认识:${evo} | 事实:${String(c.front_fact).slice(0, 75)} | 最初感受:${String(c.back_anchor).slice(0, 45)}`;
         };
 
         const batchSize = 55;
-        // Stage 1: Establish unified taxonomy + classify first batch (prioritizing cards with evolution tags)
         const sortedForTaxonomy = [...cardsList].sort((a, b) => {
           const aLen = (a.evolution_tags || []).length;
           const bLen = (b.evolution_tags || []).length;
@@ -2795,11 +2892,13 @@ ${existingHint}`;
         const firstBatch = sortedForTaxonomy.slice(0, batchSize);
         const restCards = sortedForTaxonomy.slice(batchSize);
 
-        const targetCatCount = cardsList.length <= 8 ? '2 到 4' : cardsList.length <= 25 ? '3 到 6' : '4 到 9';
-        const sys1 = `你是个人认知卡片库的整理顾问。请综合每张卡片的「最新理解（进化词条）」、事实与最初感受，为用户提炼一套干净、精炼、贴合其真实内容的大类体系，并把每张卡片按最新理解重新归类。
-严格规则：
-1. 根据这批卡片的实际内容动态生成 ${targetCatCount} 个宽泛且有区分度的类别名（每个 2–6 个汉字），不要照搬刻板默认分类，也不要碎成一卡一类。
-2. 优先依据「最新理解（进化词条）」判断卡片归属；若暂无进化词条，则依据事实与最初感受判断。
+        const targetCatCount = cardsList.length <= 8 ? '2 到 4' : cardsList.length <= 25 ? '3 到 6' : '4 到 8';
+        const domainRule = buildDomainClassificationRule([], true);
+        const baseSys1 = `你是个人认知卡片库的整理顾问。请综合每张卡片的「最新认识」、事实与最初感受，提炼一套干净、高复用的上位大类体系，并把每张卡片按最新理解重新归类。
+${domainRule}
+输出要求：
+1. 默认生成 ${targetCatCount} 个宽泛且有区分度的上位类别（每个 2–5 字），避免碎成一卡一类；如果用户在补充要求中指定了具体分类维度或数量，以用户要求为最高优先级。
+2. 优先依据「最新认识」揭示的底层规律判断归属；暂无认识时依据事实与最初感受背后的底层原理判断。
 3. 返回纯 JSON：
 {
   "categories": ["类别A", "类别B", ...],
@@ -2807,11 +2906,12 @@ ${existingHint}`;
 }
 每张输入卡片都必须出现在 assignments 中，且 domain_tag 必须严格取自 categories。`;
 
-        const res1 = await callOpenAiCompatible(
-          sys1,
+        const stage1 = applyUserPriorityPrompt(
+          baseSys1,
           `请整理并重新归类以下 ${firstBatch.length} 张卡片：\n${firstBatch.map(formatCardForPrompt).join('\n')}`,
-          true
+          customPrompt
         );
+        const res1 = await callOpenAiCompatible(stage1.sys, stage1.user, true);
 
         const categories = Array.isArray(res1.categories)
           ? Array.from(new Set(res1.categories.map(normalizeDomainLabel).filter(x => x && x !== UNCLASSIFIED_LABEL)))
@@ -2826,17 +2926,12 @@ ${existingHint}`;
           });
         }
 
-        // Stage 2: Classify any remaining cards strictly into the established taxonomy
         if (restCards.length > 0 && categories.length > 0) {
           for (let i = 0; i < restCards.length; i += batchSize) {
             const chunk = restCards.slice(i, i + batchSize);
-            const sysNext = `请将以下卡片严格按最新理解归入已确定的类别体系中：${categories.join('、')}。
-返回纯 JSON：{"assignments": [{"id": "卡片ID", "domain_tag": "类别名"}]}`;
-            const resNext = await callOpenAiCompatible(
-              sysNext,
-              chunk.map(formatCardForPrompt).join('\n'),
-              true
-            );
+            const baseSysNext = `请将以下卡片严格按最新理解背后的底层学科/机制归入已确定的类别体系中：${categories.join('、')}。\n返回纯 JSON：{"assignments": [{"id": "卡片ID", "domain_tag": "类别名"}]}`;
+            const stageNext = applyUserPriorityPrompt(baseSysNext, chunk.map(formatCardForPrompt).join('\n'), customPrompt);
+            const resNext = await callOpenAiCompatible(stageNext.sys, stageNext.user, true);
             if (Array.isArray(resNext.assignments)) {
               resNext.assignments.forEach(a => {
                 if (a?.id && a?.domain_tag) {
@@ -3233,13 +3328,14 @@ ${existingHint}`;
 
               ${testPanelHtml}
 
-              <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;flex-direction:column;gap:8px;">
                 ${!testData && !state.review.activeTestLoading ? `
                   <button type="button" class="btn btn-soft btn-sm btn-block" id="btn-active-test" style="color:var(--ink-secondary);">
                     ${ICONS.sparkle} <span>AI 换个方式考我</span>
                   </button>
                 ` : ''}
-                <button type="button" class="btn btn-primary btn-block" id="btn-reveal-back">
+                ${renderAiExtraPromptHtml('rev-test-extra', '例如：出个职场沟通场景 / 从经济学视角考我（优先按此出题）', state.review.activeTestExtraPrompt)}
+                <button type="button" class="btn btn-primary btn-block" id="btn-reveal-back" style="margin-top:4px;">
                   翻看背面
                 </button>
               </div>
@@ -3248,6 +3344,10 @@ ${existingHint}`;
           wireReviewHeaderButtons();
           document.getElementById('btn-reveal-back').onclick = onRevealBack;
           document.getElementById('front-card-tap').onclick = onRevealBack;
+          const testExtraEl = document.getElementById('rev-test-extra');
+          if (testExtraEl) {
+            testExtraEl.oninput = () => { state.review.activeTestExtraPrompt = testExtraEl.value; };
+          }
           const testBtn = document.getElementById('btn-active-test');
           if (testBtn) testBtn.onclick = onRequestActiveTest;
           const refreshTestBtn = document.getElementById('btn-active-test-refresh');
@@ -3360,6 +3460,7 @@ ${existingHint}`;
                   </button>
                   <span style="font-size:11px;color:var(--ink-muted);">直接点下方下一张</span>
                 </div>
+                ${renderAiExtraPromptHtml('rev-scaffold-extra', '例如：往心理学或博弈机制方向提问（优先按此生成）', state.review.scaffoldExtraPrompt)}
 
                 ${scaffoldHtml}
 
@@ -3385,6 +3486,10 @@ ${existingHint}`;
         document.getElementById('btn-rate-again').onclick = () => onBackRatedAndNext('again');
         document.getElementById('btn-rate-good').onclick = () => onBackRatedAndNext('good');
         document.getElementById('btn-scaffold').onclick = onRequestScaffold;
+        const scafExtraEl = document.getElementById('rev-scaffold-extra');
+        if (scafExtraEl) {
+          scafExtraEl.oninput = () => { state.review.scaffoldExtraPrompt = scafExtraEl.value; };
+        }
         document.getElementById('btn-review-edit-card').onclick = () => openCardEditModal(card, { fromReview: true });
 
         container.querySelectorAll('.evo-capsule').forEach(btn => {
@@ -3412,12 +3517,14 @@ ${existingHint}`;
           promptConfigureAi();
           return;
         }
+        const customPrompt = readAiExtraPrompt('rev-test-extra', state.review.activeTestExtraPrompt);
+        state.review.activeTestExtraPrompt = customPrompt;
         state.review.activeTestLoading = true;
         state.review.activeTestTriggered = true;
         renderReviewTab();
 
         try {
-          state.review.activeTest = await aiGenerateActiveTest(card);
+          state.review.activeTest = await aiGenerateActiveTest(card, customPrompt);
         } catch (err) {
           showToast(err.message || '测试生成失败', 4000);
           const hasEvo = Array.isArray(card.evolution_tags) && card.evolution_tags.length > 0;
@@ -3533,14 +3640,16 @@ ${existingHint}`;
           return;
         }
 
+        const customPrompt = readAiExtraPrompt('rev-scaffold-extra', state.review.scaffoldExtraPrompt);
+        state.review.scaffoldExtraPrompt = customPrompt;
         state.review.scaffoldLoading = true;
         state.review.scaffoldTriggered = true;
         renderReviewTab();
 
         try {
-          state.review.scaffoldQuestions = await aiFetchScaffolding(card);
+          state.review.scaffoldQuestions = await aiFetchScaffolding(card, customPrompt);
         } catch (err) {
-          showToast(err.message || '脚手架生成失败', 4000);
+          showToast(err.message || '提问角度生成失败', 4000);
           state.review.scaffoldQuestions = [
             '这件事背后最反常识的支点是什么？',
             '换一个完全不同的领域，它还成立吗？'
@@ -3644,6 +3753,7 @@ ${existingHint}`;
             <div>
               <label class="field-label" for="m-comp-idea">新想法</label>
               <input id="m-comp-idea" class="input" type="text" maxlength="60" placeholder="写下你想加进来的新感悟" />
+              ${renderAiExtraPromptHtml('comp-ai-extra', '例如：偏心理学专业词 / 控制在 4 字以内（优先按此压缩）')}
             </div>
 
             <button type="button" class="btn btn-primary btn-block" id="m-comp-run">${ICONS.sparkle} 生成 2 个合并词</button>
@@ -3674,13 +3784,14 @@ ${existingHint}`;
             showToast('请先写一句你的新想法');
             return;
           }
+          const customPrompt = readAiExtraPrompt('comp-ai-extra');
           runBtn.disabled = true;
           runBtn.textContent = '正在凝练语义...';
           resBox.classList.add('hidden');
           refineBox.classList.add('hidden');
 
           try {
-            const options = await aiCompressTags(card, idea);
+            const options = await aiCompressTags(card, idea, customPrompt);
             if (!options.length) throw new Error('未返回压缩方案');
 
             resBox.innerHTML = options.map((opt, idx) => {
@@ -3854,6 +3965,7 @@ ${existingHint}`;
                   ${ICONS.sparkle} <span id="btn-cap-ai-txt">AI 拆解</span>
                 </button>
               </div>
+              ${renderAiExtraPromptHtml('cap-ai-extra', '例如：偏心理学/社会学视角归类，只提炼核心事实（优先按此执行）', state.capture.aiExtraPrompt)}
             `}
           </div>
 
@@ -3886,6 +3998,7 @@ ${existingHint}`;
                 </button>
               </div>
               <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="用短词概括，可点右上角生成后再修改" />
+              ${renderAiExtraPromptHtml('cap-evo-extra', '例如：用经济学或心理学概念提炼，控制在 6 字以内（优先按此执行）', state.capture.evoExtraPrompt)}
             </div>
 
             <details class="card-soft">
@@ -4009,6 +4122,15 @@ ${existingHint}`;
           };
         }
 
+        const capAiExtraEl = document.getElementById('cap-ai-extra');
+        if (capAiExtraEl) {
+          capAiExtraEl.oninput = () => { state.capture.aiExtraPrompt = capAiExtraEl.value; };
+        }
+        const capEvoExtraEl = document.getElementById('cap-evo-extra');
+        if (capEvoExtraEl) {
+          capEvoExtraEl.oninput = () => { state.capture.evoExtraPrompt = capEvoExtraEl.value; };
+        }
+
         // AI Generate Editable Initial Evolution Tag (after manual fill of fact & feeling)
         const genEvoBtn = document.getElementById('btn-cap-gen-evo');
         if (genEvoBtn) {
@@ -4029,11 +4151,13 @@ ${existingHint}`;
               promptConfigureAi();
               return;
             }
+            const customPrompt = readAiExtraPrompt('cap-evo-extra', state.capture.evoExtraPrompt);
+            state.capture.evoExtraPrompt = customPrompt;
             genEvoBtn.disabled = true;
             const txtEl = document.getElementById('btn-cap-gen-evo-txt');
             if (txtEl) txtEl.textContent = '生成中...';
             try {
-              const res = await aiSuggestInitialTag(front, anchor);
+              const res = await aiSuggestInitialTag(front, anchor, domInput.value.trim(), customPrompt);
               if (!res.initial_tag) throw new Error('未能生成词条');
               state.capture.evoInit = res.initial_tag;
               evoEl.value = res.initial_tag;
@@ -4067,12 +4191,18 @@ ${existingHint}`;
               promptConfigureAi();
               return;
             }
+            const customPrompt = readAiExtraPrompt('cap-ai-extra', state.capture.aiExtraPrompt);
+            state.capture.aiExtraPrompt = customPrompt;
             aiBtn.disabled = true;
             const aiTxt = document.getElementById('btn-cap-ai-txt');
             if (aiTxt) aiTxt.textContent = '拆解中...';
 
             try {
-              const res = await aiSplitCapture(raw);
+              const res = await aiSplitCapture(raw, customPrompt, {
+                front: frontEl.value.trim(),
+                anchor: anchorEl.value.trim(),
+                evoInit: evoEl.value.trim()
+              });
               state.capture.raw = raw;
               state.capture.front = res.front_fact;
               state.capture.anchor = res.back_anchor;
@@ -4405,8 +4535,10 @@ ${existingHint}`;
             </div>
 
             <div class="card-soft" style="font-size:13px;color:var(--ink-secondary);line-height:1.65;">
-              AI 会通读当前全部 <strong>${state.cards.length} 张</strong> 卡片的「最新进化词条」「客观事实」和「最初感受」，重新提炼一套简洁不杂乱的主题类别，并为你预览每一处变动——你确认后才会写回云端。
+              AI 会通读当前 <strong>${state.cards.length} 张</strong> 卡片的最新认识、事实与最初感受，穿透表层话题、按底层学科与机制提炼精炼大类，预览确认后再写回云端。
             </div>
+
+            ${renderAiExtraPromptHtml('reorg-ai-extra', '例如：严格按心理学、社会学、经济学等基础学科归类，控制在 5 类以内（优先按此整理）')}
 
             <div id="reorg-preview-box" class="hidden" style="display:flex;flex-direction:column;gap:12px;"></div>
             <div id="reorg-err-box" class="inline-notice terra hidden"></div>
@@ -4427,12 +4559,13 @@ ${existingHint}`;
         let latestPlan = null;
 
         async function runAnalysis() {
+          const customPrompt = readAiExtraPrompt('reorg-ai-extra');
           errBox.classList.add('hidden');
           previewBox.classList.add('hidden');
           actionRow.innerHTML = `<button type="button" class="btn btn-primary btn-block" disabled>正在通读 ${state.cards.length} 张卡片并重排类别...</button>`;
 
           try {
-            const { categories, assignmentMap } = await aiReorganizeLibraryDomains(state.cards);
+            const { categories, assignmentMap } = await aiReorganizeLibraryDomains(state.cards, customPrompt);
             if (assignmentMap.size === 0) {
               throw new Error('AI 未返回有效的归类方案，请重试');
             }
@@ -4676,8 +4809,14 @@ ${existingHint}`;
             </div>
 
             <div>
-              <label class="field-label" for="ed-domain">分类</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+                <label class="field-label" style="margin:0;" for="ed-domain">分类</label>
+                <button type="button" class="btn btn-sage-soft btn-xs" id="ed-btn-ai-cat">
+                  ${ICONS.sparkle} <span id="ed-btn-ai-cat-txt">AI 归类</span>
+                </button>
+              </div>
               <input id="ed-domain" class="input" type="text" maxlength="14" value="${esc(curDom === UNCLASSIFIED_LABEL ? '' : curDom)}" placeholder="输入分类名或点下方已有分类" />
+              ${renderAiExtraPromptHtml('ed-cat-extra', '例如：偏心理学或社会学视角，不要按表层话题分（优先按此归类）')}
               ${existingDoms.length ? `
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="ed-dom-pills">
                   ${existingDoms.map(d => `
@@ -4709,6 +4848,50 @@ ${existingHint}`;
               pillsBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
             };
           });
+        }
+
+        const aiCatBtn = document.getElementById('ed-btn-ai-cat');
+        if (aiCatBtn) {
+          aiCatBtn.onclick = async () => {
+            if (!isAiConfigured()) {
+              promptConfigureAi();
+              return;
+            }
+            const curFront = document.getElementById('ed-front').value.trim();
+            const curAnchor = document.getElementById('ed-anchor').value.trim();
+            const curEvo = [
+              document.getElementById('ed-evo-0').value.trim(),
+              document.getElementById('ed-evo-1').value.trim(),
+              document.getElementById('ed-evo-2').value.trim()
+            ].filter(Boolean);
+            const customPrompt = readAiExtraPrompt('ed-cat-extra');
+
+            aiCatBtn.disabled = true;
+            const txtEl = document.getElementById('ed-btn-ai-cat-txt');
+            if (txtEl) txtEl.textContent = '归类中...';
+            try {
+              const newTag = await aiClassifySingleCard({
+                front_fact: curFront,
+                back_anchor: curAnchor,
+                evolution_tags: curEvo,
+                domain_tag: domInput.value.trim()
+              }, customPrompt);
+              if (newTag && newTag !== UNCLASSIFIED_LABEL) {
+                domInput.value = newTag;
+                if (pillsBox) {
+                  pillsBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.getAttribute('data-dom') === newTag));
+                }
+                showToast(`已归入「${newTag}」，点保存生效`);
+              } else {
+                showToast('未能生成新分类，可补充提示词再试');
+              }
+            } catch (err) {
+              showToast(err.message || 'AI 归类失败', 4000);
+            } finally {
+              aiCatBtn.disabled = false;
+              if (txtEl) txtEl.textContent = 'AI 归类';
+            }
+          };
         }
 
         const compBtn = document.getElementById('ed-btn-compress');
