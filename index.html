@@ -712,6 +712,69 @@
       word-break: break-word;
     }
 
+    .ign-anchor-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      max-height: 168px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ign-anchor-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 8px 11px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-soft);
+      background: var(--surface-subtle);
+      color: var(--ink-secondary);
+      font-size: 13px;
+      line-height: 1.45;
+      transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+    }
+
+    .ign-anchor-item.active {
+      background: var(--sage-soft);
+      border-color: var(--sage-border);
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .ign-anchor-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--border);
+    }
+
+    .ign-anchor-item.active .ign-anchor-dot {
+      background: var(--sage);
+    }
+
+    .ign-tag-btn {
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--ink-muted);
+      border: 1px solid transparent;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ign-tag-btn.active {
+      background: var(--sage-soft);
+      color: var(--sage);
+      border-color: var(--sage-border);
+    }
+
     .evidence-list {
       display: flex;
       flex-direction: column;
@@ -1754,6 +1817,7 @@
 
         // Ignition State
         ignition: {
+          selectedTag: '__recommended__', // '__recommended__' | '__all__' | '<scene_tag>'
           currentAnchorId: null,
           showRawAnchor: false,
           switchCount: 0,
@@ -1784,7 +1848,7 @@
           undoStack: []
         },
 
-        // Unified Capture State (1.0 Manual + 2.0 Cabinet Triage)
+        // Preservation Card Capture State (Merged AI Split + Single-Card Extractor, Manual Form Always Open)
         capture: {
           raw: '',
           front: '',
@@ -1793,24 +1857,32 @@
           domainTag: '',
           aiExtraPrompt: '',
           evoExtraPrompt: '',
-          formOpen: false,
-          rawCollapsed: false,
           anchorMissingHint: false,
+          aiLoading: false,
+          aiError: '',
+          aiExcluded: [],
+          aiPendingOverwrite: null,
+          formFilledByAi: false,
           aiSplitUsed: false,
-          aiSplitSnapshot: null,
-          // 2.0 Cabinet Triage Draft
-          triageLoading: false,
-          triageDraft: null,
-          triageEditMode: false,
-          // Video Transcript -> Single Card Extractor
-          transcriptOpen: false,
-          transcriptText: '',
-          transcriptExtraPrompt: '',
-          transcriptLoading: false,
-          transcriptError: '',
-          transcriptExcluded: [],
-          transcriptPendingOverwrite: null,
-          formFilledByTranscript: false
+          aiSplitSnapshot: null
+        },
+
+        // Breakthrough Forest Dedicated Capture State
+        forestCapture: {
+          raw: '',
+          treeLabel: '',
+          parentId: '',
+          title: '',
+          problem: '',
+          refined: '',
+          step: '',
+          status: 'fuzzy',
+          aiExtraPrompt: '',
+          aiLoading: false,
+          aiError: '',
+          implicitIntent: '',
+          pendingOverwrite: null,
+          formFilledByAi: false
         },
 
         // Library Filter State
@@ -2036,9 +2108,7 @@
           front: state.capture.front,
           anchor: state.capture.anchor,
           evoInit: state.capture.evoInit,
-          domainTag: state.capture.domainTag,
-          formOpen: state.capture.formOpen,
-          rawCollapsed: state.capture.rawCollapsed
+          domainTag: state.capture.domainTag
         });
       }
 
@@ -2051,8 +2121,6 @@
         state.capture.anchor = String(d.anchor || '');
         state.capture.evoInit = String(d.evoInit || '');
         state.capture.domainTag = String(d.domainTag || '');
-        state.capture.formOpen = Boolean(d.formOpen);
-        state.capture.rawCollapsed = Boolean(d.rawCollapsed);
       }
 
       function clearCaptureDraft() {
@@ -2065,21 +2133,31 @@
         state.capture.domainTag = '';
         state.capture.aiExtraPrompt = '';
         state.capture.evoExtraPrompt = '';
-        state.capture.formOpen = false;
-        state.capture.rawCollapsed = false;
         state.capture.anchorMissingHint = false;
+        state.capture.aiLoading = false;
+        state.capture.aiError = '';
+        state.capture.aiExcluded = [];
+        state.capture.aiPendingOverwrite = null;
+        state.capture.formFilledByAi = false;
         state.capture.aiSplitUsed = false;
         state.capture.aiSplitSnapshot = null;
-        state.capture.triageLoading = false;
-        state.capture.triageDraft = null;
-        state.capture.triageEditMode = false;
-        state.capture.transcriptText = '';
-        state.capture.transcriptExtraPrompt = '';
-        state.capture.transcriptLoading = false;
-        state.capture.transcriptError = '';
-        state.capture.transcriptExcluded = [];
-        state.capture.transcriptPendingOverwrite = null;
-        state.capture.formFilledByTranscript = false;
+      }
+
+      function clearForestCaptureDraft() {
+        state.forestCapture.raw = '';
+        state.forestCapture.treeLabel = '';
+        state.forestCapture.parentId = '';
+        state.forestCapture.title = '';
+        state.forestCapture.problem = '';
+        state.forestCapture.refined = '';
+        state.forestCapture.step = '';
+        state.forestCapture.status = 'fuzzy';
+        state.forestCapture.aiExtraPrompt = '';
+        state.forestCapture.aiLoading = false;
+        state.forestCapture.aiError = '';
+        state.forestCapture.implicitIntent = '';
+        state.forestCapture.pendingOverwrite = null;
+        state.forestCapture.formFilledByAi = false;
       }
 
       function applyTheme(theme) {
@@ -2762,6 +2840,10 @@
         state.logBatchQueue = [];
         state.review.undoStack = [];
         state.forest.reorgPlan = null;
+        state.ignition.selectedTag = '__recommended__';
+        state.ignition.currentAnchorId = null;
+        clearCaptureDraft();
+        clearForestCaptureDraft();
         state.appMounted = false;
         document.querySelector('.shell')?.classList.remove('forest-wide');
       }
@@ -3845,40 +3927,13 @@
         return `${baseRule}\n- 用户卡片库目前为空，请直接按上述底层学科/机制原则起一个 2–5 字的上位大类名称。`;
       }
 
-      // AI 1: Quick Capture Split + Discipline/Mechanism Auto-Categorization
-      async function aiSplitCapture(rawText, customPrompt = '', cardDraft = null) {
-        const existing = getExistingDomains(false).map(d => d.name);
-        const domainRule = buildDomainClassificationRule(existing, false);
-
-        const baseSys = `你是“非结构化洞察内化系统”的克制录入助手。将用户输入拆分成如下 JSON 字段：
-{
-  "front_fact": "剥离出的客观事实、原话、对话或具体现象（精炼清晰）",
-  "back_anchor": "用户第一眼看到该现象时的直觉、情绪与感触。铁律：1）严格保留用户的原话大白话口吻，严禁润色成书面语、严禁说教；2）如果用户输入里只贴了一段客观事实或他人原话、完全没有表达自己的感受，必须返回空字符串 \"\"，严禁替用户编造假感受！",
-  "domain_tag": "按底层学科或核心机制归类的 2–5 字上位大类名称"
-}
-${domainRule}`;
-
-        let baseUser = `原始输入：\n${rawText}`;
-        if (cardDraft && (cardDraft.front || cardDraft.anchor || cardDraft.evoInit)) {
-          baseUser += `\n\n已有卡片草稿：\n事实：${cardDraft.front || '空'}\n最初感受：${cardDraft.anchor || '空'}\n初始认识：${cardDraft.evoInit || '空'}`;
-        }
-
-        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
-        const res = await callOpenAiCompatible(sys, user, true);
-        return {
-          front_fact: String(res.front_fact || rawText).trim(),
-          back_anchor: String(res.back_anchor || '').trim(),
-          domain_tag: normalizeDomainLabel(res.domain_tag)
-        };
-      }
-
-      // AI 1d: Video Transcript -> Denoised Single Card Extractor (5 Anti-Distortion Iron Rules + Few-Shot)
-      async function aiExtractSingleCardFromTranscript(transcriptText, excludedPoints = [], customPrompt = '') {
+      // AI 1: Unified Card Split & Denoised Single-Card Extractor (5 Anti-Distortion Iron Rules + Few-Shot + Angle Switch)
+      async function aiSplitCapture(rawText, excludedPoints = [], customPrompt = '') {
         const t0 = Date.now();
         const existing = getExistingDomains(false).map(d => d.name);
         const domainRule = buildDomainClassificationRule(existing, false);
 
-        const baseSys = `你是“轻量认知内化系统”的短视频文稿单卡提炼助手。你的任务是从用户粘贴的微信视频号/元宝长文稿中去噪，并严格遵守以下 5 条防失真铁律，只返回 1 张卡片的纯 JSON：
+        const baseSys = `你是“每日保鲜”的单卡拆解与去噪提炼助手。无论用户是随手口述/输入的一段记录，还是复制粘贴的长文稿，都请严格遵守以下 5 条防失真铁律，只返回 1 张保鲜卡的纯 JSON：
 {
   "front_fact": "...",
   "back_anchor": "...",
@@ -3886,13 +3941,14 @@ ${domainRule}`;
 }
 
 【5 条不可违背的防失真铁律】
-1. 严格只生成 1 张卡：无论文稿有多长、包含多少个观点，每次必须只挑选唯一一个最核心、最反常识或最有启发的观点，绝不输出多张卡片、绝不输出编号列表或拼盘总结。
-2. 正面（front_fact）保留原话、严禁抽象化：从原文中挑选最具体、最有画面感、最戳人的原话片段（允许顺手删掉“家人们”“点赞关注我”“听懂扣1”等明显口水噪音），禁止生硬切碎句子，也绝对禁止改写成干巴巴的教科书式抽象概括。
-3. 背面感悟（back_anchor）有则直摘，无则留空：
-   - 如果文稿本身已经包含一句一针见血的“点睛原话/核心结论”，直接摘录这句原话作为 back_anchor（不要过度润色）。
-   - 如果文稿只讲了具体故事或现象、没有现成的点睛句，必须直接返回空字符串 ""，留给用户自己写感悟，严禁 AI 强行编造鸡汤或拔高升华。
+1. 严格只生成 1 张卡：无论原文有多长、包含多少个观点，每次必须只挑选唯一一个最核心、最反常识或最有启发的观点，绝不输出多张卡片、绝不输出编号列表或拼盘总结。
+2. 正面（front_fact）保留原话、严禁抽象化：剥离出最具体、最有画面感、最戳人的原话、客观事实或对话片段（可顺手删掉明显口水噪音或无意义寒暄），禁止生硬切碎句子，也绝对禁止改写成干巴巴的教科书式抽象概括。
+3. 背面最初感受（back_anchor）有则保留原味，无则留空：
+   - 如果原文里包含用户自己写下的直觉、情绪或感触，严格保留用户原话大白话口吻，严禁润色成书面语或说教；
+   - 如果原文是他人口述/长文稿且自带一句一针见血的“点睛原话/核心结论”，直接摘录这句原话作为 back_anchor（不要过度润色）；
+   - 如果原文只讲了具体故事、事实或现象，既没有用户个人感受也没有现成的点睛句，必须直接返回空字符串 ""，留给用户自己写，严禁 AI 强行编造鸡汤或拔高升华。
 4. 校准示例（Few-Shot 标尺，务必对齐这种保留原话温度与克制拆分的质感）：
-   - 示例输入文稿：“原来跟女孩子聊天是不用找话题的。我听过一个很扎心的回答是这么说的：其实男生不怎么会聊天不是很重要，如果女生喜欢你的话她就会自己找话题。所以就让聊天变简单了。那些每次跟女生聊天都要一字一句斟酌的男生，其实并不是你的问题，只是女生没看上你而已。主动不是女生的风格，如果有，那人一定是谁都替代不了。”
+   - 示例输入：“原来跟女孩子聊天是不用找话题的。我听过一个很扎心的回答是这么说的：其实男生不怎么会聊天不是很重要，如果女生喜欢你的话她就会自己找话题。所以就让聊天变简单了。那些每次跟女生聊天都要一字一句斟酌的男生，其实并不是你的问题，只是女生没看上你而已。主动不是女生的风格，如果有，那人一定是谁都替代不了。”
    - 理想输出 JSON：
      {
        "front_fact": "原来跟女孩子聊天是不用找话题的。那些每次跟女生聊天都要一字一句斟酌的男生，其实并不是你的问题，只是女生没看上你而已。主动不是女生的风格，如果有，那人一定是谁都替代不了。",
@@ -3903,16 +3959,16 @@ ${domainRule}`;
 
 ${domainRule}`;
 
-        let baseUser = `短视频文稿原文：\n${transcriptText}`;
+        let baseUser = `原始文本：\n${rawText}`;
         if (Array.isArray(excludedPoints) && excludedPoints.length > 0) {
           const exclStr = excludedPoints.map((pt, idx) =>
-            `[已选观点 #${idx + 1}] 正面：${String(pt.front_fact || '').slice(0, 80)}${pt.back_anchor ? ` | 点睛：${String(pt.back_anchor).slice(0, 60)}` : ''}`
+            `[已选观点 #${idx + 1}] 正面：${String(pt.front_fact || '').slice(0, 80)}${pt.back_anchor ? ` | 背面：${String(pt.back_anchor).slice(0, 60)}` : ''}`
           ).join('\n');
           baseUser += `\n\n【请务必避开以下已提炼过的观点，另选原文中一个不同的独立观点，依然严格只输出 1 张卡】：\n${exclStr}`;
         }
 
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
-        const featureName = excludedPoints.length > 0 ? 'transcript_switch_angle' : 'transcript_extract';
+        const featureName = excludedPoints.length > 0 ? 'split_switch_angle' : 'split_extract';
         try {
           const res = await callOpenAiCompatible(sys, user, true);
           trackActivity('cabinet', 'ai_trigger', null, { feature: featureName, ok: true, excluded_count: excludedPoints.length }, Date.now() - t0);
@@ -4180,83 +4236,48 @@ ${domainRule}
       // 8B. 2.0 MING CABINET AI FUNCTIONS (ALL OMIT TEMPERATURE & HONOR PRIORITY PROMPT)
       // =====================================================================
 
-      // AI 6: Unified Capture Cabinet Triage (纠错 + 抓潜台词 + 三路分流票拟)
-      async function aiCabinetTriageCapture(rawText, customPrompt = '') {
+      // AI 6: Breakthrough Forest Capture — 具象化难题 + 建议归属树/父节点 + 15分钟抓手
+      async function aiStructureForestCapture(rawText, customPrompt = '') {
         const t0 = Date.now();
-        const existingDomains = getExistingDomains(false).map(d => d.name);
-        const domainRule = buildDomainClassificationRule(existingDomains, false);
-        const existingTrees = Array.from(new Set(state.forestNodes.map(n => n.tree_label).filter(Boolean)));
-        const forestContext = state.forestNodes.slice(0, 30).map(n =>
+        const existingTrees = Array.from(new Set(state.forestNodes.filter(n => !n.is_meta).map(n => n.tree_label).filter(Boolean)));
+        const forestContext = state.forestNodes.filter(n => !n.is_meta).slice(0, 30).map(n =>
           `ID:${n.id} | 树:${n.tree_label} | 标题:${n.short_title} | 状态:${n.status}`
         ).join('\n') || '暂无已有节点';
 
-        const baseSys = `你是“双引擎个人认知内化系统”的明朝内阁首辅，负责对用户随手捕捉的一段语音/文字草拟票拟（纠错、抓潜台词、建议归属）。
-三路去向说明：
-- "anchor"（渴望锚点）：让人心动、向往的具体画面、想成为的状态或点燃动力的渴望燃料。
-- "forest"（破局森林）：用户自己面对的难题、卡点、目标拆解、行动困扰或阶段性推进思考。
-- "card"（每日保鲜）：从外部看到的客观现象、金句原话、他人经验或零散规律洞察。
-
+        const baseSys = `你是“破局森林”的问题拆解参谋。请把用户输入的一段模糊难题、卡壳或想法，整理成 1 个清晰、可挂入破局森林的问题节点草稿。
 铁律：
-1. 严禁替用户编造未表达的情绪或说教；若分流为 card 但原文不含用户个人感受，card_draft.back_anchor 必须返回 ""！
-2. 严禁过度润色抹掉大白话原味；corrected_text 仅做语音错别字纠错与轻断句。
-3. ${domainRule}
+1. 严禁过度润色或空洞说教，保留用户真实关切与具体场景；corrected_problem 仅做轻纠错断句。
+2. 允许独立或并列，绝不把毫不相关的想法硬塞到不合适的父节点下。
+3. 严禁建议挂载到 is_meta 元问题节点下。
 4. 返回纯 JSON：
 {
-  "corrected_text": "轻纠错断句后的文本（保持原口吻）",
-  "implicit_intent": "一句 25 字内简短提示：你可能没说出口的潜台词或核心意图",
-  "suggested_target": "anchor 或 forest 或 card",
-  "reason": "18 字内说明为何建议归入此引擎",
-  "anchor_draft": {
-    "polished_text": "可选的凝练画面表述（简短鲜活，不鸡汤）",
-    "scene_tags": ["清晨", "科研工作"],
-    "linked_tree_label": "最适合挂在哪棵树顶"
-  },
-  "forest_draft": {
-    "tree_label": "归属领域树名（优先复用已有树：${existingTrees.join('、') || '综合破局'}）",
-    "parent_id": "若自然归属某已有父节点填其ID，否则填空字符串 \"\" 表示独立或并列节点",
-    "short_title": "8到16字折叠短语",
-    "refined_problem": "帮用户把模糊想法具象化的一两句清晰问题陈述",
-    "next_micro_step": "15分钟内可启动的一小步（可选）"
-  },
-  "card_draft": {
-    "front_fact": "剥离出的客观事实/原话",
-    "back_anchor": "用户原文里的大白话感受（若原文未写必须返回 \"\"）",
-    "domain_tag": "按底层学科/机制归类的2-5字上位类别"
-  }
+  "corrected_problem": "轻纠错断句后的问题原述（保留原口吻）",
+  "implicit_intent": "一句 25 字内简短提示：你可能真正在意的卡点或潜台词",
+  "tree_label": "归属领域树名（优先复用已有树：${existingTrees.join('、') || '综合破局'}）",
+  "parent_id": "若自然归属某已有父节点填其ID，否则填空字符串 \"\" 表示独立或并列节点",
+  "short_title": "8到16字折叠短语（用于在森林画布展示）",
+  "refined_problem": "一两句清晰具象的问题表述（降低模糊感，不失真）",
+  "next_micro_step": "15分钟内立刻可动手的最小抓手（若暂不需要可填空字符串 \"\"）"
 }`;
 
         const baseUser = `用户原始输入：\n${rawText}\n\n当前破局森林已有节点：\n${forestContext}`;
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
         try {
           const res = await callOpenAiCompatible(sys, user, true);
-          trackActivity('cabinet', 'ai_trigger', null, { feature: 'capture_triage', ok: true }, Date.now() - t0);
-          const target = ['anchor', 'forest', 'card'].includes(res.suggested_target) ? res.suggested_target : 'card';
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'forest_capture_structure', ok: true }, Date.now() - t0);
+          const validParent = state.forestNodes.some(n => !n.is_meta && n.id === res.parent_id) ? res.parent_id : '';
           return {
             raw_text: rawText,
-            corrected_text: String(res.corrected_text || rawText).trim(),
+            corrected_problem: String(res.corrected_problem || rawText).trim(),
             implicit_intent: String(res.implicit_intent || '').trim(),
-            suggested_target: target,
-            reason: String(res.reason || '').trim(),
-            anchor_draft: {
-              polished_text: String(res.anchor_draft?.polished_text || res.corrected_text || rawText).trim(),
-              scene_tags: Array.isArray(res.anchor_draft?.scene_tags) ? res.anchor_draft.scene_tags.slice(0, 4) : [getTimeSlotLabel()],
-              linked_tree_label: String(res.anchor_draft?.linked_tree_label || '').trim()
-            },
-            forest_draft: {
-              tree_label: String(res.forest_draft?.tree_label || existingTrees[0] || '综合破局').trim().slice(0, 16),
-              parent_id: state.forestNodes.some(n => n.id === res.forest_draft?.parent_id) ? res.forest_draft.parent_id : '',
-              short_title: String(res.forest_draft?.short_title || rawText.slice(0, 16)).trim().slice(0, 32),
-              refined_problem: String(res.forest_draft?.refined_problem || res.corrected_text || rawText).trim(),
-              next_micro_step: String(res.forest_draft?.next_micro_step || '').trim()
-            },
-            card_draft: {
-              front_fact: String(res.card_draft?.front_fact || res.corrected_text || rawText).trim(),
-              back_anchor: String(res.card_draft?.back_anchor || '').trim(),
-              domain_tag: normalizeDomainLabel(res.card_draft?.domain_tag)
-            }
+            tree_label: String(res.tree_label || existingTrees[0] || '综合破局').trim().slice(0, 16),
+            parent_id: validParent,
+            short_title: String(res.short_title || rawText.slice(0, 16)).trim().slice(0, 32),
+            refined_problem: String(res.refined_problem || '').trim(),
+            next_micro_step: String(res.next_micro_step || '').trim()
           };
         } catch (err) {
-          trackActivity('cabinet', 'ai_trigger', null, { feature: 'capture_triage', ok: false, error: err.message }, Date.now() - t0);
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'forest_capture_structure', ok: false, error: err.message }, Date.now() - t0);
           throw err;
         }
       }
@@ -4762,16 +4783,19 @@ ${domainRule}
               <!-- Space 4: Cabinet Council (Periodic Cross-Engine Collision Inbox) -->
               <section id="view-cabinet" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
 
-              <!-- Space 5: Unified Quick Capture -->
-              <section id="view-capture" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
+              <!-- Space 5A: Preservation Card Capture -->
+              <section id="view-capture-card" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
+
+              <!-- Space 5B: Breakthrough Forest Capture -->
+              <section id="view-capture-forest" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
 
               <!-- Settings & Observer Analysis Lab -->
               <section id="view-settings" class="hidden" style="flex:1;display:flex;flex-direction:column;"></section>
             </main>
 
-            <!-- Persistent Floating Quick Capture Button -->
-            <button type="button" class="capture-fab" id="btn-capture-fab" aria-label="随手速记">
-              ${ICONS.capture}<span>速记</span>
+            <!-- Context-Aware Floating Quick Capture Button -->
+            <button type="button" class="capture-fab" id="btn-capture-fab" aria-label="速记">
+              ${ICONS.capture}<span id="btn-capture-fab-label">速记</span>
             </button>
 
             <nav class="bottom-nav" aria-label="主导航">
@@ -4794,7 +4818,15 @@ ${domainRule}
             btn.addEventListener('click', () => switchPreserveSubTab(btn.getAttribute('data-pres-sub')));
           });
           document.getElementById('btn-pres-settings').addEventListener('click', () => switchTab('settings'));
-          document.getElementById('btn-capture-fab').addEventListener('click', () => switchTab('capture'));
+          document.getElementById('btn-capture-fab').addEventListener('click', () => {
+            if (state.activeTab === 'ignition') {
+              openQuickDesireModal();
+            } else if (state.activeTab === 'forest') {
+              openForestCapture();
+            } else {
+              switchTab('capture-card');
+            }
+          });
 
           state.appMounted = true;
           trackActivity('system', 'session_start', null, {
@@ -4890,8 +4922,16 @@ ${domainRule}
         }
       }
 
+      function openForestCapture(defaultTree = '') {
+        const chosenTree = defaultTree || (state.forest.selectedTree !== '全部树' ? state.forest.selectedTree : '');
+        if (chosenTree && !state.forestCapture.treeLabel && !state.forestCapture.problem && !state.forestCapture.raw) {
+          state.forestCapture.treeLabel = chosenTree;
+        }
+        switchTab('capture-forest');
+      }
+
       function switchTab(rawTab) {
-        // Maintain 100% compatibility with existing 1.0 calls like switchTab('review') or switchTab('library')
+        // Maintain 100% compatibility with existing calls like 'review', 'library', 'capture'
         let tab = rawTab;
         if (rawTab === 'review') {
           tab = 'preserve';
@@ -4899,6 +4939,8 @@ ${domainRule}
         } else if (rawTab === 'library') {
           tab = 'preserve';
           state.preserveSubTab = 'library';
+        } else if (rawTab === 'capture') {
+          tab = 'capture-card';
         }
 
         const prevTab = state.activeTab;
@@ -4907,7 +4949,7 @@ ${domainRule}
           if (prevTab) {
             trackActivity('system', 'space_switch', null, { from: prevTab, to: tab }, dwellMs);
           }
-          if (prevTab === 'ignition' && (tab === 'forest' || tab === 'preserve' || tab === 'capture')) {
+          if (prevTab === 'ignition' && (tab === 'forest' || tab === 'preserve' || tab === 'capture-card' || tab === 'capture-forest')) {
             recordIgnitionFollowupIfRecent(tab, 'enter_space');
           }
           state.spaceEnterMs = Date.now();
@@ -4925,17 +4967,24 @@ ${domainRule}
           shellEl.classList.toggle('forest-wide', tab === 'forest');
         }
 
-        ['ignition', 'forest', 'preserve', 'cabinet', 'capture', 'settings'].forEach(name => {
+        ['ignition', 'forest', 'preserve', 'cabinet', 'capture-card', 'capture-forest', 'settings'].forEach(name => {
           const el = document.getElementById(`view-${name}`);
           if (el) el.classList.toggle('hidden', name !== tab);
         });
 
+        const navActiveTab = tab === 'capture-card' ? 'preserve' : (tab === 'capture-forest' ? 'forest' : tab);
         document.querySelectorAll('.nav-item').forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+          btn.classList.toggle('active', btn.getAttribute('data-tab') === navActiveTab);
         });
 
         const fab = document.getElementById('btn-capture-fab');
-        if (fab) fab.classList.toggle('hidden', tab === 'capture');
+        if (fab) {
+          const showFab = tab === 'ignition' || tab === 'forest' || tab === 'preserve';
+          fab.classList.toggle('hidden', !showFab);
+          const fabTip = tab === 'ignition' ? '新增渴望' : (tab === 'forest' ? '破局速记' : '保鲜记卡片');
+          fab.setAttribute('aria-label', fabTip);
+          fab.setAttribute('title', fabTip);
+        }
 
         window.scrollTo(0, 0);
 
@@ -4943,15 +4992,49 @@ ${domainRule}
         if (tab === 'forest') renderForestTab();
         if (tab === 'preserve') switchPreserveSubTab(state.preserveSubTab);
         if (tab === 'cabinet') renderCabinetTab();
-        if (tab === 'capture') renderCaptureTab();
+        if (tab === 'capture-card') renderCardCaptureTab();
+        if (tab === 'capture-forest') renderForestCaptureTab();
         if (tab === 'settings') renderSettingsTab();
       }
 
       // =====================================================================
       // 10B. SPACE 1: 启动点火页 (IGNITION - PREHEATED 0MS FIRST SCREEN)
       // =====================================================================
-      function pickWeightedDesireAnchor(excludeId = null) {
-        const pool = state.desireAnchors.filter(a => a && a.raw_text);
+      function getIgnitionAnchorTags() {
+        const counts = new Map();
+        let untaggedCount = 0;
+        state.desireAnchors.forEach(a => {
+          if (!a || !a.raw_text) return;
+          const tags = Array.isArray(a.scene_tags) ? a.scene_tags.map(t => String(t).trim()).filter(Boolean) : [];
+          if (tags.length === 0) {
+            untaggedCount++;
+          } else {
+            const uniq = new Set(tags);
+            uniq.forEach(t => counts.set(t, (counts.get(t) || 0) + 1));
+          }
+        });
+        const list = Array.from(counts.entries())
+          .map(([tag, count]) => ({ tag, count }))
+          .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'zh-CN'));
+        if (untaggedCount > 0 && list.length > 0) {
+          list.push({ tag: '__untagged__', label: '未标标签', count: untaggedCount });
+        }
+        return list;
+      }
+
+      function getFilteredIgnitionAnchors(selectedTag = state.ignition.selectedTag) {
+        const all = state.desireAnchors.filter(a => a && a.raw_text);
+        if (!selectedTag || selectedTag === '__recommended__' || selectedTag === '__all__') {
+          return all;
+        }
+        if (selectedTag === '__untagged__') {
+          return all.filter(a => !Array.isArray(a.scene_tags) || a.scene_tags.map(t => String(t).trim()).filter(Boolean).length === 0);
+        }
+        return all.filter(a => Array.isArray(a.scene_tags) && a.scene_tags.some(t => String(t).trim() === selectedTag));
+      }
+
+      function pickWeightedDesireAnchor(excludeId = null, customPool = null) {
+        const pool = (Array.isArray(customPool) ? customPool : state.desireAnchors).filter(a => a && a.raw_text);
         if (pool.length === 0) return null;
         if (pool.length === 1) return pool[0];
 
@@ -4990,27 +5073,44 @@ ${domainRule}
         return list[0];
       }
 
+      function selectIgnitionAnchor(targetAnchor, sourceAction = 'anchor_select') {
+        if (!targetAnchor) return;
+        state.ignition.currentAnchorId = targetAnchor.id;
+        state.ignition.showRawAnchor = false;
+        state.lastIgnitionAnchorId = targetAnchor.id;
+        state.lastIgnitionViewedAt = Date.now();
+        state.ignitionFollowupLogged = false;
+        updateDesireAnchorOptimistic(targetAnchor.id, {
+          shown_count: (Number(targetAnchor.shown_count) || 0) + 1,
+          last_shown_at: new Date().toISOString()
+        });
+        trackActivity('ignition', sourceAction, targetAnchor.id, {
+          anchor_id: targetAnchor.id,
+          is_meta: Boolean(targetAnchor.is_meta),
+          selected_tag: state.ignition.selectedTag
+        });
+      }
+
       function renderIgnitionTab() {
         const container = document.getElementById('view-ignition');
         if (!container) return;
 
-        let anchor = state.desireAnchors.find(a => a.id === state.ignition.currentAnchorId);
-        if (!anchor) {
-          anchor = pickWeightedDesireAnchor(null);
+        const allAnchors = state.desireAnchors.filter(a => a && a.raw_text);
+        const tagList = getIgnitionAnchorTags();
+        const validTags = new Set(['__recommended__', '__all__', ...tagList.map(t => t.tag)]);
+        if (!validTags.has(state.ignition.selectedTag)) {
+          state.ignition.selectedTag = '__recommended__';
+        }
+
+        const activeTag = state.ignition.selectedTag;
+        const filteredAnchors = getFilteredIgnitionAnchors(activeTag);
+        const isFilteredMode = activeTag !== '__recommended__';
+
+        let anchor = filteredAnchors.find(a => a.id === state.ignition.currentAnchorId);
+        if (!anchor && filteredAnchors.length > 0) {
+          anchor = pickWeightedDesireAnchor(null, filteredAnchors);
           if (anchor) {
-            state.ignition.currentAnchorId = anchor.id;
-            state.ignition.showRawAnchor = false;
-            state.lastIgnitionAnchorId = anchor.id;
-            state.lastIgnitionViewedAt = Date.now();
-            state.ignitionFollowupLogged = false;
-            updateDesireAnchorOptimistic(anchor.id, {
-              shown_count: (Number(anchor.shown_count) || 0) + 1,
-              last_shown_at: new Date().toISOString()
-            });
-            trackActivity('ignition', 'ignition_view', anchor.id, {
-              anchor_id: anchor.id,
-              is_meta: Boolean(anchor.is_meta)
-            });
+            selectIgnitionAnchor(anchor, 'ignition_view');
           }
         }
 
@@ -5032,8 +5132,12 @@ ${domainRule}
 
         const dotClass = state.syncStatus === 'syncing' ? 'syncing' : (state.syncStatus === 'error' || state.syncQueue.length > 0) ? 'error' : '';
 
+        const activeTagLabel = activeTag === '__recommended__'
+          ? '时间推荐'
+          : (activeTag === '__all__' ? '全部渴望' : (activeTag === '__untagged__' ? '未标标签' : activeTag));
+
         container.innerHTML = `
-          <div class="page-header" style="margin-bottom:14px;">
+          <div class="page-header" style="margin-bottom:10px;">
             <div>
               <div style="display:flex;align-items:center;gap:7px;">
                 <h1 class="page-title">${slotLabel}点火</h1>
@@ -5051,9 +5155,18 @@ ${domainRule}
             </div>
           </div>
 
+          <!-- Tag Filter Bar: Default Time-Weighted Recommendation + Direct Tag / All Selection -->
+          <div class="pills-scroll" id="ign-tag-pills" style="margin-bottom:10px;">
+            <button type="button" class="pill ${activeTag === '__recommended__' ? 'active' : ''}" data-ign-tag="__recommended__">时间推荐</button>
+            <button type="button" class="pill ${activeTag === '__all__' ? 'active' : ''}" data-ign-tag="__all__">全部 <span style="opacity:0.65;font-size:11px;margin-left:2px;">${allAnchors.length}</span></button>
+            ${tagList.map(t => `
+              <button type="button" class="pill ${activeTag === t.tag ? 'active' : ''}" data-ign-tag="${esc(t.tag)}">${esc(t.label || t.tag)} <span style="opacity:0.65;font-size:11px;margin-left:2px;">${t.count}</span></button>
+            `).join('')}
+          </div>
+
           <div class="ignition-anchor-card anim-up">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;">
-              <span style="font-size:12px;font-weight:500;color:var(--sage);">✦ 渴望锚点</span>
+              <span style="font-size:12px;font-weight:500;color:var(--sage);">✦ 渴望锚点${isFilteredMode ? ` · ${esc(activeTagLabel)}` : ''}</span>
               <div style="display:flex;align-items:center;gap:6px;">
                 ${hasPolishedAlt ? `
                   <button type="button" class="btn-ghost btn-xs" id="btn-anchor-toggle-raw" style="padding:2px 7px;min-height:24px;">
@@ -5070,7 +5183,27 @@ ${domainRule}
 
             ${anchor?.scene_tags?.length ? `
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
-                ${anchor.scene_tags.slice(0, 4).map(t => `<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface-soft);color:var(--ink-muted);">${esc(t)}</span>`).join('')}
+                ${anchor.scene_tags.slice(0, 4).map(t => `
+                  <button type="button" class="ign-tag-btn ${activeTag === t ? 'active' : ''}" data-ign-tag="${esc(t)}">${esc(t)}</button>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${isFilteredMode && filteredAnchors.length > 0 ? `
+              <div class="ign-anchor-picker" id="ign-anchor-picker" aria-label="选择要点火的渴望">
+                <div style="font-size:11px;color:var(--ink-muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                  <span>点选想看的点火（${filteredAnchors.length} 条）</span>
+                </div>
+                ${filteredAnchors.map(item => {
+                  const preview = (item.use_polished && item.polished_text) ? item.polished_text : item.raw_text;
+                  const isActive = anchor && item.id === anchor.id;
+                  return `
+                    <button type="button" class="ign-anchor-item ${isActive ? 'active' : ''}" data-ign-pick="${esc(item.id)}">
+                      <span class="ign-anchor-dot"></span>
+                      <span class="line-clamp-1" style="flex:1;">${esc(preview)}</span>
+                    </button>
+                  `;
+                }).join('')}
               </div>
             ` : ''}
 
@@ -5142,6 +5275,36 @@ ${domainRule}
         const cabShortcut = document.getElementById('btn-ign-cabinet');
         if (cabShortcut) cabShortcut.onclick = () => switchTab('cabinet');
 
+        // Tag filter pills (both top bar and tags inside anchor card)
+        container.querySelectorAll('[data-ign-tag]').forEach(btn => {
+          btn.onclick = () => {
+            const nextTag = btn.getAttribute('data-ign-tag');
+            state.ignition.selectedTag = nextTag;
+            if (nextTag === '__recommended__') {
+              const rec = pickWeightedDesireAnchor(null, allAnchors);
+              if (rec) selectIgnitionAnchor(rec, 'anchor_tag_recommended');
+            } else {
+              const nextList = getFilteredIgnitionAnchors(nextTag);
+              if (nextList.length > 0 && !nextList.some(a => a.id === state.ignition.currentAnchorId)) {
+                const pick = pickWeightedDesireAnchor(null, nextList) || nextList[0];
+                selectIgnitionAnchor(pick, 'anchor_tag_filter');
+              }
+            }
+            renderIgnitionTab();
+          };
+        });
+
+        // Direct anchor selection in filtered mode ("我想看哪个点火就能看哪个")
+        container.querySelectorAll('[data-ign-pick]').forEach(btn => {
+          btn.onclick = () => {
+            const targetId = btn.getAttribute('data-ign-pick');
+            const target = state.desireAnchors.find(a => a.id === targetId);
+            if (!target) return;
+            selectIgnitionAnchor(target, 'anchor_direct_pick');
+            renderIgnitionTab();
+          };
+        });
+
         const toggleRawBtn = document.getElementById('btn-anchor-toggle-raw');
         if (toggleRawBtn) {
           toggleRawBtn.onclick = () => {
@@ -5151,25 +5314,16 @@ ${domainRule}
         }
 
         document.getElementById('btn-anchor-switch').onclick = () => {
-          const next = pickWeightedDesireAnchor(state.ignition.currentAnchorId);
+          const pool = isFilteredMode ? filteredAnchors : allAnchors;
+          const next = pickWeightedDesireAnchor(state.ignition.currentAnchorId, pool);
           if (!next || next.id === state.ignition.currentAnchorId) {
-            showToast('渴望池目前只有 1 条，点「管理渴望池」或「速记」多存几条吧');
+            showToast(isFilteredMode
+              ? '当前标签下只有 1 条渴望，可点右下角「速记」新增'
+              : '渴望池目前只有 1 条，点右下角「速记」多存几条吧');
             return;
           }
           state.ignition.switchCount++;
-          state.ignition.currentAnchorId = next.id;
-          state.ignition.showRawAnchor = false;
-          state.lastIgnitionAnchorId = next.id;
-          state.lastIgnitionViewedAt = Date.now();
-          state.ignitionFollowupLogged = false;
-          updateDesireAnchorOptimistic(next.id, {
-            shown_count: (Number(next.shown_count) || 0) + 1,
-            last_shown_at: new Date().toISOString()
-          });
-          trackActivity('ignition', 'anchor_switch', next.id, {
-            anchor_id: next.id,
-            switch_count: state.ignition.switchCount
-          });
+          selectIgnitionAnchor(next, 'anchor_switch');
           renderIgnitionTab();
         };
 
@@ -5311,9 +5465,98 @@ ${domainRule}
         };
       }
 
+      // Ignition Quick Capture Modal (Triggered by FAB on Ignition page)
+      function openQuickDesireModal() {
+        const trees = state.forestNodes.filter(n => !n.parent_id && !n.is_meta);
+        const existingTags = Array.from(new Set([
+          getTimeSlotLabel(),
+          ...getIgnitionAnchorTags().filter(t => t.tag !== '__untagged__').map(t => t.tag)
+        ])).slice(0, 12);
+        const prefillTag = (state.ignition.selectedTag && !state.ignition.selectedTag.startsWith('__'))
+          ? state.ignition.selectedTag
+          : '';
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="margin:0;font-size:16px;font-weight:600;">新增渴望锚点</h3>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <textarea id="qdes-raw" class="textarea" rows="3" placeholder="写下让你心头一热的渴望画面或状态"></textarea>
+
+            <div>
+              <input id="qdes-tags" class="input" style="font-size:13px;" type="text" value="${esc(prefillTag)}" placeholder="标签（逗号分隔，用于点火页按标签筛选）" />
+              ${existingTags.length ? `
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="qdes-tag-chips">
+                  ${existingTags.map(t => `<button type="button" class="preset-chip" data-qdes-chip="${esc(t)}">+ ${esc(t)}</button>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <select id="qdes-node" class="select" style="font-size:13px;">
+              <option value="">不绑定特定问题树</option>
+              ${trees.map(n => `<option value="${esc(n.id)}">挂到：${esc(n.tree_label)} · ${esc(n.short_title.slice(0, 12))}</option>`).join('')}
+            </select>
+
+            <button type="button" class="btn btn-primary btn-block" id="btn-qdes-save">存进渴望池并展示</button>
+
+            <div style="display:flex;justify-content:center;">
+              <button type="button" class="btn-ghost btn-xs" id="btn-qdes-open-pool">管理全部渴望池 (${state.desireAnchors.length})</button>
+            </div>
+          </div>
+        `);
+
+        document.getElementById('m-close').onclick = closeModal;
+        const tagsInput = document.getElementById('qdes-tags');
+        document.querySelectorAll('[data-qdes-chip]').forEach(btn => {
+          btn.onclick = () => {
+            const chip = btn.getAttribute('data-qdes-chip');
+            const cur = tagsInput.value.split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
+            if (!cur.includes(chip)) {
+              cur.push(chip);
+              tagsInput.value = cur.join(', ');
+            }
+          };
+        });
+
+        document.getElementById('btn-qdes-open-pool').onclick = () => openDesireAnchorPoolModal();
+
+        document.getElementById('btn-qdes-save').onclick = () => {
+          const raw = document.getElementById('qdes-raw').value.trim();
+          if (!raw) {
+            showToast('先写一句让你心动的画面');
+            document.getElementById('qdes-raw')?.focus();
+            return;
+          }
+          const sceneStr = tagsInput.value.trim();
+          const scenes = sceneStr ? sceneStr.split(/[,，、\s]+/).filter(Boolean).slice(0, 4) : [getTimeSlotLabel()];
+          const linkedNodeId = document.getElementById('qdes-node').value || null;
+          const created = createDesireAnchorOptimistic({
+            raw_text: raw,
+            scene_tags: scenes,
+            linked_node_id: linkedNodeId
+          });
+          state.ignition.currentAnchorId = created.id;
+          state.ignition.showRawAnchor = false;
+          if (state.ignition.selectedTag && !state.ignition.selectedTag.startsWith('__') && !scenes.includes(state.ignition.selectedTag)) {
+            state.ignition.selectedTag = scenes[0] || '__all__';
+          }
+          closeModal();
+          renderIgnitionTab();
+          showToast('已存进渴望池并展示');
+        };
+
+        setTimeout(() => document.getElementById('qdes-raw')?.focus(), 60);
+      }
+
       // Desire Anchor Pool Manager Modal (Add / Edit / Raw vs Polished / Bind Tree / Delete)
       function openDesireAnchorPoolModal(preselectTreeNodeId = null) {
         const trees = state.forestNodes.filter(n => !n.parent_id);
+        const existingTags = Array.from(new Set([
+          getTimeSlotLabel(),
+          ...getIgnitionAnchorTags().filter(t => t.tag !== '__untagged__').map(t => t.tag)
+        ])).slice(0, 10);
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -5323,14 +5566,19 @@ ${domainRule}
 
             <div class="card-soft" style="display:flex;flex-direction:column;gap:9px;">
               <div style="font-size:12px;font-weight:500;color:var(--ink-secondary);">存入一条新渴望画面</div>
-              <textarea id="anc-new-raw" class="textarea" rows="2" placeholder="写下让你心头一热的具体画面或渴望状态（大白话最有力）"></textarea>
+              <textarea id="anc-new-raw" class="textarea" rows="2" placeholder="写下让你心头一热的具体画面或渴望状态"></textarea>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <input id="anc-new-scenes" class="input" style="font-size:13px;padding:8px 10px;" type="text" placeholder="适用时段/场景，如：清晨,科研" />
+                <input id="anc-new-scenes" class="input" style="font-size:13px;padding:8px 10px;" type="text" placeholder="标签，如：清晨,科研" />
                 <select id="anc-new-node" class="select" style="font-size:13px;padding:8px 10px;">
                   <option value="">不绑定特定树</option>
                   ${trees.map(n => `<option value="${esc(n.id)}" ${n.id === preselectTreeNodeId ? 'selected' : ''}>挂到：${esc(n.tree_label)} · ${esc(n.short_title.slice(0, 10))}</option>`).join('')}
                 </select>
               </div>
+              ${existingTags.length ? `
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                  ${existingTags.map(t => `<button type="button" class="preset-chip" style="font-size:11px;padding:2px 8px;" data-anc-chip="${esc(t)}">+ ${esc(t)}</button>`).join('')}
+                </div>
+              ` : ''}
               <button type="button" class="btn btn-primary btn-sm btn-block" id="btn-anc-add">存进渴望池</button>
             </div>
 
@@ -5359,6 +5607,17 @@ ${domainRule}
         `);
 
         document.getElementById('m-close').onclick = closeModal;
+        document.querySelectorAll('[data-anc-chip]').forEach(btn => {
+          btn.onclick = () => {
+            const inp = document.getElementById('anc-new-scenes');
+            const chip = btn.getAttribute('data-anc-chip');
+            const cur = inp.value.split(/[,，、\s]+/).map(x => x.trim()).filter(Boolean);
+            if (!cur.includes(chip)) {
+              cur.push(chip);
+              inp.value = cur.join(', ');
+            }
+          };
+        });
         document.getElementById('btn-anc-add').onclick = () => {
           const raw = document.getElementById('anc-new-raw').value.trim();
           if (!raw) {
@@ -5392,8 +5651,16 @@ ${domainRule}
 
         document.querySelectorAll('[data-anc-pin]').forEach(btn => {
           btn.onclick = () => {
-            state.ignition.currentAnchorId = btn.getAttribute('data-anc-pin');
+            const pinId = btn.getAttribute('data-anc-pin');
+            const pinned = state.desireAnchors.find(x => x.id === pinId);
+            state.ignition.currentAnchorId = pinId;
             state.ignition.showRawAnchor = false;
+            if (state.ignition.selectedTag && !state.ignition.selectedTag.startsWith('__')) {
+              const tags = Array.isArray(pinned?.scene_tags) ? pinned.scene_tags.map(t => String(t).trim()) : [];
+              if (!tags.includes(state.ignition.selectedTag)) {
+                state.ignition.selectedTag = '__all__';
+              }
+            }
             closeModal();
             switchTab('ignition');
           };
@@ -6191,7 +6458,7 @@ ${domainRule}
       }
 
       // =====================================================================
-      // 12. SPACE 5: 统一速记入口 (2.0 TRIAGE + 3-BUTTON 批红 + 1.0 MANUAL CARD INTACT)
+      // 12. DEDICATED CAPTURE SPACES: 保鲜记卡片 (SPACE 5A) & 破局速记 (SPACE 5B)
       // =====================================================================
       function getCaptureStash() {
         const arr = state.prefs.ignition_cache?.capture_stash;
@@ -6207,8 +6474,9 @@ ${domainRule}
         enqueueSyncOp({ type: 'save_prefs' });
       }
 
-      function renderCaptureTab() {
-        const container = document.getElementById('view-capture');
+      // --- 12A. 保鲜速记：记卡片（合并 AI 拆解 + 单卡提炼 + 换一个观点，手动表单默认展开） ---
+      function renderCardCaptureTab() {
+        const container = document.getElementById('view-capture-card');
         if (!container) return;
 
         const existingDoms = getExistingDomains(false);
@@ -6216,194 +6484,62 @@ ${domainRule}
           ? esc(state.capture.domainTag)
           : (isAiConfigured() ? '自动归类' : UNCLASSIFIED_LABEL);
         const stash = getCaptureStash();
-        const triage = state.capture.triageDraft;
-        const forestTrees = Array.from(new Set(state.forestNodes.map(n => n.tree_label).filter(Boolean)));
-        const forestRoots = state.forestNodes.filter(n => !n.is_meta);
-
-        let triageHtml = '';
-        if (state.capture.triageLoading) {
-          triageHtml = `
-            <div class="card anim-pulse" style="margin-bottom:14px;font-size:13px;color:var(--sage);">
-              内阁正在纠错、抓潜台词并草拟分流去向...
-            </div>
-          `;
-        } else if (triage) {
-          const tgt = triage.selectedTarget || triage.suggested_target || 'card';
-          const editMode = Boolean(state.capture.triageEditMode);
-          triageHtml = `
-            <div class="card anim-up" style="margin-bottom:14px;border-color:var(--sage-border);">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
-                <span style="font-size:12px;font-weight:600;color:var(--sage);">✦ 内阁票拟分流</span>
-                <button type="button" class="btn-ghost btn-xs" id="btn-triage-dismiss">关闭</button>
-              </div>
-
-              ${triage.implicit_intent ? `
-                <div class="card-soft" style="padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--ink-secondary);">
-                  <strong style="color:var(--ink);">潜台词提示：</strong>${esc(triage.implicit_intent)}
-                </div>
-              ` : ''}
-
-              <details style="margin-bottom:10px;">
-                <summary style="list-style:none;cursor:pointer;font-size:11px;color:var(--ink-muted);">查看原始口语（永久留档）</summary>
-                <p style="margin:6px 0 0;font-size:12px;color:var(--ink-muted);white-space:pre-wrap;background:var(--surface-subtle);padding:8px 10px;border-radius:10px;">${esc(triage.raw_text)}</p>
-              </details>
-
-              <!-- Switchable Destination Engine -->
-              <div style="font-size:12px;color:var(--ink-muted);margin-bottom:6px;">建议去向${triage.reason ? `（${esc(triage.reason)}）` : ''}：</div>
-              <div class="seg-bar" style="margin-bottom:12px;">
-                <button type="button" class="seg-btn ${tgt === 'anchor' ? 'active' : ''}" data-triage-tgt="anchor">渴望锚点</button>
-                <button type="button" class="seg-btn ${tgt === 'forest' ? 'active' : ''}" data-triage-tgt="forest">破局森林</button>
-                <button type="button" class="seg-btn ${tgt === 'card' ? 'active' : ''}" data-triage-tgt="card">每日保鲜</button>
-              </div>
-
-              ${tgt === 'anchor' ? `
-                <div class="card-soft" style="display:flex;flex-direction:column;gap:8px;">
-                  <div style="font-size:11px;color:var(--ink-muted);">渴望画面票拟${editMode ? '（微调中）' : ''}</div>
-                  ${editMode ? `
-                    <textarea id="tri-anc-polished" class="textarea" rows="2">${esc(triage.anchor_draft.polished_text)}</textarea>
-                    <input id="tri-anc-scenes" class="input" style="font-size:13px;" value="${esc((triage.anchor_draft.scene_tags || []).join(','))}" placeholder="时段/场景标签，用逗号分隔" />
-                  ` : `
-                    <p style="margin:0;font-size:14px;color:var(--ink);line-height:1.6;">${esc(triage.anchor_draft.polished_text)}</p>
-                    <div style="font-size:11px;color:var(--ink-muted);">标签：${esc((triage.anchor_draft.scene_tags || []).join(' · ') || '全时段')}</div>
-                  `}
-                </div>
-              ` : tgt === 'forest' ? `
-                <div class="card-soft" style="display:flex;flex-direction:column;gap:8px;">
-                  ${editMode ? `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                      <input id="tri-for-tree" class="input" style="font-size:13px;" value="${esc(triage.forest_draft.tree_label)}" placeholder="所属问题树" />
-                      <select id="tri-for-parent" class="select" style="font-size:13px;">
-                        <option value="">独立/并列节点</option>
-                        ${forestRoots.map(n => `<option value="${esc(n.id)}" ${n.id === triage.forest_draft.parent_id ? 'selected' : ''}>挂于：${esc(n.short_title.slice(0, 12))}</option>`).join('')}
-                      </select>
-                    </div>
-                    <input id="tri-for-title" class="input" style="font-size:13px;" value="${esc(triage.forest_draft.short_title)}" placeholder="折叠短语" />
-                    <textarea id="tri-for-refined" class="textarea" rows="2" placeholder="具象化问题陈述">${esc(triage.forest_draft.refined_problem)}</textarea>
-                    <input id="tri-for-step" class="input" style="font-size:13px;" value="${esc(triage.forest_draft.next_micro_step || '')}" placeholder="15 分钟最小抓手（选填）" />
-                  ` : `
-                    <div style="font-size:11px;color:var(--ink-muted);">问题树：${esc(triage.forest_draft.tree_label)}</div>
-                    <div style="font-size:14px;font-weight:600;color:var(--ink);">${esc(triage.forest_draft.short_title)}</div>
-                    <p style="margin:0;font-size:13px;color:var(--ink-secondary);line-height:1.6;">${esc(triage.forest_draft.refined_problem)}</p>
-                    ${triage.forest_draft.next_micro_step ? `<div style="font-size:12px;color:var(--sage);">抓手：${esc(triage.forest_draft.next_micro_step)}</div>` : ''}
-                  `}
-                </div>
-              ` : `
-                <div class="card-soft" style="display:flex;flex-direction:column;gap:8px;">
-                  <div>
-                    <div style="font-size:11px;color:var(--ink-muted);margin-bottom:3px;">事实 / 原话</div>
-                    ${editMode ? `<textarea id="tri-card-front" class="textarea" rows="2">${esc(triage.card_draft.front_fact)}</textarea>` : `<p style="margin:0;font-size:14px;color:var(--ink);line-height:1.6;">${esc(triage.card_draft.front_fact)}</p>`}
-                  </div>
-                  <div>
-                    <div style="font-size:11px;color:var(--ink-muted);margin-bottom:3px;">最初感受</div>
-                    ${editMode || !triage.card_draft.back_anchor ? `<textarea id="tri-card-anchor" class="textarea" rows="2" placeholder="原文未写感受，补一句第一感觉">${esc(triage.card_draft.back_anchor)}</textarea>` : `<p style="margin:0;font-size:13px;color:var(--ink-muted);line-height:1.6;">${esc(triage.card_draft.back_anchor)}</p>`}
-                  </div>
-                  <div style="font-size:11px;color:var(--ink-muted);">底层分类：${esc(triage.card_draft.domain_tag)}</div>
-                </div>
-              `}
-
-              <!-- Three-Button Ming Cabinet 批红 Bar -->
-              <div class="tri-approve-grid">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-triage-approve">${editMode ? '确认微调入库' : '采纳入库'}</button>
-                <button type="button" class="btn btn-soft btn-sm" id="btn-triage-edit">${editMode ? '取消微调' : '微调后入库'}</button>
-                <button type="button" class="btn btn-ghost btn-sm tri-approve-keep" id="btn-triage-keep-raw">保留原样，暂不改写</button>
-              </div>
-            </div>
-          `;
-        }
-
-        const pendingOw = state.capture.transcriptPendingOverwrite;
+        const pendingOw = state.capture.aiPendingOverwrite;
+        const hasAnyContent = Boolean(state.capture.raw || state.capture.front || state.capture.anchor || state.capture.evoInit || state.capture.aiError || pendingOw);
 
         container.innerHTML = `
-          <div class="page-header">
-            <h1 class="page-title">统一速记</h1>
-            ${(state.capture.raw || state.capture.front || state.capture.anchor || state.capture.evoInit || state.capture.transcriptText || triage) ? `
+          <div class="page-header" style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-ghost btn-xs" id="btn-cap-back" style="padding:4px 6px;" aria-label="返回保鲜">
+                ${ICONS.chevronLeft}
+              </button>
+              <h1 class="page-title">记卡片</h1>
+            </div>
+            ${hasAnyContent ? `
               <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear">清空</button>
             ` : ''}
           </div>
 
-          <!-- Collapsible Video Transcript -> Single Card Extractor -->
-          <details id="cap-transcript-details" class="card" style="margin-bottom:14px;" ${state.capture.transcriptOpen ? 'open' : ''}>
-            <summary class="settings-collapse-summary">
-              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
-                <span style="color:var(--sage);display:inline-flex;flex-shrink:0;">${ICONS.sparkle}</span>
-                <span style="font-size:14px;font-weight:600;color:var(--ink);">从文稿提炼单卡</span>
-                <span style="font-size:11px;color:var(--ink-muted);white-space:nowrap;">视频号 / 元宝去噪</span>
-              </div>
-              <span style="color:var(--ink-muted);display:inline-flex;flex-shrink:0;">${ICONS.chevronRight}</span>
-            </summary>
+          <!-- Unified Raw Input -> AI Split / Single-Card Denoised Extractor -->
+          <div class="card" style="margin-bottom:14px;display:flex;flex-direction:column;gap:10px;">
+            <textarea id="cap-raw" class="textarea" rows="3" style="border:none;background:transparent;padding:0;min-height:76px;" placeholder="输入或粘贴原文，AI 帮你拆成 1 张单卡">${esc(state.capture.raw)}</textarea>
 
-            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px;">
-              <textarea id="cap-transcript-input" class="textarea" rows="5" placeholder="粘贴微信视频号/元宝文稿，AI 帮你去噪只提炼 1 张核心卡...">${esc(state.capture.transcriptText)}</textarea>
-
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="btn btn-primary btn-sm" style="flex:1.4;" id="btn-cap-tr-run" ${state.capture.transcriptLoading ? 'disabled' : ''}>
-                  ${ICONS.sparkle} <span>${state.capture.transcriptLoading ? '正在去噪提炼...' : 'AI 提炼 1 张卡'}</span>
-                </button>
-                <button type="button" class="btn btn-soft btn-sm" style="flex:1;" id="btn-cap-tr-next" ${(state.capture.transcriptLoading || state.capture.transcriptExcluded.length === 0) ? 'disabled' : ''} title="避开刚才已选的观点，再从原文提炼 1 个新观点">
-                  ${ICONS.refresh} <span>换一个观点${state.capture.transcriptExcluded.length > 0 ? ` (${state.capture.transcriptExcluded.length})` : ''}</span>
-                </button>
-              </div>
-
-              ${renderAiExtraPromptHtml('cap-tr-extra', '例如：侧重文稿里关于人际边界的那一段 / 归类偏心理学（优先按此提炼）', state.capture.transcriptExtraPrompt)}
-
-              ${state.capture.transcriptError ? `
-                <div class="inline-notice terra" role="alert">${esc(state.capture.transcriptError)}</div>
-              ` : ''}
-
-              ${pendingOw ? `
-                <div class="card-soft anim-up" style="border:1px solid var(--terra-border);background:var(--terra-soft);padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
-                  <div style="font-size:12px;color:var(--terra);font-weight:500;">下方卡片表单已有你手动写的内容，是否用本次提炼结果替换？</div>
-                  <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">
-                    <div class="line-clamp-2"><strong>拟预填正面：</strong>${esc(pendingOw.front_fact)}</div>
-                    ${pendingOw.back_anchor ? `<div class="line-clamp-2" style="margin-top:3px;"><strong>拟预填感受：</strong>${esc(pendingOw.back_anchor)}</div>` : `<div style="margin-top:3px;color:var(--ink-muted);">背面感受留空（供你自己写）</div>`}
-                  </div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <button type="button" class="btn btn-primary btn-xs" id="btn-tr-ow-yes">确认替换预填</button>
-                    <button type="button" class="btn btn-soft btn-xs" id="btn-tr-ow-no">保留手写内容</button>
-                  </div>
-                </div>
-              ` : ''}
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border-soft);">
+              <button type="button" class="btn btn-primary btn-sm" style="flex:1.2;" id="btn-cap-ai" ${state.capture.aiLoading ? 'disabled' : ''}>
+                ${ICONS.sparkle} <span id="btn-cap-ai-txt">${state.capture.aiLoading ? '拆解中...' : 'AI 拆解'}</span>
+              </button>
+              <button type="button" class="btn btn-soft btn-sm" style="flex:1;" id="btn-cap-ai-next" ${(state.capture.aiLoading || state.capture.aiExcluded.length === 0) ? 'disabled' : ''} title="避开刚才已拆的观点，再从原文提炼 1 个新观点">
+                ${ICONS.refresh} <span>换一个观点${state.capture.aiExcluded.length > 0 ? ` (${state.capture.aiExcluded.length})` : ''}</span>
+              </button>
+              <button type="button" class="btn-ghost btn-xs" id="btn-cap-stash" style="padding:6px 8px;">暂存</button>
             </div>
-          </details>
 
-          <div class="card" style="margin-bottom:14px;">
-            ${state.capture.rawCollapsed ? `
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                <span class="line-clamp-2" style="font-size:12px;color:var(--ink-muted);flex:1;">原文：${esc(state.capture.raw)}</span>
-                <button type="button" class="btn-ghost btn-xs" id="btn-cap-expand-raw" style="flex-shrink:0;">展开原文</button>
-              </div>
-            ` : `
-              <textarea id="cap-raw" class="textarea" rows="4" style="border:none;background:transparent;padding:0;min-height:100px;" placeholder="说出或粘贴渴望画面、卡壳难题、或看到听到的原话与感觉">${esc(state.capture.raw)}</textarea>
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;padding-top:12px;margin-top:10px;border-top:1px solid var(--border-soft);">
-                <div style="display:flex;align-items:center;gap:4px;">
-                  <button type="button" class="btn-ghost btn-xs" id="btn-cap-stash">先存暂存箱</button>
-                  <button type="button" class="btn-ghost btn-xs" id="btn-cap-manual">${state.capture.formOpen ? '收起手动' : '手动填写'}</button>
+            ${renderAiExtraPromptHtml('cap-ai-extra', '例如：侧重某段观点 / 归类偏心理学（优先按此拆解）', state.capture.aiExtraPrompt)}
+
+            ${state.capture.aiError ? `
+              <div class="inline-notice terra" role="alert">${esc(state.capture.aiError)}</div>
+            ` : ''}
+
+            ${pendingOw ? `
+              <div class="card-soft anim-up" style="border:1px solid var(--terra-border);background:var(--terra-soft);padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="font-size:12px;color:var(--terra);font-weight:500;">下方表单已有手动填写的内容，是否用本次拆解结果替换？</div>
+                <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">
+                  <div class="line-clamp-2"><strong>拟预填正面：</strong>${esc(pendingOw.front_fact)}</div>
+                  ${pendingOw.back_anchor ? `<div class="line-clamp-2" style="margin-top:3px;"><strong>拟预填感受：</strong>${esc(pendingOw.back_anchor)}</div>` : `<div style="margin-top:3px;color:var(--ink-muted);">背面感受留空（供你自己写）</div>`}
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <button type="button" class="btn btn-soft btn-xs" id="btn-cap-ai" title="按保鲜卡直接拆解">
-                    <span id="btn-cap-ai-txt">AI 拆解</span>
-                  </button>
-                  <button type="button" class="btn btn-primary btn-sm" id="btn-cap-triage">
-                    ${ICONS.sparkle} <span id="btn-cap-triage-txt">内阁票拟分流</span>
-                  </button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <button type="button" class="btn btn-primary btn-xs" id="btn-cap-ow-yes">确认替换</button>
+                  <button type="button" class="btn btn-soft btn-xs" id="btn-cap-ow-no">保留手写</button>
                 </div>
               </div>
-              ${renderAiExtraPromptHtml('cap-ai-extra', '例如：帮我挂到科研树 / 偏心理学归类（优先按此执行）', state.capture.aiExtraPrompt)}
-            `}
+            ` : ''}
           </div>
 
-          ${triageHtml}
-
-          <!-- 1.0 Manual Preservation Card Form (100% Preserved & Closeable!) -->
-          <div id="cap-form-panel" class="${state.capture.formOpen ? '' : 'hidden'} anim-up" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
-              <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">保鲜卡片内容</span>
-              <button type="button" class="btn-ghost btn-xs" id="btn-cap-collapse-form">收起</button>
-            </div>
-
+          <!-- Manual Preservation Card Form (Expanded by Default) -->
+          <div id="cap-form-panel" class="anim-up" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
             <div class="card">
               <label class="field-label" for="cap-front">事实 / 原话</label>
-              <textarea id="cap-front" class="textarea" rows="3" placeholder="记录你看到或听到的原话、具体发生了什么">${esc(state.capture.front)}</textarea>
+              <textarea id="cap-front" class="textarea" rows="3" placeholder="看到或听到的原话、具体事件">${esc(state.capture.front)}</textarea>
             </div>
 
             <div class="card">
@@ -6411,7 +6547,7 @@ ${domainRule}
                 <label class="field-label" style="margin:0;" for="cap-anchor">最初感受</label>
                 <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear-anchor" style="padding:2px 6px;min-height:24px;">清空自己写</button>
               </div>
-              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="当时最直接的想法或情绪，用大白话写">${esc(state.capture.anchor)}</textarea>
+              <textarea id="cap-anchor" class="textarea" rows="3" placeholder="当时的直接想法或情绪">${esc(state.capture.anchor)}</textarea>
               ${state.capture.anchorMissingHint ? `
                 <div class="inline-notice terra" style="margin-top:8px;">
                   原文里没现成的点睛感悟，补一句你自己的第一感觉即可。
@@ -6426,7 +6562,7 @@ ${domainRule}
                   ${ICONS.sparkle} <span id="btn-cap-gen-evo-txt">AI 生成词条</span>
                 </button>
               </div>
-              <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="用短词概括，可点右上角生成后再修改" />
+              <input id="cap-evo-init" class="input" type="text" maxlength="24" value="${esc(state.capture.evoInit)}" placeholder="用短词概括，可点右侧生成后再改" />
               ${renderAiExtraPromptHtml('cap-evo-extra', '例如：用经济学或心理学概念提炼，控制在 6 字以内（优先按此执行）', state.capture.evoExtraPrompt)}
             </div>
 
@@ -6454,7 +6590,7 @@ ${domainRule}
           ${stash.length ? `
             <details class="card-soft">
               <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);">
-                <span>暂存箱（${stash.length} 条原样留存）</span>
+                <span>暂存箱（${stash.length} 条）</span>
                 <span style="text-decoration:underline;">展开处理</span>
               </summary>
               <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-soft);">
@@ -6464,7 +6600,7 @@ ${domainRule}
                     <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-muted);">
                       <span>${formatTime(item.at).slice(5)}</span>
                       <div style="display:flex;gap:6px;">
-                        <button type="button" class="btn-ghost btn-xs" data-stash-load="${idx}">载入处理</button>
+                        <button type="button" class="btn-ghost btn-xs" data-stash-load="${idx}">载入</button>
                         <button type="button" class="btn-ghost btn-xs" style="color:var(--terra);" data-stash-del="${idx}">移除</button>
                       </div>
                     </div>
@@ -6475,32 +6611,14 @@ ${domainRule}
           ` : ''}
         `;
 
-        // Wire Clear Draft
+        document.getElementById('btn-cap-back').onclick = () => switchTab('preserve');
+
         const clearBtn = document.getElementById('btn-cap-clear');
         if (clearBtn) {
           clearBtn.onclick = () => {
             clearCaptureDraft();
-            renderCaptureTab();
+            renderCardCaptureTab();
             showToast('已清空');
-          };
-        }
-
-        const expandBtn = document.getElementById('btn-cap-expand-raw');
-        if (expandBtn) {
-          expandBtn.onclick = () => {
-            state.capture.rawCollapsed = false;
-            persistCaptureDraft();
-            renderCaptureTab();
-          };
-        }
-
-        const collapseFormBtn = document.getElementById('btn-cap-collapse-form');
-        if (collapseFormBtn) {
-          collapseFormBtn.onclick = () => {
-            state.capture.formOpen = false;
-            state.capture.rawCollapsed = false;
-            persistCaptureDraft();
-            renderCaptureTab();
           };
         }
 
@@ -6511,168 +6629,48 @@ ${domainRule}
         const domInput = document.getElementById('cap-domain-input');
         const domLabel = document.getElementById('cap-domain-label');
 
-        if (rawEl) {
-          rawEl.oninput = () => {
+        rawEl.oninput = () => {
+          if (rawEl.value !== state.capture.raw) {
             state.capture.raw = rawEl.value;
+            state.capture.aiExcluded = [];
+            state.capture.aiPendingOverwrite = null;
+            state.capture.aiError = '';
             persistCaptureDraft();
-          };
-        }
+          }
+        };
+
         frontEl.oninput = () => {
           state.capture.front = frontEl.value;
-          state.capture.formFilledByTranscript = false;
+          state.capture.formFilledByAi = false;
           persistCaptureDraft();
         };
+
         anchorEl.oninput = () => {
           state.capture.anchor = anchorEl.value;
-          state.capture.formFilledByTranscript = false;
+          state.capture.formFilledByAi = false;
           if (anchorEl.value.trim()) state.capture.anchorMissingHint = false;
           persistCaptureDraft();
         };
 
-        const clearAnchorBtn = document.getElementById('btn-cap-clear-anchor');
-        if (clearAnchorBtn) {
-          clearAnchorBtn.onclick = () => {
-            state.capture.anchor = '';
-            state.capture.anchorMissingHint = false;
-            state.capture.formFilledByTranscript = false;
-            anchorEl.value = '';
-            persistCaptureDraft();
-            anchorEl.focus();
-            showToast('已清空背面感悟，请直接写下你的直觉');
-          };
-        }
-
-        // Wire Video Transcript -> Single Card Extractor
-        const trDetails = document.getElementById('cap-transcript-details');
-        if (trDetails) {
-          trDetails.addEventListener('toggle', () => {
-            state.capture.transcriptOpen = trDetails.open;
-          });
-        }
-
-        const trInput = document.getElementById('cap-transcript-input');
-        if (trInput) {
-          trInput.oninput = () => {
-            if (trInput.value !== state.capture.transcriptText) {
-              state.capture.transcriptText = trInput.value;
-              state.capture.transcriptExcluded = [];
-              state.capture.transcriptPendingOverwrite = null;
-              state.capture.transcriptError = '';
-            }
-          };
-        }
-
-        const trExtraEl = document.getElementById('cap-tr-extra');
-        if (trExtraEl) {
-          trExtraEl.oninput = () => { state.capture.transcriptExtraPrompt = trExtraEl.value; };
-        }
-
-        const applyTranscriptResultToForm = (res) => {
-          state.capture.front = res.front_fact;
-          state.capture.anchor = res.back_anchor;
-          state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
-          state.capture.formOpen = true;
-          state.capture.anchorMissingHint = !res.back_anchor;
-          state.capture.formFilledByTranscript = true;
-          state.capture.transcriptPendingOverwrite = null;
-          state.capture.aiSplitUsed = true;
-          state.capture.aiSplitSnapshot = {
-            front_fact: res.front_fact,
-            back_anchor: res.back_anchor,
-            domain_tag: state.capture.domainTag
-          };
+        evoEl.oninput = () => {
+          state.capture.evoInit = evoEl.value;
           persistCaptureDraft();
-          renderCaptureTab();
-          const formEl = document.getElementById('cap-form-panel');
-          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          if (!res.back_anchor) {
-            showToast('已提炼正面原话，背面留空供你自己写感悟');
-            setTimeout(() => document.getElementById('cap-anchor')?.focus(), 100);
-          } else {
-            showToast(`已提炼 1 张单卡预填到下方（${res.domain_tag}）`);
-          }
         };
 
-        const runTranscriptExtract = async (switchAngle = false) => {
-          const text = (trInput ? trInput.value : state.capture.transcriptText).trim();
-          if (!text) {
-            showToast('请先粘贴视频文稿内容');
-            trInput?.focus();
-            return;
-          }
-          if (!isAiConfigured()) {
-            promptConfigureAi();
-            return;
-          }
-
-          const customPrompt = readAiExtraPrompt('cap-tr-extra', state.capture.transcriptExtraPrompt);
-          state.capture.transcriptText = text;
-          state.capture.transcriptExtraPrompt = customPrompt;
-          state.capture.transcriptOpen = true;
-          state.capture.transcriptLoading = true;
-          state.capture.transcriptError = '';
-          state.capture.transcriptPendingOverwrite = null;
-          renderCaptureTab();
-
-          try {
-            const excluded = switchAngle ? [...state.capture.transcriptExcluded] : [];
-            const res = await aiExtractSingleCardFromTranscript(text, excluded, customPrompt);
-            if (!res.front_fact) {
-              throw new Error('AI 未能从文稿中提取有效原话，请重试或补充提示词');
-            }
-            if (switchAngle) {
-              state.capture.transcriptExcluded.push({ front_fact: res.front_fact, back_anchor: res.back_anchor });
-            } else {
-              state.capture.transcriptExcluded = [{ front_fact: res.front_fact, back_anchor: res.back_anchor }];
-            }
-
-            // Protect existing manual input in the form from silent overwrite
-            const hasManualFormContent = Boolean(
-              !state.capture.formFilledByTranscript &&
-              (state.capture.front.trim() || state.capture.anchor.trim())
-            );
-            state.capture.transcriptLoading = false;
-
-            if (hasManualFormContent) {
-              state.capture.transcriptPendingOverwrite = res;
-              renderCaptureTab();
-              showToast('已提炼完成，请确认是否替换下方手写内容');
-              return;
-            }
-
-            applyTranscriptResultToForm(res);
-          } catch (err) {
-            state.capture.transcriptLoading = false;
-            state.capture.transcriptError = err.message || '文稿提炼失败';
-            renderCaptureTab();
-            showToast(err.message || '文稿提炼失败', 4200);
-          }
-        };
-
-        const trRunBtn = document.getElementById('btn-cap-tr-run');
-        if (trRunBtn) trRunBtn.onclick = () => runTranscriptExtract(false);
-
-        const trNextBtn = document.getElementById('btn-cap-tr-next');
-        if (trNextBtn) trNextBtn.onclick = () => runTranscriptExtract(true);
-
-        const owYesBtn = document.getElementById('btn-tr-ow-yes');
-        if (owYesBtn && pendingOw) {
-          owYesBtn.onclick = () => applyTranscriptResultToForm(pendingOw);
-        }
-
-        const owNoBtn = document.getElementById('btn-tr-ow-no');
-        if (owNoBtn) {
-          owNoBtn.onclick = () => {
-            state.capture.transcriptPendingOverwrite = null;
-            renderCaptureTab();
-            showToast('已保留你手动填写的内容');
-          };
-        }
-        evoEl.oninput = () => { state.capture.evoInit = evoEl.value; persistCaptureDraft(); };
         domInput.oninput = () => {
           state.capture.domainTag = domInput.value.trim();
           domLabel.textContent = state.capture.domainTag || (isAiConfigured() ? '自动归类' : UNCLASSIFIED_LABEL);
           persistCaptureDraft();
+        };
+
+        document.getElementById('btn-cap-clear-anchor').onclick = () => {
+          state.capture.anchor = '';
+          state.capture.anchorMissingHint = false;
+          state.capture.formFilledByAi = false;
+          anchorEl.value = '';
+          persistCaptureDraft();
+          anchorEl.focus();
+          showToast('已清空背面感悟，请直接写下你的直觉');
         };
 
         const pillsBox = document.getElementById('cap-domain-pills');
@@ -6693,25 +6691,117 @@ ${domainRule}
         const capEvoExtraEl = document.getElementById('cap-evo-extra');
         if (capEvoExtraEl) capEvoExtraEl.oninput = () => { state.capture.evoExtraPrompt = capEvoExtraEl.value; };
 
-        // Zero-wait Stash button
-        const stashBtn = document.getElementById('btn-cap-stash');
-        if (stashBtn) {
-          stashBtn.onclick = () => {
-            const raw = (rawEl ? rawEl.value : state.capture.raw).trim();
-            if (!raw) {
-              showToast('先写或说一句话再存暂存箱');
+        const applySplitResultToForm = (res) => {
+          state.capture.front = res.front_fact;
+          state.capture.anchor = res.back_anchor;
+          state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
+          state.capture.anchorMissingHint = !res.back_anchor;
+          state.capture.formFilledByAi = true;
+          state.capture.aiPendingOverwrite = null;
+          state.capture.aiSplitUsed = true;
+          state.capture.aiSplitSnapshot = {
+            front_fact: res.front_fact,
+            back_anchor: res.back_anchor,
+            domain_tag: state.capture.domainTag
+          };
+          persistCaptureDraft();
+          renderCardCaptureTab();
+          const formEl = document.getElementById('cap-form-panel');
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          if (!res.back_anchor) {
+            showToast('已拆出正面原话，背面留空供你自己写感悟');
+            setTimeout(() => document.getElementById('cap-anchor')?.focus(), 100);
+          } else {
+            showToast(`已拆解 1 张单卡（${res.domain_tag}）`);
+          }
+        };
+
+        const runUnifiedCardSplit = async (switchAngle = false) => {
+          const raw = rawEl.value.trim();
+          if (!raw) {
+            showToast('请先输入或粘贴原文');
+            rawEl.focus();
+            return;
+          }
+          if (!isAiConfigured()) {
+            promptConfigureAi();
+            return;
+          }
+          const customPrompt = readAiExtraPrompt('cap-ai-extra', state.capture.aiExtraPrompt);
+          state.capture.raw = raw;
+          state.capture.aiExtraPrompt = customPrompt;
+          state.capture.aiLoading = true;
+          state.capture.aiError = '';
+          state.capture.aiPendingOverwrite = null;
+          renderCardCaptureTab();
+
+          try {
+            const excluded = switchAngle ? [...state.capture.aiExcluded] : [];
+            const res = await aiSplitCapture(raw, excluded, customPrompt);
+            if (!res.front_fact) {
+              throw new Error('AI 未能从原文中提取有效内容，请重试或补充提示词');
+            }
+            if (switchAngle) {
+              state.capture.aiExcluded.push({ front_fact: res.front_fact, back_anchor: res.back_anchor });
+            } else {
+              state.capture.aiExcluded = [{ front_fact: res.front_fact, back_anchor: res.back_anchor }];
+            }
+
+            const hasManualFormContent = Boolean(
+              !state.capture.formFilledByAi &&
+              (state.capture.front.trim() || state.capture.anchor.trim())
+            );
+            state.capture.aiLoading = false;
+
+            if (hasManualFormContent) {
+              state.capture.aiPendingOverwrite = res;
+              renderCardCaptureTab();
+              showToast('拆解完成，请确认是否替换下方手写内容');
               return;
             }
-            const next = [{ id: makeClientId(), text: raw, at: new Date().toISOString() }, ...getCaptureStash()];
-            saveCaptureStash(next);
-            trackActivity('capture', 'capture_stash', null, { length: raw.length });
-            clearCaptureDraft();
-            renderCaptureTab();
-            showToast('已原样存进暂存箱，卸下脑力负荷');
+
+            applySplitResultToForm(res);
+          } catch (err) {
+            state.capture.aiLoading = false;
+            state.capture.aiError = err.message || 'AI 拆解失败';
+            renderCardCaptureTab();
+            showToast(err.message || 'AI 拆解失败', 4200);
+          }
+        };
+
+        document.getElementById('btn-cap-ai').onclick = () => runUnifiedCardSplit(false);
+        document.getElementById('btn-cap-ai-next').onclick = () => runUnifiedCardSplit(true);
+
+        const owYesBtn = document.getElementById('btn-cap-ow-yes');
+        if (owYesBtn && pendingOw) {
+          owYesBtn.onclick = () => applySplitResultToForm(pendingOw);
+        }
+        const owNoBtn = document.getElementById('btn-cap-ow-no');
+        if (owNoBtn) {
+          owNoBtn.onclick = () => {
+            state.capture.aiPendingOverwrite = null;
+            renderCardCaptureTab();
+            showToast('已保留手写内容');
           };
         }
 
-        // Stash list actions
+        // Stash raw text
+        document.getElementById('btn-cap-stash').onclick = () => {
+          const raw = rawEl.value.trim();
+          if (!raw) {
+            showToast('先输入一段内容再暂存');
+            return;
+          }
+          const next = [{ id: makeClientId(), text: raw, at: new Date().toISOString() }, ...getCaptureStash()];
+          saveCaptureStash(next);
+          trackActivity('capture', 'capture_stash', null, { length: raw.length, source: 'card_capture' });
+          state.capture.raw = '';
+          state.capture.aiExcluded = [];
+          persistCaptureDraft();
+          renderCardCaptureTab();
+          showToast('已存进暂存箱');
+        };
+
         container.querySelectorAll('[data-stash-load]').forEach(btn => {
           btn.onclick = () => {
             const idx = Number(btn.getAttribute('data-stash-load'));
@@ -6721,9 +6811,9 @@ ${domainRule}
             cur.splice(idx, 1);
             saveCaptureStash(cur);
             state.capture.raw = item.text;
-            state.capture.rawCollapsed = false;
+            state.capture.aiExcluded = [];
             persistCaptureDraft();
-            renderCaptureTab();
+            renderCardCaptureTab();
           };
         });
         container.querySelectorAll('[data-stash-del]').forEach(btn => {
@@ -6732,315 +6822,58 @@ ${domainRule}
             const cur = [...getCaptureStash()];
             cur.splice(idx, 1);
             saveCaptureStash(cur);
-            renderCaptureTab();
-            showToast('已从暂存箱移除');
+            renderCardCaptureTab();
+            showToast('已移除');
           };
         });
 
-        // 2.0 Cabinet Triage Trigger
-        const triageBtn = document.getElementById('btn-cap-triage');
-        if (triageBtn) {
-          triageBtn.onclick = async () => {
-            const raw = (rawEl ? rawEl.value : state.capture.raw).trim();
-            if (!raw) {
-              showToast('先输入或口述一段内容');
-              return;
-            }
-            if (!isAiConfigured()) {
-              promptConfigureAi();
-              return;
-            }
-            const customPrompt = readAiExtraPrompt('cap-ai-extra', state.capture.aiExtraPrompt);
-            state.capture.aiExtraPrompt = customPrompt;
-            state.capture.raw = raw;
-            state.capture.triageLoading = true;
-            state.capture.triageDraft = null;
-            state.capture.triageEditMode = false;
-            renderCaptureTab();
-
-            try {
-              const draft = await aiCabinetTriageCapture(raw, customPrompt);
-              draft.selectedTarget = draft.suggested_target;
-              state.capture.triageDraft = draft;
-              state.capture.rawCollapsed = true;
-              trackActivity('capture', 'capture_submit', null, {
-                length: raw.length,
-                mode: 'cabinet_triage',
-                suggested_target: draft.suggested_target
-              });
-            } catch (err) {
-              showToast(err.message || '内阁票拟失败，可先存暂存箱或手动填写', 4200);
-            } finally {
-              state.capture.triageLoading = false;
-              renderCaptureTab();
-            }
-          };
-        }
-
-        // Wire Cabinet Triage 3-Button 批红 Handlers
-        if (triage) {
-          document.getElementById('btn-triage-dismiss').onclick = () => {
-            state.capture.triageDraft = null;
-            state.capture.triageEditMode = false;
-            state.capture.rawCollapsed = false;
-            renderCaptureTab();
-          };
-
-          container.querySelectorAll('[data-triage-tgt]').forEach(btn => {
-            btn.onclick = () => {
-              triage.selectedTarget = btn.getAttribute('data-triage-tgt');
-              renderCaptureTab();
-            };
-          });
-
-          document.getElementById('btn-triage-edit').onclick = () => {
-            state.capture.triageEditMode = !state.capture.triageEditMode;
-            renderCaptureTab();
-          };
-
-          async function commitTriageDecision(decisionMode) {
-            // decisionMode: 'approved' | 'edited' | 'kept_raw'
-            const target = triage.selectedTarget || triage.suggested_target || 'card';
-            const editMode = Boolean(state.capture.triageEditMode);
-            const rawText = triage.raw_text;
-
-            try {
-              if (target === 'anchor') {
-                const polished = (editMode ? document.getElementById('tri-anc-polished')?.value.trim() : triage.anchor_draft.polished_text) || rawText;
-                const scenesStr = editMode ? (document.getElementById('tri-anc-scenes')?.value || '') : (triage.anchor_draft.scene_tags || []).join(',');
-                const scenes = scenesStr.split(/[,，、\s]+/).filter(Boolean).slice(0, 4);
-                const treeMatch = state.forestNodes.find(n => !n.parent_id && n.tree_label === triage.anchor_draft.linked_tree_label);
-                const created = createDesireAnchorOptimistic({
-                  raw_text: rawText,
-                  polished_text: decisionMode === 'kept_raw' ? null : polished,
-                  use_polished: decisionMode !== 'kept_raw' && polished !== rawText,
-                  scene_tags: scenes.length ? scenes : [getTimeSlotLabel()],
-                  linked_node_id: treeMatch?.id || null
-                });
-                state.ignition.currentAnchorId = created.id;
-                showToast(decisionMode === 'kept_raw' ? '已原样存入渴望锚点池' : '已批红存入渴望锚点池');
-              } else if (target === 'forest') {
-                const treeLabel = (editMode ? document.getElementById('tri-for-tree')?.value.trim() : triage.forest_draft.tree_label) || '综合破局';
-                const parentId = (editMode ? document.getElementById('tri-for-parent')?.value : triage.forest_draft.parent_id) || null;
-                const title = decisionMode === 'kept_raw'
-                  ? rawText.slice(0, 18)
-                  : ((editMode ? document.getElementById('tri-for-title')?.value.trim() : triage.forest_draft.short_title) || rawText.slice(0, 18));
-                const refined = decisionMode === 'kept_raw'
-                  ? null
-                  : ((editMode ? document.getElementById('tri-for-refined')?.value.trim() : triage.forest_draft.refined_problem) || null);
-                const step = decisionMode === 'kept_raw'
-                  ? null
-                  : ((editMode ? document.getElementById('tri-for-step')?.value.trim() : triage.forest_draft.next_micro_step) || null);
-
-                createForestNodeOptimistic({
-                  tree_label: treeLabel,
-                  parent_id: parentId,
-                  short_title: title,
-                  short_title_ai_draft: triage.forest_draft.short_title,
-                  raw_problem: rawText,
-                  refined_problem: refined,
-                  next_micro_step: step,
-                  status: decisionMode === 'kept_raw' ? 'fuzzy' : 'active',
-                  analysis_history: [{
-                    at: new Date().toISOString(),
-                    source: 'capture',
-                    content: rawText,
-                    next_step: step || ''
-                  }]
-                });
-                scheduleIgnitionPreheat();
-                showToast(decisionMode === 'kept_raw' ? '已保留模糊原样挂载到破局森林' : `已挂载到破局森林「${treeLabel}」`);
-              } else {
-                // Daily Preservation Card
-                const frontVal = decisionMode === 'kept_raw'
-                  ? rawText
-                  : ((editMode ? document.getElementById('tri-card-front')?.value.trim() : triage.card_draft.front_fact) || rawText);
-                const anchorElTri = document.getElementById('tri-card-anchor');
-                const anchorVal = decisionMode === 'kept_raw'
-                  ? (anchorElTri ? anchorElTri.value.trim() : (triage.card_draft.back_anchor || rawText))
-                  : ((anchorElTri ? anchorElTri.value.trim() : triage.card_draft.back_anchor) || '');
-
-                if (!anchorVal) {
-                  // Never fabricate user feelings: drop smoothly into editable card form focused on 最初感受!
-                  state.capture.front = frontVal;
-                  state.capture.anchor = '';
-                  state.capture.domainTag = triage.card_draft.domain_tag === UNCLASSIFIED_LABEL ? '' : triage.card_draft.domain_tag;
-                  state.capture.formOpen = true;
-                  state.capture.anchorMissingHint = true;
-                  state.capture.triageDraft = null;
-                  persistCaptureDraft();
-                  renderCaptureTab();
-                  showToast('请先补一句你的最初感受再存为保鲜卡');
-                  setTimeout(() => document.getElementById('cap-anchor')?.focus(), 80);
-                  return;
-                }
-
-                const fsrs = createInitialFsrsState();
-                const created = await insertCardToCloud({
-                  front_fact: frontVal,
-                  back_anchor: anchorVal,
-                  evolution_tags: [],
-                  evolution_history: [],
-                  domain_tag: normalizeDomainLabel(triage.card_draft.domain_tag),
-                  fsrs_state: fsrs,
-                  due_at: fsrs.due,
-                  cross_link_id: null,
-                  cross_link_hint: null
-                });
-                if (created) runSilentCrossDomainMatch(created);
-                renderLibraryTab();
-                showToast('已批红存入每日保鲜，明天开始复习');
-              }
-
-              trackActivity('capture', 'capture_triage_decision', null, {
-                suggested_target: triage.suggested_target,
-                final_target: target,
-                decision: decisionMode
-              });
-              trackActivity('cabinet', 'ai_decision', null, {
-                feature: 'capture_triage',
-                decision: decisionMode
-              });
-
-              clearCaptureDraft();
-              renderCaptureTab();
-            } catch (err) {
-              showToast(err.message || '保存失败，请重试', 3600);
-            }
+        // AI Generate Editable Initial Evolution Tag
+        document.getElementById('btn-cap-gen-evo').onclick = async () => {
+          const front = frontEl.value.trim();
+          const anchor = anchorEl.value.trim();
+          if (!front) {
+            showToast('先填一下事实 / 原话');
+            frontEl.focus();
+            return;
           }
-
-          document.getElementById('btn-triage-approve').onclick = () =>
-            commitTriageDecision(state.capture.triageEditMode ? 'edited' : 'approved');
-          document.getElementById('btn-triage-keep-raw').onclick = () =>
-            commitTriageDecision('kept_raw');
-        }
-
-        // Manual toggle open / close (1.0 behavior 100% preserved!)
-        const manualBtn = document.getElementById('btn-cap-manual');
-        if (manualBtn) {
-          manualBtn.onclick = () => {
-            if (state.capture.formOpen) {
-              state.capture.formOpen = false;
-              persistCaptureDraft();
-              renderCaptureTab();
-              return;
+          if (!anchor) {
+            showToast('先填一下最初感受，生成的词条更贴合');
+            anchorEl.focus();
+            return;
+          }
+          if (!isAiConfigured()) {
+            promptConfigureAi();
+            return;
+          }
+          const customPrompt = readAiExtraPrompt('cap-evo-extra', state.capture.evoExtraPrompt);
+          state.capture.evoExtraPrompt = customPrompt;
+          const genEvoBtn = document.getElementById('btn-cap-gen-evo');
+          genEvoBtn.disabled = true;
+          const txtEl = document.getElementById('btn-cap-gen-evo-txt');
+          if (txtEl) txtEl.textContent = '生成中...';
+          try {
+            const res = await aiSuggestInitialTag(front, anchor, domInput.value.trim(), customPrompt);
+            if (!res.initial_tag) throw new Error('未能生成词条');
+            state.capture.evoInit = res.initial_tag;
+            evoEl.value = res.initial_tag;
+            if (!state.capture.domainTag && res.domain_tag && res.domain_tag !== UNCLASSIFIED_LABEL) {
+              state.capture.domainTag = res.domain_tag;
+              domInput.value = res.domain_tag;
+              domLabel.textContent = res.domain_tag;
             }
-            state.capture.formOpen = true;
-            if (state.capture.raw.trim() && !state.capture.front.trim()) {
-              state.capture.front = state.capture.raw.trim();
-            }
-            state.capture.aiSplitUsed = false;
-            state.capture.aiSplitSnapshot = null;
             persistCaptureDraft();
-            renderCaptureTab();
-            setTimeout(() => document.getElementById('cap-front')?.focus(), 60);
-          };
-        }
+            logActivityCloud('ai_usage', null, { feature: 'gen_init_tag', adopted: true });
+            showToast('已生成初始词条，可直接编辑修改');
+            evoEl.focus();
+          } catch (err) {
+            showToast(err.message || '生成词条失败', 4000);
+          } finally {
+            genEvoBtn.disabled = false;
+            if (txtEl) txtEl.textContent = 'AI 生成词条';
+          }
+        };
 
-        // 1.0 AI Generate Editable Initial Evolution Tag
-        const genEvoBtn = document.getElementById('btn-cap-gen-evo');
-        if (genEvoBtn) {
-          genEvoBtn.onclick = async () => {
-            const front = frontEl.value.trim();
-            const anchor = anchorEl.value.trim();
-            if (!front) {
-              showToast('先填一下事实 / 原话');
-              frontEl.focus();
-              return;
-            }
-            if (!anchor) {
-              showToast('先填一下最初感受，生成的词条更贴合');
-              anchorEl.focus();
-              return;
-            }
-            if (!isAiConfigured()) {
-              promptConfigureAi();
-              return;
-            }
-            const customPrompt = readAiExtraPrompt('cap-evo-extra', state.capture.evoExtraPrompt);
-            state.capture.evoExtraPrompt = customPrompt;
-            genEvoBtn.disabled = true;
-            const txtEl = document.getElementById('btn-cap-gen-evo-txt');
-            if (txtEl) txtEl.textContent = '生成中...';
-            try {
-              const res = await aiSuggestInitialTag(front, anchor, domInput.value.trim(), customPrompt);
-              if (!res.initial_tag) throw new Error('未能生成词条');
-              state.capture.evoInit = res.initial_tag;
-              evoEl.value = res.initial_tag;
-              if (!state.capture.domainTag && res.domain_tag && res.domain_tag !== UNCLASSIFIED_LABEL) {
-                state.capture.domainTag = res.domain_tag;
-                domInput.value = res.domain_tag;
-                domLabel.textContent = res.domain_tag;
-              }
-              persistCaptureDraft();
-              logActivityCloud('ai_usage', null, { feature: 'gen_init_tag', adopted: true });
-              showToast('已生成初始词条，可直接编辑修改');
-              evoEl.focus();
-            } catch (err) {
-              showToast(err.message || '生成词条失败', 4000);
-            } finally {
-              genEvoBtn.disabled = false;
-              if (txtEl) txtEl.textContent = 'AI 生成词条';
-            }
-          };
-        }
-
-        // 1.0 Direct AI Split to Preservation Card
-        const aiBtn = document.getElementById('btn-cap-ai');
-        if (aiBtn) {
-          aiBtn.onclick = async () => {
-            const raw = (rawEl ? rawEl.value : state.capture.raw).trim();
-            if (!raw) {
-              showToast('先输入或口述一段内容');
-              return;
-            }
-            if (!isAiConfigured()) {
-              promptConfigureAi();
-              return;
-            }
-            const customPrompt = readAiExtraPrompt('cap-ai-extra', state.capture.aiExtraPrompt);
-            state.capture.aiExtraPrompt = customPrompt;
-            aiBtn.disabled = true;
-            const aiTxt = document.getElementById('btn-cap-ai-txt');
-            if (aiTxt) aiTxt.textContent = '拆解中...';
-
-            try {
-              const res = await aiSplitCapture(raw, customPrompt, {
-                front: frontEl.value.trim(),
-                anchor: anchorEl.value.trim(),
-                evoInit: evoEl.value.trim()
-              });
-              state.capture.raw = raw;
-              state.capture.front = res.front_fact;
-              state.capture.anchor = res.back_anchor;
-              state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
-              state.capture.formOpen = true;
-              state.capture.rawCollapsed = true;
-              state.capture.anchorMissingHint = !res.back_anchor;
-              state.capture.aiSplitUsed = true;
-              state.capture.aiSplitSnapshot = {
-                front_fact: res.front_fact,
-                back_anchor: res.back_anchor,
-                domain_tag: state.capture.domainTag
-              };
-              persistCaptureDraft();
-              renderCaptureTab();
-              if (!res.back_anchor) {
-                showToast('事实已拆出，补一句最初感受即可');
-                setTimeout(() => document.getElementById('cap-anchor')?.focus(), 80);
-              } else {
-                showToast(`已拆解 · 归入「${res.domain_tag}」`);
-              }
-            } catch (err) {
-              showToast(err.message || 'AI 拆解失败，可先手动填写', 4200);
-              state.capture.front = state.capture.front || raw;
-              state.capture.formOpen = true;
-              persistCaptureDraft();
-              renderCaptureTab();
-            }
-          };
-        }
-
+        // Save Card
         document.getElementById('btn-cap-save').onclick = async () => {
           const front = frontEl.value.trim();
           const anchor = anchorEl.value.trim();
@@ -7049,10 +6882,12 @@ ${domainRule}
 
           if (!front) {
             showToast('请先填写事实 / 原话');
+            frontEl.focus();
             return;
           }
           if (!anchor) {
             showToast('请写一句最初感受');
+            anchorEl.focus();
             return;
           }
 
@@ -7096,7 +6931,7 @@ ${domainRule}
             }
 
             clearCaptureDraft();
-            renderCaptureTab();
+            renderCardCaptureTab();
             renderLibraryTab();
 
             showToast(needsSilentClassify
@@ -7117,6 +6952,362 @@ ${domainRule}
             saveBtn.disabled = false;
             saveBtn.textContent = '保存卡片';
           }
+        };
+      }
+
+      // --- 12B. 破局速记：专属问题树录入与 AI 具象化挂树 ---
+      function renderForestCaptureTab() {
+        const container = document.getElementById('view-capture-forest');
+        if (!container) return;
+
+        const fc = state.forestCapture;
+        const trees = getForestTreesList().filter(t => !t.isMeta).map(t => t.label);
+        const parentCandidates = state.forestNodes.filter(n => !n.is_meta);
+        const stash = getCaptureStash();
+        const pendingOw = fc.pendingOverwrite;
+        const hasAnyContent = Boolean(fc.raw || fc.title || fc.problem || fc.refined || fc.step || fc.aiError || pendingOw);
+
+        container.innerHTML = `
+          <div class="page-header" style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-ghost btn-xs" id="btn-fcap-back" style="padding:4px 6px;" aria-label="返回破局森林">
+                ${ICONS.chevronLeft}
+              </button>
+              <h1 class="page-title">破局速记</h1>
+            </div>
+            ${hasAnyContent ? `
+              <button type="button" class="btn-ghost btn-xs" id="btn-fcap-clear">清空</button>
+            ` : ''}
+          </div>
+
+          <!-- Forest AI Problem Structuring Box -->
+          <div class="card" style="margin-bottom:14px;display:flex;flex-direction:column;gap:10px;">
+            <textarea id="fcap-raw" class="textarea" rows="3" style="border:none;background:transparent;padding:0;min-height:76px;" placeholder="写下卡壳难题、模糊想法或推进思路">${esc(fc.raw)}</textarea>
+
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border-soft);">
+              <button type="button" class="btn btn-primary btn-sm" style="flex:1;" id="btn-fcap-ai" ${fc.aiLoading ? 'disabled' : ''}>
+                ${ICONS.sparkle} <span>${fc.aiLoading ? '整理并匹配问题树...' : 'AI 具象化并挂树'}</span>
+              </button>
+              <button type="button" class="btn-ghost btn-xs" id="btn-fcap-stash" style="padding:6px 8px;">暂存</button>
+            </div>
+
+            ${renderAiExtraPromptHtml('fcap-ai-extra', '例如：挂到科研树下 / 拆成 15 分钟能动手的一步（优先按此整理）', fc.aiExtraPrompt)}
+
+            ${fc.implicitIntent ? `
+              <div class="card-soft" style="padding:9px 11px;font-size:12px;color:var(--ink-secondary);line-height:1.55;">
+                <strong style="color:var(--sage);">潜台词提示：</strong>${esc(fc.implicitIntent)}
+              </div>
+            ` : ''}
+
+            ${fc.aiError ? `
+              <div class="inline-notice terra" role="alert">${esc(fc.aiError)}</div>
+            ` : ''}
+
+            ${pendingOw ? `
+              <div class="card-soft anim-up" style="border:1px solid var(--terra-border);background:var(--terra-soft);padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="font-size:12px;color:var(--terra);font-weight:500;">下方节点表单已有手动填写的内容，是否用本次整理结果替换？</div>
+                <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">
+                  <div><strong>拟挂树：</strong>${esc(pendingOw.tree_label)} · ${esc(pendingOw.short_title)}</div>
+                  ${pendingOw.refined_problem ? `<div class="line-clamp-2" style="margin-top:3px;"><strong>具象化：</strong>${esc(pendingOw.refined_problem)}</div>` : ''}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <button type="button" class="btn btn-primary btn-xs" id="btn-fcap-ow-yes">确认替换</button>
+                  <button type="button" class="btn btn-soft btn-xs" id="btn-fcap-ow-no">保留手写</button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Manual Forest Node Form (Expanded by Default) -->
+          <div id="fcap-form-panel" class="anim-up" style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label class="field-label" for="fcap-tree">所属问题树</label>
+                  <input id="fcap-tree" class="input" style="font-size:13px;" value="${esc(fc.treeLabel)}" placeholder="如：科研、体能、关系" />
+                </div>
+                <div>
+                  <label class="field-label" for="fcap-parent">挂载父节点</label>
+                  <select id="fcap-parent" class="select" style="font-size:13px;">
+                    <option value="">独立 / 并列根节点</option>
+                    ${parentCandidates.map(n => `
+                      <option value="${esc(n.id)}" ${n.id === fc.parentId ? 'selected' : ''}>${esc(n.tree_label)} · ${esc(n.short_title.slice(0, 12))}</option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+              ${trees.length ? `
+                <div style="display:flex;flex-wrap:wrap;gap:6px;" id="fcap-tree-pills">
+                  ${trees.map(t => `
+                    <button type="button" class="preset-chip ${t === fc.treeLabel ? 'active' : ''}" data-fcap-tree="${esc(t)}">${esc(t)}</button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <label class="field-label" for="fcap-title">节点短语（画布展示）</label>
+                <input id="fcap-title" class="input" maxlength="32" value="${esc(fc.title)}" placeholder="简短概括，留空自动截取原述前 18 字" />
+              </div>
+              <div>
+                <label class="field-label" for="fcap-problem">问题原述</label>
+                <textarea id="fcap-problem" class="textarea" rows="3" placeholder="写下具体卡点或模糊困惑，允许先不完美">${esc(fc.problem)}</textarea>
+              </div>
+            </div>
+
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <label class="field-label" for="fcap-refined">具象化表述（选填）</label>
+                <textarea id="fcap-refined" class="textarea" rows="2" placeholder="更清晰的问题边界或拆解方向">${esc(fc.refined)}</textarea>
+              </div>
+              <div>
+                <label class="field-label" for="fcap-step">15 分钟最小抓手（选填）</label>
+                <input id="fcap-step" class="input" value="${esc(fc.step)}" placeholder="现在立刻能动手的最小一步" />
+              </div>
+              <div>
+                <div class="field-label" style="margin-bottom:6px;">当前状态</div>
+                <div class="seg-bar" style="margin-bottom:0;">
+                  <button type="button" class="seg-btn ${fc.status === 'fuzzy' ? 'active' : ''}" data-fcap-status="fuzzy">模糊探索</button>
+                  <button type="button" class="seg-btn ${fc.status === 'active' ? 'active' : ''}" data-fcap-status="active">推进中</button>
+                  <button type="button" class="seg-btn ${fc.status === 'solved' ? 'active' : ''}" data-fcap-status="solved">已克服</button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block" id="btn-fcap-save">种入破局森林</button>
+          </div>
+
+          ${stash.length ? `
+            <details class="card-soft">
+              <summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-muted);">
+                <span>暂存箱（${stash.length} 条）</span>
+                <span style="text-decoration:underline;">展开处理</span>
+              </summary>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-soft);">
+                ${stash.map((item, idx) => `
+                  <div class="card" style="padding:10px 12px;">
+                    <p style="margin:0 0 8px;font-size:13px;line-height:1.55;white-space:pre-wrap;">${esc(item.text)}</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-muted);">
+                      <span>${formatTime(item.at).slice(5)}</span>
+                      <div style="display:flex;gap:6px;">
+                        <button type="button" class="btn-ghost btn-xs" data-fstash-load="${idx}">载入</button>
+                        <button type="button" class="btn-ghost btn-xs" style="color:var(--terra);" data-fstash-del="${idx}">移除</button>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </details>
+          ` : ''}
+        `;
+
+        document.getElementById('btn-fcap-back').onclick = () => switchTab('forest');
+
+        const clearBtn = document.getElementById('btn-fcap-clear');
+        if (clearBtn) {
+          clearBtn.onclick = () => {
+            clearForestCaptureDraft();
+            renderForestCaptureTab();
+            showToast('已清空');
+          };
+        }
+
+        const rawEl = document.getElementById('fcap-raw');
+        const treeEl = document.getElementById('fcap-tree');
+        const parentEl = document.getElementById('fcap-parent');
+        const titleEl = document.getElementById('fcap-title');
+        const probEl = document.getElementById('fcap-problem');
+        const refEl = document.getElementById('fcap-refined');
+        const stepEl = document.getElementById('fcap-step');
+        const extraEl = document.getElementById('fcap-ai-extra');
+
+        rawEl.oninput = () => {
+          fc.raw = rawEl.value;
+          fc.aiError = '';
+        };
+        treeEl.oninput = () => { fc.treeLabel = treeEl.value; };
+        parentEl.onchange = () => {
+          fc.parentId = parentEl.value;
+          const pNode = state.forestNodes.find(n => n.id === fc.parentId);
+          if (pNode && !treeEl.value.trim()) {
+            fc.treeLabel = pNode.tree_label;
+            treeEl.value = pNode.tree_label;
+          }
+        };
+        titleEl.oninput = () => { fc.title = titleEl.value; fc.formFilledByAi = false; };
+        probEl.oninput = () => { fc.problem = probEl.value; fc.formFilledByAi = false; };
+        refEl.oninput = () => { fc.refined = refEl.value; fc.formFilledByAi = false; };
+        stepEl.oninput = () => { fc.step = stepEl.value; fc.formFilledByAi = false; };
+        if (extraEl) extraEl.oninput = () => { fc.aiExtraPrompt = extraEl.value; };
+
+        container.querySelectorAll('[data-fcap-tree]').forEach(btn => {
+          btn.onclick = () => {
+            fc.treeLabel = btn.getAttribute('data-fcap-tree') || '';
+            treeEl.value = fc.treeLabel;
+            container.querySelectorAll('[data-fcap-tree]').forEach(b => b.classList.toggle('active', b === btn));
+          };
+        });
+
+        container.querySelectorAll('[data-fcap-status]').forEach(btn => {
+          btn.onclick = () => {
+            fc.status = btn.getAttribute('data-fcap-status') || 'fuzzy';
+            container.querySelectorAll('[data-fcap-status]').forEach(b => b.classList.toggle('active', b === btn));
+          };
+        });
+
+        const applyForestAiResult = (res) => {
+          fc.treeLabel = res.tree_label || fc.treeLabel || '综合破局';
+          fc.parentId = res.parent_id || '';
+          fc.title = res.short_title || '';
+          fc.problem = res.corrected_problem || fc.raw.trim();
+          fc.refined = res.refined_problem || '';
+          fc.step = res.next_micro_step || '';
+          fc.status = (fc.refined || fc.step) ? 'active' : 'fuzzy';
+          fc.implicitIntent = res.implicit_intent || '';
+          fc.formFilledByAi = true;
+          fc.pendingOverwrite = null;
+          renderForestCaptureTab();
+          const formEl = document.getElementById('fcap-form-panel');
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          showToast(`已具象化并建议挂入「${fc.treeLabel}」`);
+        };
+
+        document.getElementById('btn-fcap-ai').onclick = async () => {
+          const raw = rawEl.value.trim();
+          if (!raw) {
+            showToast('请先写下卡壳难题或思路');
+            rawEl.focus();
+            return;
+          }
+          if (!isAiConfigured()) {
+            promptConfigureAi();
+            return;
+          }
+          const customPrompt = readAiExtraPrompt('fcap-ai-extra', fc.aiExtraPrompt);
+          fc.raw = raw;
+          fc.aiExtraPrompt = customPrompt;
+          fc.aiLoading = true;
+          fc.aiError = '';
+          fc.pendingOverwrite = null;
+          renderForestCaptureTab();
+
+          try {
+            const res = await aiStructureForestCapture(raw, customPrompt);
+            const hasManualContent = Boolean(
+              !fc.formFilledByAi &&
+              (fc.title.trim() || fc.problem.trim() || fc.refined.trim())
+            );
+            fc.aiLoading = false;
+            if (hasManualContent) {
+              fc.implicitIntent = res.implicit_intent || '';
+              fc.pendingOverwrite = res;
+              renderForestCaptureTab();
+              showToast('整理完成，请确认是否替换下方手写内容');
+              return;
+            }
+            applyForestAiResult(res);
+          } catch (err) {
+            fc.aiLoading = false;
+            fc.aiError = err.message || 'AI 整理失败';
+            renderForestCaptureTab();
+            showToast(err.message || 'AI 整理失败', 4200);
+          }
+        };
+
+        const fowYes = document.getElementById('btn-fcap-ow-yes');
+        if (fowYes && pendingOw) fowYes.onclick = () => applyForestAiResult(pendingOw);
+        const fowNo = document.getElementById('btn-fcap-ow-no');
+        if (fowNo) {
+          fowNo.onclick = () => {
+            fc.pendingOverwrite = null;
+            renderForestCaptureTab();
+            showToast('已保留手写内容');
+          };
+        }
+
+        document.getElementById('btn-fcap-stash').onclick = () => {
+          const raw = rawEl.value.trim();
+          if (!raw) {
+            showToast('先输入一段内容再暂存');
+            return;
+          }
+          const next = [{ id: makeClientId(), text: raw, at: new Date().toISOString() }, ...getCaptureStash()];
+          saveCaptureStash(next);
+          trackActivity('capture', 'capture_stash', null, { length: raw.length, source: 'forest_capture' });
+          fc.raw = '';
+          renderForestCaptureTab();
+          showToast('已存进暂存箱');
+        };
+
+        container.querySelectorAll('[data-fstash-load]').forEach(btn => {
+          btn.onclick = () => {
+            const idx = Number(btn.getAttribute('data-fstash-load'));
+            const cur = [...getCaptureStash()];
+            const item = cur[idx];
+            if (!item) return;
+            cur.splice(idx, 1);
+            saveCaptureStash(cur);
+            fc.raw = item.text;
+            renderForestCaptureTab();
+          };
+        });
+        container.querySelectorAll('[data-fstash-del]').forEach(btn => {
+          btn.onclick = () => {
+            const idx = Number(btn.getAttribute('data-fstash-del'));
+            const cur = [...getCaptureStash()];
+            cur.splice(idx, 1);
+            saveCaptureStash(cur);
+            renderForestCaptureTab();
+            showToast('已移除');
+          };
+        });
+
+        document.getElementById('btn-fcap-save').onclick = () => {
+          const problem = probEl.value.trim() || rawEl.value.trim();
+          if (!problem) {
+            showToast('请先写下问题原述');
+            probEl.focus();
+            return;
+          }
+          const parentId = parentEl.value || null;
+          const parentObj = parentId ? state.forestNodes.find(n => n.id === parentId) : null;
+          const treeLabel = (treeEl.value.trim() || parentObj?.tree_label || '综合破局').slice(0, 16);
+          const shortTitle = (titleEl.value.trim() || problem.slice(0, 18)).slice(0, 32);
+          const refined = refEl.value.trim() || null;
+          const step = stepEl.value.trim() || null;
+          const status = fc.status || ((refined || step) ? 'active' : 'fuzzy');
+
+          const created = createForestNodeOptimistic({
+            tree_label: treeLabel,
+            parent_id: parentId,
+            short_title: shortTitle,
+            raw_problem: problem,
+            refined_problem: refined,
+            next_micro_step: step,
+            status,
+            analysis_history: [{
+              at: new Date().toISOString(),
+              source: 'forest_capture',
+              content: problem,
+              next_step: step || ''
+            }]
+          });
+
+          trackActivity('capture', 'capture_submit', created?.id || null, {
+            length: problem.length,
+            mode: fc.formFilledByAi ? 'forest_ai_capture' : 'forest_manual_capture',
+            tree_label: treeLabel
+          });
+
+          scheduleIgnitionPreheat();
+          clearForestCaptureDraft();
+
+          if (state.forest.selectedTree !== '全部树') {
+            state.forest.selectedTree = treeLabel;
+          }
+          switchTab('forest');
+          showToast(`已种入破局森林「${treeLabel}」`);
         };
       }
 
@@ -7628,9 +7819,9 @@ ${domainRule}
         }
         document.getElementById('btn-fcover-manage').onclick = () => openDesireAnchorPoolModal(firstRootForTree?.id || null);
 
-        // Wire New Problem button
+        // Wire New Problem button -> Dedicated Forest Capture
         document.getElementById('btn-for-new').onclick = () =>
-          openNewForestNodeModal(state.forest.selectedTree === '全部树' ? '' : state.forest.selectedTree, null);
+          openForestCapture(state.forest.selectedTree === '全部树' ? '' : state.forest.selectedTree);
 
         // Wire AI Cabinet Reorganize Forest
         document.getElementById('btn-for-reorg').onclick = async () => {
