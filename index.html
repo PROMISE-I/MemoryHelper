@@ -1622,9 +1622,58 @@
         evening: ['金融', '表达', '人际关系', '自我提升']
       };
 
-      const DEFAULT_META_TITLE = '元问题 · 用认知机制 + AI 持续破局';
-      const DEFAULT_META_PROBLEM = '如何理解大脑认知与动机机制，并用软件 + AI 持续拆解克服生活中的各类难题';
-      const DEFAULT_META_ANCHOR = '在这套系统运转下，我会持续变好，并有能力逐一拿下所有想解决的人生课题。';
+      const DEFAULT_META_TITLE = '双引擎认知提升元系统';
+      const DEFAULT_META_PROBLEM = '如何顺应大脑的行动规律、记忆规律与后台处理机制，通过日常积累把“自我行动（渴望+可行）”与“别人经验（记忆）”结合起来，借助 AI 内阁票拟，持续破局而不闭塞？';
+      const DEFAULT_META_ANCHOR = '拥有一套顺应大脑规律的认知提升系统——既不靠硬扛内耗，也不闭门造车；把日常积累的自我行动和别人的成熟经验接通，亲眼看着自己把人生各个领域的难题一个个拆解拿下。';
+
+      // 第 0 号元知识种子（双端严格幂等预置，绝不重复创建或覆盖用户修改）
+      const META_ZERO_SEED = {
+        card: {
+          front_fact: '认知提升的底层公式：自我行动（渴望+可行）+ 别人经验（记忆）；靠日常积累，由 AI 作内阁票拟，整体顺应大脑的“行动规律 + 记忆规律 + 后台处理”。',
+          back_anchor: '不能没有别人经验，这是捷径，更是破局的关键，人太闭塞是走不长远的。靠自己闷头硬想容易卡死在原有天花板里，只有一边靠“渴望+可行”推进自己，一边靠“记忆”吸收外部经验，日常攒下来交给后台处理，才能持续变好。',
+          evolution_tags: [
+            '自我行动(渴望+可行) × 别人经验(记忆)',
+            '借他山之石破闭塞',
+            '日常积累 + 后台处理 + AI票拟'
+          ],
+          domain_tag: '自我觉察'
+        },
+        root: {
+          tree_label: '元系统',
+          is_meta: true,
+          status: 'active',
+          short_title: DEFAULT_META_TITLE,
+          raw_problem: DEFAULT_META_PROBLEM,
+          next_micro_step: '初始化第 0 号元知识卡片与元问题树，并录下今天遇到的第一条“别人经验”或现实小卡点，跑通一次真实循环。',
+          pos_x: 300,
+          pos_y: 64
+        },
+        pillars: [
+          {
+            short_title: '行动规律：动态渴望 + 可行证据',
+            raw_problem: '持续迭代如何破除清晨恐惧、降低启动阻力、保留分析历史。',
+            pos_x: 60,
+            pos_y: 230
+          },
+          {
+            short_title: '记忆规律：外部经验破闭塞',
+            raw_problem: '持续优化如何低阻吸收他人成熟经验，并精准反哺现实卡点，避免闭门造车。',
+            pos_x: 300,
+            pos_y: 230
+          },
+          {
+            short_title: '后台与协作：日常积累 + 留白 + AI票拟',
+            raw_problem: '持续校准 3 槽上限、单次负荷边界以及明朝内阁的批红体感。',
+            pos_x: 540,
+            pos_y: 230
+          }
+        ],
+        anchor: {
+          is_meta: true,
+          raw_text: DEFAULT_META_ANCHOR,
+          scene_tags: ['元系统', '全时段']
+        }
+      };
 
       const AI_PRESETS = [
         { id: 'openai_terra', label: 'OpenAI 主力', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6.1-terra' },
@@ -2839,67 +2888,254 @@
           enqueueSyncOp({ type: 'save_prefs' });
         }
 
-        ensureMetaQuestionSeeded();
+        await seedMetaZeroKnowledge({ manual: false });
         persistUserCache();
         setSyncStatus('ok');
       }
 
-      // Ensure the unique Meta-Question node & anchor exist cleanly for cold start
-      function ensureMetaQuestionSeeded() {
-        const hasMetaNode = state.forestNodes.some(n => n.is_meta);
-        if (!hasMetaNode) {
-          const metaNode = {
-            id: crypto.randomUUID ? crypto.randomUUID() : makeClientId(),
-            user_id: currentUserId(),
-            tree_label: '元问题',
-            is_meta: true,
-            parent_id: null,
-            parallel_group: null,
-            short_title: DEFAULT_META_TITLE,
-            short_title_ai_draft: null,
-            raw_problem: DEFAULT_META_PROBLEM,
-            refined_problem: DEFAULT_META_PROBLEM,
-            analysis_history: [{
-              at: new Date().toISOString(),
-              source: 'system',
-              content: '系统确立唯一元问题：用认知科学与 AI 持续把复杂难题拆小、留痕、内化。',
-              next_step: '每天花 1 分钟在点火页唤醒渴望，推进任一小步。'
-            }],
-            next_micro_step: '在破局森林记下此刻最想攻克的一个具体问题',
-            status: 'active',
-            pos_x: 120,
-            pos_y: 80,
-            last_touched_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          state.forestNodes.unshift(metaNode);
-          if (state.v2SchemaReady && isValidUuid(metaNode.id)) {
-            enqueueSyncOp({ type: 'upsert_table', table: 'forest_nodes', row: metaNode });
+      // --- 第 0 号元知识种子：严格幂等、按外键顺序直接写入 Supabase（绝不重复、绝不覆盖用户修改） ---
+      function findMetaZeroCard(metaRootId = null) {
+        const rootId = metaRootId || state.forestNodes.find(n => n.is_meta)?.id || null;
+        return state.cards.find(c => {
+          if (!c) return false;
+          if (rootId && c.source_forest_node_id === rootId) return true;
+          if (Array.isArray(c.evolution_history) && c.evolution_history.some(h => h && h.action === 'meta_seed')) return true;
+          if (String(c.front_fact || '').includes('认知提升的底层公式：')) return true;
+          return false;
+        }) || null;
+      }
+
+      function getMetaZeroStatus() {
+        const metaRoot = state.forestNodes.find(n => n.is_meta) || null;
+        const pillars = metaRoot
+          ? state.forestNodes.filter(n => n.parent_id === metaRoot.id || n.parallel_group === 'meta_pillars')
+          : [];
+        const metaAnchor = state.desireAnchors.find(a => a.is_meta) || null;
+        const metaCard = findMetaZeroCard(metaRoot?.id);
+        return {
+          hasRoot: Boolean(metaRoot),
+          pillarCount: pillars.length,
+          hasAnchor: Boolean(metaAnchor),
+          hasCard: Boolean(metaCard),
+          complete: Boolean(metaRoot && pillars.length >= 3 && metaAnchor && metaCard)
+        };
+      }
+
+      async function upsertV2RowDirect(table, row) {
+        if (!state.session?.access_token) return false;
+        try {
+          await sbRest(`${table}?on_conflict=id`, {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: row
+          });
+          return true;
+        } catch (err) {
+          if (isMissingSchemaError(err)) {
+            state.v2SchemaReady = false;
+            return false;
           }
+          enqueueSyncOp({ type: 'upsert_table', table, row });
+          return false;
         }
-        const hasMetaAnchor = state.desireAnchors.some(a => a.is_meta);
-        if (!hasMetaAnchor) {
-          const metaNode = state.forestNodes.find(n => n.is_meta);
-          const metaAnchor = {
-            id: crypto.randomUUID ? crypto.randomUUID() : makeClientId(),
-            user_id: currentUserId(),
-            raw_text: DEFAULT_META_ANCHOR,
-            polished_text: null,
-            use_polished: false,
-            scene_tags: ['清晨', '白天', '晚间', '元问题'],
-            linked_node_id: metaNode?.id || null,
-            is_meta: true,
-            shown_count: 0,
-            last_shown_at: null,
-            ignite_score: 1.2,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          state.desireAnchors.unshift(metaAnchor);
-          if (state.v2SchemaReady && isValidUuid(metaAnchor.id)) {
-            enqueueSyncOp({ type: 'upsert_table', table: 'desire_anchors', row: metaAnchor });
+      }
+
+      let metaZeroSeedInFlight = false;
+      async function seedMetaZeroKnowledge(opts = {}) {
+        const manual = Boolean(opts.manual);
+        if (metaZeroSeedInFlight || !currentUserId()) {
+          return { createdRoot: false, createdPillars: 0, createdAnchor: false, createdCard: false, skipped: true };
+        }
+        metaZeroSeedInFlight = true;
+        const nowIso = new Date().toISOString();
+        const uid = currentUserId();
+        let createdRoot = false;
+        let createdPillars = 0;
+        let createdAnchor = false;
+        let createdCard = false;
+
+        try {
+          // 1. Meta Root Node (must exist in forest_nodes BEFORE FK children & anchor)
+          let metaRoot = state.forestNodes.find(n => n.is_meta) || null;
+          const legacyPlaceholderTitle = '元问题 · 用认知机制 + AI 持续破局';
+          const legacyPlaceholderProb = '如何理解大脑认知与动机机制，并用软件 + AI 持续拆解克服生活中的各类难题';
+
+          if (!metaRoot) {
+            const rootRow = {
+              id: crypto.randomUUID ? crypto.randomUUID() : makeClientId(),
+              user_id: uid,
+              tree_label: META_ZERO_SEED.root.tree_label,
+              is_meta: true,
+              parent_id: null,
+              parallel_group: null,
+              short_title: META_ZERO_SEED.root.short_title,
+              short_title_ai_draft: null,
+              raw_problem: META_ZERO_SEED.root.raw_problem,
+              refined_problem: null,
+              analysis_history: [{
+                at: nowIso,
+                source: '第 0 号元知识',
+                content: '确立双引擎最高底层公式：自我行动（渴望+可行）+ 别人经验（记忆）；靠日常积累与后台处理，由 AI 作内阁票拟，严防闭塞。',
+                next_step: META_ZERO_SEED.root.next_micro_step
+              }],
+              next_micro_step: META_ZERO_SEED.root.next_micro_step,
+              status: META_ZERO_SEED.root.status,
+              pos_x: META_ZERO_SEED.root.pos_x,
+              pos_y: META_ZERO_SEED.root.pos_y,
+              last_touched_at: nowIso,
+              created_at: nowIso,
+              updated_at: nowIso
+            };
+            state.forestNodes.unshift(rootRow);
+            metaRoot = rootRow;
+            createdRoot = true;
+            if (state.v2SchemaReady && isValidUuid(rootRow.id)) {
+              await upsertV2RowDirect('forest_nodes', rootRow);
+            }
+          } else if (metaRoot.short_title === legacyPlaceholderTitle && metaRoot.raw_problem === legacyPlaceholderProb) {
+            // Smoothly upgrade untouched legacy placeholder only (never overwrite user edits!)
+            const patch = {
+              tree_label: META_ZERO_SEED.root.tree_label,
+              short_title: META_ZERO_SEED.root.short_title,
+              raw_problem: META_ZERO_SEED.root.raw_problem,
+              refined_problem: null,
+              next_micro_step: META_ZERO_SEED.root.next_micro_step,
+              status: 'active',
+              pos_x: META_ZERO_SEED.root.pos_x,
+              pos_y: META_ZERO_SEED.root.pos_y,
+              updated_at: nowIso
+            };
+            Object.assign(metaRoot, patch);
+            createdRoot = true;
+            if (state.v2SchemaReady && isValidUuid(metaRoot.id)) {
+              await upsertV2RowDirect('forest_nodes', metaRoot);
+            }
           }
+
+          // 2. Three Parallel Meta Pillars (parent_id -> metaRoot.id, parallel_group = 'meta_pillars')
+          const existingKids = state.forestNodes.filter(n => n.parent_id === metaRoot.id || n.parallel_group === 'meta_pillars');
+          const shouldSeedPillars = existingKids.length === 0 || (manual && existingKids.length < META_ZERO_SEED.pillars.length);
+          if (shouldSeedPillars) {
+            for (const pillar of META_ZERO_SEED.pillars) {
+              const dup = existingKids.some(k => k.short_title === pillar.short_title);
+              if (dup) continue;
+              const childRow = {
+                id: crypto.randomUUID ? crypto.randomUUID() : makeClientId(),
+                user_id: uid,
+                tree_label: metaRoot.tree_label || META_ZERO_SEED.root.tree_label,
+                is_meta: false,
+                parent_id: metaRoot.id,
+                parallel_group: 'meta_pillars',
+                short_title: pillar.short_title,
+                short_title_ai_draft: null,
+                raw_problem: pillar.raw_problem,
+                refined_problem: null,
+                analysis_history: [{
+                  at: nowIso,
+                  source: '第 0 号元知识',
+                  content: pillar.raw_problem,
+                  next_step: ''
+                }],
+                next_micro_step: null,
+                status: 'active',
+                pos_x: pillar.pos_x,
+                pos_y: pillar.pos_y,
+                last_touched_at: nowIso,
+                created_at: nowIso,
+                updated_at: nowIso
+              };
+              state.forestNodes.push(childRow);
+              existingKids.push(childRow);
+              createdPillars++;
+              if (state.v2SchemaReady && isValidUuid(childRow.id)) {
+                await upsertV2RowDirect('forest_nodes', childRow);
+              }
+            }
+          }
+
+          // 3. Tree-Top Meta Desire Anchor (linked_node_id -> metaRoot.id)
+          let metaAnchor = state.desireAnchors.find(a => a.is_meta) || null;
+          const legacyAnchorText = '在这套系统运转下，我会持续变好，并有能力逐一拿下所有想解决的人生课题。';
+          if (!metaAnchor) {
+            const ancRow = {
+              id: crypto.randomUUID ? crypto.randomUUID() : makeClientId(),
+              user_id: uid,
+              raw_text: META_ZERO_SEED.anchor.raw_text,
+              polished_text: null,
+              use_polished: false,
+              scene_tags: [...META_ZERO_SEED.anchor.scene_tags],
+              linked_node_id: metaRoot.id,
+              is_meta: true,
+              shown_count: 0,
+              last_shown_at: null,
+              ignite_score: 1.3,
+              created_at: nowIso,
+              updated_at: nowIso
+            };
+            state.desireAnchors.unshift(ancRow);
+            metaAnchor = ancRow;
+            createdAnchor = true;
+            if (state.v2SchemaReady && isValidUuid(ancRow.id)) {
+              await upsertV2RowDirect('desire_anchors', ancRow);
+            }
+          } else if (metaAnchor.raw_text === legacyAnchorText && (Number(metaAnchor.shown_count) || 0) === 0) {
+            metaAnchor.raw_text = META_ZERO_SEED.anchor.raw_text;
+            metaAnchor.scene_tags = [...META_ZERO_SEED.anchor.scene_tags];
+            metaAnchor.linked_node_id = metaRoot.id;
+            metaAnchor.updated_at = nowIso;
+            createdAnchor = true;
+            if (state.v2SchemaReady && isValidUuid(metaAnchor.id)) {
+              await upsertV2RowDirect('desire_anchors', metaAnchor);
+            }
+          } else if (manual && !metaAnchor.linked_node_id && metaRoot?.id) {
+            metaAnchor.linked_node_id = metaRoot.id;
+            metaAnchor.updated_at = nowIso;
+            if (state.v2SchemaReady && isValidUuid(metaAnchor.id)) {
+              await upsertV2RowDirect('desire_anchors', metaAnchor);
+            }
+          }
+
+          // 4. Daily Preservation Card #0 (FSRS-4.5 standard new card, due today for immediate reviewability)
+          const existingMetaCard = findMetaZeroCard(metaRoot?.id);
+          if (!existingMetaCard) {
+            const todayIso = new Date(startOfTodayMs()).toISOString();
+            const fsrs = {
+              ...createInitialFsrsState(),
+              due: todayIso
+            };
+            const cardPayload = {
+              front_fact: META_ZERO_SEED.card.front_fact,
+              back_anchor: META_ZERO_SEED.card.back_anchor,
+              evolution_tags: [...META_ZERO_SEED.card.evolution_tags],
+              evolution_history: [{
+                at: nowIso,
+                reps: 0,
+                action: 'meta_seed',
+                before: [],
+                after: [...META_ZERO_SEED.card.evolution_tags]
+              }],
+              domain_tag: META_ZERO_SEED.card.domain_tag,
+              source_forest_node_id: (state.v2SchemaReady && isValidUuid(metaRoot?.id)) ? metaRoot.id : null,
+              fsrs_state: fsrs,
+              due_at: todayIso,
+              cross_link_id: null,
+              cross_link_hint: null
+            };
+            try {
+              await insertCardToCloud(cardPayload);
+              createdCard = true;
+            } catch (_) {
+              // Offline fallback: store locally so it isn't lost
+            }
+          }
+
+          if (createdRoot || createdPillars || createdAnchor || createdCard) {
+            persistUserCache();
+          }
+
+          return { createdRoot, createdPillars, createdAnchor, createdCard, v2SchemaReady: state.v2SchemaReady };
+        } finally {
+          metaZeroSeedInFlight = false;
         }
       }
 
@@ -3115,15 +3351,16 @@
           if (parent) {
             const siblings = state.forestNodes.filter(n => n.parent_id === parentId);
             return {
-              x: Math.round((Number(parent.pos_x) || 120) + (siblings.length - 0.5) * 225),
-              y: Math.round((Number(parent.pos_y) || 80) + 128)
+              x: Math.round((Number(parent.pos_x) || 120) + (siblings.length - 0.5) * 240),
+              y: Math.round((Number(parent.pos_y) || 64) + 166)
             };
           }
         }
-        const roots = state.forestNodes.filter(n => !n.parent_id);
-        const col = roots.length % 3;
-        const row = Math.floor(roots.length / 3);
-        return { x: 80 + col * 270, y: 80 + row * 240 };
+        if (state.forestNodes.length > 0) {
+          const maxX = Math.max(...state.forestNodes.map(n => Number(n.pos_x) || 60));
+          return { x: Math.round(maxX + 260), y: 64 };
+        }
+        return { x: 80, y: 64 };
       }
 
       function updateForestNodeOptimistic(nodeId, patch) {
@@ -4512,7 +4749,6 @@ ${domainRule}
             };
             applyTheme(state.prefs.theme);
           }
-          ensureMetaQuestionSeeded();
           buildTodayQueue();
           updateCabinetBadgeDot();
           switchTab('ignition');
@@ -4686,8 +4922,6 @@ ${domainRule}
       function renderIgnitionTab() {
         const container = document.getElementById('view-ignition');
         if (!container) return;
-
-        ensureMetaQuestionSeeded();
 
         let anchor = state.desireAnchors.find(a => a.id === state.ignition.currentAnchorId);
         if (!anchor) {
@@ -4911,39 +5145,98 @@ ${domainRule}
         };
       }
 
-      // Unique Meta-Question Modal (Always 1 tap away!)
+      // Unique Meta-Question Modal (Linked to 第 0 号元问题树 + 3 条并列支柱 + 元渴望锚点 + 第 0 号元知识卡)
       function openMetaQuestionModal() {
-        ensureMetaQuestionSeeded();
-        const metaNode = state.forestNodes.find(n => n.is_meta);
-        const metaAnchor = state.desireAnchors.find(a => a.is_meta);
+        const metaNode = state.forestNodes.find(n => n.is_meta) || null;
+        const metaPillars = metaNode
+          ? state.forestNodes.filter(n => n.parent_id === metaNode.id || n.parallel_group === 'meta_pillars')
+          : [];
+        const metaAnchor = state.desireAnchors.find(a => a.is_meta) || null;
+        const metaCard = findMetaZeroCard(metaNode?.id);
         trackActivity('ignition', 'meta_open', metaNode?.id || null, {});
 
         openModal(`
-          <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;flex-direction:column;gap:13px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span class="meta-pill">${ICONS.sparkle} 全系统唯一元问题</span>
+              <span class="meta-pill">${ICONS.sparkle} 第 0 号元问题树 · ${esc(metaNode?.tree_label || '元系统')}</span>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
-            <div class="card" style="padding:16px;">
-              <div style="font-size:12px;color:var(--ink-muted);margin-bottom:6px;">终极主问题</div>
-              <p class="fact-hero-text" style="font-size:16px;">${esc(metaNode?.raw_problem || DEFAULT_META_PROBLEM)}</p>
+
+            <div class="card" style="padding:15px 16px;">
+              <div style="font-size:12px;color:var(--sage);font-weight:600;margin-bottom:5px;">${esc(metaNode?.short_title || DEFAULT_META_TITLE)}</div>
+              <p class="fact-hero-text" style="font-size:15px;">${esc(metaNode?.raw_problem || DEFAULT_META_PROBLEM)}</p>
+              ${metaNode?.next_micro_step ? `
+                <div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--border-soft);font-size:12px;color:var(--ink-secondary);line-height:1.55;">
+                  <strong style="color:var(--sage);">15 分钟抓手：</strong>${esc(metaNode.next_micro_step)}
+                </div>
+              ` : ''}
             </div>
-            <div class="card-soft">
-              <div style="font-size:12px;color:var(--sage);font-weight:500;margin-bottom:5px;">底层掌控感背书</div>
+
+            ${metaPillars.length ? `
+              <div>
+                <div style="font-size:12px;color:var(--ink-muted);margin-bottom:7px;">三大并列核心支柱（点击直达节点）</div>
+                <div style="display:flex;flex-direction:column;gap:7px;">
+                  ${metaPillars.map(p => `
+                    <button type="button" class="card-soft" data-meta-pillar="${esc(p.id)}" style="text-align:left;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;">
+                      <div style="min-width:0;">
+                        <div style="font-size:13px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:7px;">
+                          <span class="status-dot ${p.status || 'active'}"></span>
+                          <span>${esc(p.short_title)}</span>
+                        </div>
+                        <div class="line-clamp-2" style="font-size:12px;color:var(--ink-muted);margin-top:3px;padding-left:16px;">${esc(p.raw_problem)}</div>
+                      </div>
+                      <span style="color:var(--ink-muted);flex-shrink:0;display:inline-flex;">${ICONS.chevronRight}</span>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="card-soft" style="padding:13px 14px;border:1px solid var(--sage-border);background:var(--sage-soft);">
+              <div style="font-size:12px;color:var(--sage);font-weight:600;margin-bottom:5px;">✦ 树顶 · 元渴望锚点</div>
               <p style="margin:0;font-size:13px;color:var(--ink-secondary);line-height:1.65;">${esc(metaAnchor?.raw_text || DEFAULT_META_ANCHOR)}</p>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <button type="button" class="btn btn-soft btn-sm" id="m-meta-close">回到当下</button>
-              <button type="button" class="btn btn-primary btn-sm" id="m-meta-forest">在森林打开它</button>
+
+            <div style="display:grid;grid-template-columns:${metaCard ? '1fr 1fr' : '1fr 1fr'};gap:9px;">
+              ${metaCard ? `
+                <button type="button" class="btn btn-soft btn-sm" id="m-meta-card">看第 0 号元知识卡</button>
+              ` : `
+                <button type="button" class="btn btn-soft btn-sm" id="m-meta-close">回到当下</button>
+              `}
+              <button type="button" class="btn btn-primary btn-sm" id="m-meta-forest">在森林查看元系统树</button>
             </div>
           </div>
         `);
         document.getElementById('m-close').onclick = closeModal;
-        document.getElementById('m-meta-close').onclick = closeModal;
+        const closeBtn = document.getElementById('m-meta-close');
+        if (closeBtn) closeBtn.onclick = closeModal;
+
+        const cardBtn = document.getElementById('m-meta-card');
+        if (cardBtn && metaCard) {
+          cardBtn.onclick = () => {
+            closeModal();
+            openCardDetailModal(metaCard);
+          };
+        }
+
+        document.querySelectorAll('[data-meta-pillar]').forEach(btn => {
+          btn.onclick = () => {
+            const pNode = state.forestNodes.find(n => n.id === btn.getAttribute('data-meta-pillar'));
+            closeModal();
+            state.forest.selectedTree = metaNode?.tree_label || '元系统';
+            switchTab('forest');
+            if (pNode) setTimeout(() => openForestNodeDrawer(pNode), 80);
+          };
+        });
+
         document.getElementById('m-meta-forest').onclick = () => {
           closeModal();
+          const treeName = metaNode?.tree_label || '元系统';
+          state.forest.selectedTree = treeName;
           switchTab('forest');
-          if (metaNode) setTimeout(() => openForestNodeDrawer(metaNode), 80);
+          const subset = state.forestNodes.filter(n => n.tree_label === treeName);
+          centerForestViewport(subset);
+          renderForestTab();
         };
       }
 
@@ -6672,12 +6965,15 @@ ${domainRule}
           return String(a.tree_label).localeCompare(String(b.tree_label), 'zh-CN');
         });
 
-        const X_GAP = 228;
-        const Y_GAP = 124;
+        const X_GAP = 240;
+        const Y_GAP = 166;
         let cursorX = 64;
 
         function placeSubtree(node, depth) {
-          const kids = childrenMap.get(node.id) || [];
+          const kids = (childrenMap.get(node.id) || []).slice().sort((a, b) =>
+            (Number(a.pos_x) || 0) - (Number(b.pos_x) || 0) ||
+            new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+          );
           const y = 64 + depth * Y_GAP;
           let x;
           if (kids.length === 0) {
@@ -6709,13 +7005,19 @@ ${domainRule}
           state.forest.scale = 1;
           return;
         }
+        const NODE_W = 196;
         const xs = visibleNodes.map(n => Number(n.pos_x) || 80);
         const ys = visibleNodes.map(n => Number(n.pos_y) || 80);
-        const minX = Math.min(...xs);
-        const minY = Math.min(...ys);
-        state.forest.scale = 1;
-        state.forest.panX = Math.round(36 - minX);
-        state.forest.panY = Math.round(36 - minY);
+        const minX = Math.min(...xs) - 20;
+        const maxX = Math.max(...xs) + NODE_W + 20;
+        const minY = Math.min(...ys) - 20;
+        const contentW = Math.max(240, maxX - minX);
+        const shellEl = document.getElementById('forest-canvas-shell');
+        const availW = shellEl?.clientWidth || Math.min(window.innerWidth - 36, window.innerWidth >= 768 ? 1120 : 440);
+        const fitScale = Number(clamp((availW - 32) / contentW, 0.55, 1).toFixed(2));
+        state.forest.scale = fitScale;
+        state.forest.panX = Math.round((availW - contentW * fitScale) / 2 - minX * fitScale);
+        state.forest.panY = Math.round(28 - minY * fitScale);
       }
 
       function getForestCoverAnchors(selectedTree) {
@@ -6728,10 +7030,19 @@ ${domainRule}
         return nonMeta.length > 0 ? nonMeta : state.desireAnchors;
       }
 
+      function formatParallelGroupLabel(groupName) {
+        if (groupName === 'meta_pillars') return '三大核心支柱';
+        return String(groupName || '');
+      }
+
       function renderForestSvgEdges(effNodes) {
         const nodeMap = new Map(effNodes.map(n => [n.id, n]));
         const NODE_W = 196;
-        const NODE_H = 62;
+        const estimateCardHeight = (n) => {
+          const titleLen = String(n._effShortTitle || '').length;
+          const extraLines = (state.forest.selectedTree === '全部树' ? 1 : 0) + (n._reorgNote ? 1 : 0);
+          return (titleLen > 12 ? 64 : 44) + extraLines * 15;
+        };
         const parts = [];
 
         // 1. Subtle dashed bounding boxes for parallel sibling groups (允许并列)
@@ -6745,13 +7056,13 @@ ${domainRule}
         parallelGroups.forEach((members, groupName) => {
           if (members.length < 1) return;
           const minX = Math.min(...members.map(m => Number(m.pos_x) || 80)) - 14;
-          const minY = Math.min(...members.map(m => Number(m.pos_y) || 80)) - 22;
+          const minY = Math.min(...members.map(m => Number(m.pos_y) || 80)) - 28;
           const maxX = Math.max(...members.map(m => (Number(m.pos_x) || 80) + NODE_W)) + 14;
-          const maxY = Math.max(...members.map(m => (Number(m.pos_y) || 80) + NODE_H)) + 14;
+          const maxY = Math.max(...members.map(m => (Number(m.pos_y) || 80) + estimateCardHeight(m))) + 18;
           parts.push(`
             <rect x="${minX}" y="${minY}" width="${maxX - minX}" height="${maxY - minY}" rx="16"
               fill="none" stroke="var(--sage-border)" stroke-width="1.5" stroke-dasharray="6 5" />
-            <text x="${minX + 10}" y="${minY + 14}" font-size="11" fill="var(--sage)" opacity="0.85">并列 · ${esc(groupName)}</text>
+            <text x="${minX + 12}" y="${minY + 17}" font-size="11" fill="var(--sage)" opacity="0.88">并列 · ${esc(formatParallelGroupLabel(groupName))}</text>
           `);
         });
 
@@ -6761,7 +7072,7 @@ ${domainRule}
           const p = nodeMap.get(n._effParentId);
           if (!p) return;
           const x1 = (Number(p.pos_x) || 80) + NODE_W / 2;
-          const y1 = (Number(p.pos_y) || 80) + NODE_H;
+          const y1 = (Number(p.pos_y) || 80) + estimateCardHeight(p);
           const x2 = (Number(n.pos_x) || 80) + NODE_W / 2;
           const y2 = (Number(n.pos_y) || 80);
           const midY = Math.round((y1 + y2) / 2);
@@ -6779,8 +7090,6 @@ ${domainRule}
       function renderForestTab() {
         const container = document.getElementById('view-forest');
         if (!container) return;
-
-        ensureMetaQuestionSeeded();
 
         const trees = getForestTreesList();
         const validTreeNames = new Set(['全部树', ...trees.map(t => t.label)]);
@@ -6937,7 +7246,7 @@ ${domainRule}
                   </div>
                   ${(node._effParallelGroup || node._reorgNote) ? `
                     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding-left:17px;">
-                      ${node._effParallelGroup ? `<span style="font-size:11px;padding:1px 7px;border-radius:999px;background:var(--sage-soft);color:var(--sage);">并列 · ${esc(node._effParallelGroup)}</span>` : ''}
+                      ${node._effParallelGroup ? `<span style="font-size:11px;padding:1px 7px;border-radius:999px;background:var(--sage-soft);color:var(--sage);">并列 · ${esc(formatParallelGroupLabel(node._effParallelGroup))}</span>` : ''}
                       ${node._reorgNote ? `<span style="font-size:11px;color:var(--terra);">${esc(node._reorgNote)}</span>` : ''}
                     </div>
                   ` : ''}
@@ -7497,7 +7806,7 @@ ${domainRule}
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
               <div style="min-width:0;">
                 <div style="font-size:11px;color:var(--ink-muted);margin-bottom:3px;">
-                  ${esc(node.tree_label)}${parentNode ? ` / ${esc(parentNode.short_title)}` : ''}${node.parallel_group ? ` · 并列：${esc(node.parallel_group)}` : ''}
+                  ${esc(node.tree_label)}${parentNode ? ` / ${esc(parentNode.short_title)}` : ''}${node.parallel_group ? ` · 并列：${esc(formatParallelGroupLabel(node.parallel_group))}` : ''}
                 </div>
                 <h3 style="margin:0;font-size:16px;font-weight:600;line-height:1.4;">${esc(node.short_title)}</h3>
               </div>
@@ -9151,6 +9460,21 @@ ${domainRule}
                   </label>
                 </div>
 
+                ${(() => {
+                  const mz = getMetaZeroStatus();
+                  return `
+                    <div class="card-soft" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                      <div style="font-size:12px;color:var(--ink-secondary);line-height:1.5;">
+                        <div style="font-weight:500;color:var(--ink);">第 0 号元知识种子</div>
+                        <div style="font-size:11px;color:var(--ink-muted);">${mz.complete ? '已完整就位（元知识卡 + 元系统树含 3 枝干 + 元渴望锚点）' : `待补齐：卡片 ${mz.hasCard ? '✓' : '缺'} · 元树 ${mz.hasRoot ? '✓' : '缺'} · 枝干 ${mz.pillarCount}/3 · 渴望 ${mz.hasAnchor ? '✓' : '缺'}`}</div>
+                      </div>
+                      <button type="button" class="btn btn-sage-soft btn-xs" id="btn-seed-meta-zero">
+                        ${ICONS.sparkle} <span>导入/恢复第 0 号元知识</span>
+                      </button>
+                    </div>
+                  `;
+                })()}
+
                 <div style="text-align:right;padding-top:2px;">
                   <button type="button" class="btn-ghost btn-xs" id="btn-prune-logs" style="color:var(--ink-muted);">清理 30 天前明细日志</button>
                 </div>
@@ -9281,6 +9605,34 @@ ${domainRule}
             renderSettingsTab();
           }
         };
+
+        // Wire Idempotent Seed / Restore Meta-Zero Knowledge Button
+        const seedMetaBtn = document.getElementById('btn-seed-meta-zero');
+        if (seedMetaBtn) {
+          seedMetaBtn.onclick = async () => {
+            seedMetaBtn.disabled = true;
+            seedMetaBtn.textContent = '检查并补齐中...';
+            try {
+              const res = await seedMetaZeroKnowledge({ manual: true });
+              const addedParts = [];
+              if (res.createdCard) addedParts.push('第 0 号元知识卡');
+              if (res.createdRoot) addedParts.push('元系统根节点');
+              if (res.createdPillars) addedParts.push(`${res.createdPillars} 条并列支柱`);
+              if (res.createdAnchor) addedParts.push('元渴望锚点');
+              buildTodayQueue();
+              renderSettingsTab();
+              renderLibraryTab();
+              if (addedParts.length > 0) {
+                showToast(`已幂等补齐：${addedParts.join('、')}`, 3400);
+              } else {
+                showToast('第 0 号元知识已完整存在，未重复写入也未覆盖你的修改');
+              }
+            } catch (err) {
+              showToast(err.message || '补齐失败，请检查网络连接', 3600);
+              renderSettingsTab();
+            }
+          };
+        }
 
         // Wire Prune >30d logs (2-step safe confirm)
         const pruneBtn = document.getElementById('btn-prune-logs');
