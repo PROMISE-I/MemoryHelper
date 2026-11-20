@@ -1801,7 +1801,16 @@
           // 2.0 Cabinet Triage Draft
           triageLoading: false,
           triageDraft: null,
-          triageEditMode: false
+          triageEditMode: false,
+          // Video Transcript -> Single Card Extractor
+          transcriptOpen: false,
+          transcriptText: '',
+          transcriptExtraPrompt: '',
+          transcriptLoading: false,
+          transcriptError: '',
+          transcriptExcluded: [],
+          transcriptPendingOverwrite: null,
+          formFilledByTranscript: false
         },
 
         // Library Filter State
@@ -2064,6 +2073,13 @@
         state.capture.triageLoading = false;
         state.capture.triageDraft = null;
         state.capture.triageEditMode = false;
+        state.capture.transcriptText = '';
+        state.capture.transcriptExtraPrompt = '';
+        state.capture.transcriptLoading = false;
+        state.capture.transcriptError = '';
+        state.capture.transcriptExcluded = [];
+        state.capture.transcriptPendingOverwrite = null;
+        state.capture.formFilledByTranscript = false;
       }
 
       function applyTheme(theme) {
@@ -3854,6 +3870,61 @@ ${domainRule}`;
           back_anchor: String(res.back_anchor || '').trim(),
           domain_tag: normalizeDomainLabel(res.domain_tag)
         };
+      }
+
+      // AI 1d: Video Transcript -> Denoised Single Card Extractor (5 Anti-Distortion Iron Rules + Few-Shot)
+      async function aiExtractSingleCardFromTranscript(transcriptText, excludedPoints = [], customPrompt = '') {
+        const t0 = Date.now();
+        const existing = getExistingDomains(false).map(d => d.name);
+        const domainRule = buildDomainClassificationRule(existing, false);
+
+        const baseSys = `你是“轻量认知内化系统”的短视频文稿单卡提炼助手。你的任务是从用户粘贴的微信视频号/元宝长文稿中去噪，并严格遵守以下 5 条防失真铁律，只返回 1 张卡片的纯 JSON：
+{
+  "front_fact": "...",
+  "back_anchor": "...",
+  "domain_tag": "..."
+}
+
+【5 条不可违背的防失真铁律】
+1. 严格只生成 1 张卡：无论文稿有多长、包含多少个观点，每次必须只挑选唯一一个最核心、最反常识或最有启发的观点，绝不输出多张卡片、绝不输出编号列表或拼盘总结。
+2. 正面（front_fact）保留原话、严禁抽象化：从原文中挑选最具体、最有画面感、最戳人的原话片段（允许顺手删掉“家人们”“点赞关注我”“听懂扣1”等明显口水噪音），禁止生硬切碎句子，也绝对禁止改写成干巴巴的教科书式抽象概括。
+3. 背面感悟（back_anchor）有则直摘，无则留空：
+   - 如果文稿本身已经包含一句一针见血的“点睛原话/核心结论”，直接摘录这句原话作为 back_anchor（不要过度润色）。
+   - 如果文稿只讲了具体故事或现象、没有现成的点睛句，必须直接返回空字符串 ""，留给用户自己写感悟，严禁 AI 强行编造鸡汤或拔高升华。
+4. 校准示例（Few-Shot 标尺，务必对齐这种保留原话温度与克制拆分的质感）：
+   - 示例输入文稿：“原来跟女孩子聊天是不用找话题的。我听过一个很扎心的回答是这么说的：其实男生不怎么会聊天不是很重要，如果女生喜欢你的话她就会自己找话题。所以就让聊天变简单了。那些每次跟女生聊天都要一字一句斟酌的男生，其实并不是你的问题，只是女生没看上你而已。主动不是女生的风格，如果有，那人一定是谁都替代不了。”
+   - 理想输出 JSON：
+     {
+       "front_fact": "原来跟女孩子聊天是不用找话题的。那些每次跟女生聊天都要一字一句斟酌的男生，其实并不是你的问题，只是女生没看上你而已。主动不是女生的风格，如果有，那人一定是谁都替代不了。",
+       "back_anchor": "其实男生不怎么会聊天不是很重要，如果女生喜欢你的话她就会自己找话题。",
+       "domain_tag": "心理学"
+     }
+5. 切换观点避重：如果用户消息中列出了此前已提炼过的观点，必须严格避开这些观点，从原文另挑一个完全不同的独立观点，仍然严格只返回 1 张卡。
+
+${domainRule}`;
+
+        let baseUser = `短视频文稿原文：\n${transcriptText}`;
+        if (Array.isArray(excludedPoints) && excludedPoints.length > 0) {
+          const exclStr = excludedPoints.map((pt, idx) =>
+            `[已选观点 #${idx + 1}] 正面：${String(pt.front_fact || '').slice(0, 80)}${pt.back_anchor ? ` | 点睛：${String(pt.back_anchor).slice(0, 60)}` : ''}`
+          ).join('\n');
+          baseUser += `\n\n【请务必避开以下已提炼过的观点，另选原文中一个不同的独立观点，依然严格只输出 1 张卡】：\n${exclStr}`;
+        }
+
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        const featureName = excludedPoints.length > 0 ? 'transcript_switch_angle' : 'transcript_extract';
+        try {
+          const res = await callOpenAiCompatible(sys, user, true);
+          trackActivity('cabinet', 'ai_trigger', null, { feature: featureName, ok: true, excluded_count: excludedPoints.length }, Date.now() - t0);
+          return {
+            front_fact: String(res.front_fact || '').trim(),
+            back_anchor: String(res.back_anchor || '').trim(),
+            domain_tag: normalizeDomainLabel(res.domain_tag)
+          };
+        } catch (err) {
+          trackActivity('cabinet', 'ai_trigger', null, { feature: featureName, ok: false, error: err.message }, Date.now() - t0);
+          throw err;
+        }
       }
 
       // AI 1b: Single-Card Auto-Classify (used silently on save OR on-demand in Edit Modal with custom prompt)
@@ -6240,13 +6311,60 @@ ${domainRule}
           `;
         }
 
+        const pendingOw = state.capture.transcriptPendingOverwrite;
+
         container.innerHTML = `
           <div class="page-header">
             <h1 class="page-title">统一速记</h1>
-            ${(state.capture.raw || state.capture.front || state.capture.anchor || state.capture.evoInit || triage) ? `
+            ${(state.capture.raw || state.capture.front || state.capture.anchor || state.capture.evoInit || state.capture.transcriptText || triage) ? `
               <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear">清空</button>
             ` : ''}
           </div>
+
+          <!-- Collapsible Video Transcript -> Single Card Extractor -->
+          <details id="cap-transcript-details" class="card" style="margin-bottom:14px;" ${state.capture.transcriptOpen ? 'open' : ''}>
+            <summary class="settings-collapse-summary">
+              <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                <span style="color:var(--sage);display:inline-flex;flex-shrink:0;">${ICONS.sparkle}</span>
+                <span style="font-size:14px;font-weight:600;color:var(--ink);">从文稿提炼单卡</span>
+                <span style="font-size:11px;color:var(--ink-muted);white-space:nowrap;">视频号 / 元宝去噪</span>
+              </div>
+              <span style="color:var(--ink-muted);display:inline-flex;flex-shrink:0;">${ICONS.chevronRight}</span>
+            </summary>
+
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px;">
+              <textarea id="cap-transcript-input" class="textarea" rows="5" placeholder="粘贴微信视频号/元宝文稿，AI 帮你去噪只提炼 1 张核心卡...">${esc(state.capture.transcriptText)}</textarea>
+
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" style="flex:1.4;" id="btn-cap-tr-run" ${state.capture.transcriptLoading ? 'disabled' : ''}>
+                  ${ICONS.sparkle} <span>${state.capture.transcriptLoading ? '正在去噪提炼...' : 'AI 提炼 1 张卡'}</span>
+                </button>
+                <button type="button" class="btn btn-soft btn-sm" style="flex:1;" id="btn-cap-tr-next" ${(state.capture.transcriptLoading || state.capture.transcriptExcluded.length === 0) ? 'disabled' : ''} title="避开刚才已选的观点，再从原文提炼 1 个新观点">
+                  ${ICONS.refresh} <span>换一个观点${state.capture.transcriptExcluded.length > 0 ? ` (${state.capture.transcriptExcluded.length})` : ''}</span>
+                </button>
+              </div>
+
+              ${renderAiExtraPromptHtml('cap-tr-extra', '例如：侧重文稿里关于人际边界的那一段 / 归类偏心理学（优先按此提炼）', state.capture.transcriptExtraPrompt)}
+
+              ${state.capture.transcriptError ? `
+                <div class="inline-notice terra" role="alert">${esc(state.capture.transcriptError)}</div>
+              ` : ''}
+
+              ${pendingOw ? `
+                <div class="card-soft anim-up" style="border:1px solid var(--terra-border);background:var(--terra-soft);padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
+                  <div style="font-size:12px;color:var(--terra);font-weight:500;">下方卡片表单已有你手动写的内容，是否用本次提炼结果替换？</div>
+                  <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">
+                    <div class="line-clamp-2"><strong>拟预填正面：</strong>${esc(pendingOw.front_fact)}</div>
+                    ${pendingOw.back_anchor ? `<div class="line-clamp-2" style="margin-top:3px;"><strong>拟预填感受：</strong>${esc(pendingOw.back_anchor)}</div>` : `<div style="margin-top:3px;color:var(--ink-muted);">背面感受留空（供你自己写）</div>`}
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button type="button" class="btn btn-primary btn-xs" id="btn-tr-ow-yes">确认替换预填</button>
+                    <button type="button" class="btn btn-soft btn-xs" id="btn-tr-ow-no">保留手写内容</button>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </details>
 
           <div class="card" style="margin-bottom:14px;">
             ${state.capture.rawCollapsed ? `
@@ -6289,11 +6407,14 @@ ${domainRule}
             </div>
 
             <div class="card">
-              <label class="field-label" for="cap-anchor">最初感受</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+                <label class="field-label" style="margin:0;" for="cap-anchor">最初感受</label>
+                <button type="button" class="btn-ghost btn-xs" id="btn-cap-clear-anchor" style="padding:2px 6px;min-height:24px;">清空自己写</button>
+              </div>
               <textarea id="cap-anchor" class="textarea" rows="3" placeholder="当时最直接的想法或情绪，用大白话写">${esc(state.capture.anchor)}</textarea>
               ${state.capture.anchorMissingHint ? `
                 <div class="inline-notice terra" style="margin-top:8px;">
-                  原文里没写你的感受，补一句第一时间的直觉即可。
+                  原文里没现成的点睛感悟，补一句你自己的第一感觉即可。
                 </div>
               ` : ''}
             </div>
@@ -6396,12 +6517,157 @@ ${domainRule}
             persistCaptureDraft();
           };
         }
-        frontEl.oninput = () => { state.capture.front = frontEl.value; persistCaptureDraft(); };
+        frontEl.oninput = () => {
+          state.capture.front = frontEl.value;
+          state.capture.formFilledByTranscript = false;
+          persistCaptureDraft();
+        };
         anchorEl.oninput = () => {
           state.capture.anchor = anchorEl.value;
+          state.capture.formFilledByTranscript = false;
           if (anchorEl.value.trim()) state.capture.anchorMissingHint = false;
           persistCaptureDraft();
         };
+
+        const clearAnchorBtn = document.getElementById('btn-cap-clear-anchor');
+        if (clearAnchorBtn) {
+          clearAnchorBtn.onclick = () => {
+            state.capture.anchor = '';
+            state.capture.anchorMissingHint = false;
+            state.capture.formFilledByTranscript = false;
+            anchorEl.value = '';
+            persistCaptureDraft();
+            anchorEl.focus();
+            showToast('已清空背面感悟，请直接写下你的直觉');
+          };
+        }
+
+        // Wire Video Transcript -> Single Card Extractor
+        const trDetails = document.getElementById('cap-transcript-details');
+        if (trDetails) {
+          trDetails.addEventListener('toggle', () => {
+            state.capture.transcriptOpen = trDetails.open;
+          });
+        }
+
+        const trInput = document.getElementById('cap-transcript-input');
+        if (trInput) {
+          trInput.oninput = () => {
+            if (trInput.value !== state.capture.transcriptText) {
+              state.capture.transcriptText = trInput.value;
+              state.capture.transcriptExcluded = [];
+              state.capture.transcriptPendingOverwrite = null;
+              state.capture.transcriptError = '';
+            }
+          };
+        }
+
+        const trExtraEl = document.getElementById('cap-tr-extra');
+        if (trExtraEl) {
+          trExtraEl.oninput = () => { state.capture.transcriptExtraPrompt = trExtraEl.value; };
+        }
+
+        const applyTranscriptResultToForm = (res) => {
+          state.capture.front = res.front_fact;
+          state.capture.anchor = res.back_anchor;
+          state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
+          state.capture.formOpen = true;
+          state.capture.anchorMissingHint = !res.back_anchor;
+          state.capture.formFilledByTranscript = true;
+          state.capture.transcriptPendingOverwrite = null;
+          state.capture.aiSplitUsed = true;
+          state.capture.aiSplitSnapshot = {
+            front_fact: res.front_fact,
+            back_anchor: res.back_anchor,
+            domain_tag: state.capture.domainTag
+          };
+          persistCaptureDraft();
+          renderCaptureTab();
+          const formEl = document.getElementById('cap-form-panel');
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          if (!res.back_anchor) {
+            showToast('已提炼正面原话，背面留空供你自己写感悟');
+            setTimeout(() => document.getElementById('cap-anchor')?.focus(), 100);
+          } else {
+            showToast(`已提炼 1 张单卡预填到下方（${res.domain_tag}）`);
+          }
+        };
+
+        const runTranscriptExtract = async (switchAngle = false) => {
+          const text = (trInput ? trInput.value : state.capture.transcriptText).trim();
+          if (!text) {
+            showToast('请先粘贴视频文稿内容');
+            trInput?.focus();
+            return;
+          }
+          if (!isAiConfigured()) {
+            promptConfigureAi();
+            return;
+          }
+
+          const customPrompt = readAiExtraPrompt('cap-tr-extra', state.capture.transcriptExtraPrompt);
+          state.capture.transcriptText = text;
+          state.capture.transcriptExtraPrompt = customPrompt;
+          state.capture.transcriptOpen = true;
+          state.capture.transcriptLoading = true;
+          state.capture.transcriptError = '';
+          state.capture.transcriptPendingOverwrite = null;
+          renderCaptureTab();
+
+          try {
+            const excluded = switchAngle ? [...state.capture.transcriptExcluded] : [];
+            const res = await aiExtractSingleCardFromTranscript(text, excluded, customPrompt);
+            if (!res.front_fact) {
+              throw new Error('AI 未能从文稿中提取有效原话，请重试或补充提示词');
+            }
+            if (switchAngle) {
+              state.capture.transcriptExcluded.push({ front_fact: res.front_fact, back_anchor: res.back_anchor });
+            } else {
+              state.capture.transcriptExcluded = [{ front_fact: res.front_fact, back_anchor: res.back_anchor }];
+            }
+
+            // Protect existing manual input in the form from silent overwrite
+            const hasManualFormContent = Boolean(
+              !state.capture.formFilledByTranscript &&
+              (state.capture.front.trim() || state.capture.anchor.trim())
+            );
+            state.capture.transcriptLoading = false;
+
+            if (hasManualFormContent) {
+              state.capture.transcriptPendingOverwrite = res;
+              renderCaptureTab();
+              showToast('已提炼完成，请确认是否替换下方手写内容');
+              return;
+            }
+
+            applyTranscriptResultToForm(res);
+          } catch (err) {
+            state.capture.transcriptLoading = false;
+            state.capture.transcriptError = err.message || '文稿提炼失败';
+            renderCaptureTab();
+            showToast(err.message || '文稿提炼失败', 4200);
+          }
+        };
+
+        const trRunBtn = document.getElementById('btn-cap-tr-run');
+        if (trRunBtn) trRunBtn.onclick = () => runTranscriptExtract(false);
+
+        const trNextBtn = document.getElementById('btn-cap-tr-next');
+        if (trNextBtn) trNextBtn.onclick = () => runTranscriptExtract(true);
+
+        const owYesBtn = document.getElementById('btn-tr-ow-yes');
+        if (owYesBtn && pendingOw) {
+          owYesBtn.onclick = () => applyTranscriptResultToForm(pendingOw);
+        }
+
+        const owNoBtn = document.getElementById('btn-tr-ow-no');
+        if (owNoBtn) {
+          owNoBtn.onclick = () => {
+            state.capture.transcriptPendingOverwrite = null;
+            renderCaptureTab();
+            showToast('已保留你手动填写的内容');
+          };
+        }
         evoEl.oninput = () => { state.capture.evoInit = evoEl.value; persistCaptureDraft(); };
         domInput.oninput = () => {
           state.capture.domainTag = domInput.value.trim();
