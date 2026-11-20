@@ -417,6 +417,120 @@
       width: 100%;
       height: 100%;
       touch-action: none;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .canvas-wrap.panning #markmap-svg {
+      cursor: grabbing;
+    }
+
+    .canvas-wrap.is-loading #markmap-svg {
+      opacity: 0.32;
+      pointer-events: none;
+    }
+
+    #markmap-svg, #markmap-svg * {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Indeterminate Top Loading Progress Bar & Animated Spinner */
+    .top-loading-bar {
+      position: relative;
+      width: 100%;
+      height: 2.5px;
+      background: var(--accent-soft);
+      overflow: hidden;
+    }
+
+    .top-loading-bar::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 38%;
+      background: var(--accent);
+      border-radius: 999px;
+      animation: rmIndeterminate 1.1s ease-in-out infinite;
+    }
+
+    @keyframes rmIndeterminate {
+      0% { transform: translateX(-110%); }
+      100% { transform: translateX(310%); }
+    }
+
+    .rm-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-soft);
+      border-top-color: var(--accent);
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .rm-spinner.lg {
+      width: 28px;
+      height: 28px;
+      border-width: 2.8px;
+    }
+
+    .canvas-loading-pill {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 16;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      box-shadow: var(--shadow-md);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    /* Bottom-Right Floating Zoom & Center Controls */
+    .canvas-zoom-controls {
+      position: absolute;
+      right: 12px;
+      bottom: calc(var(--safe-bottom) + 12px);
+      z-index: 9;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .canvas-zoom-controls button {
+      height: 28px;
+      min-width: 28px;
+      padding: 0 7px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.14s ease, color 0.14s ease;
+    }
+
+    .canvas-zoom-controls button:hover {
+      background: var(--surface-soft);
+      color: var(--ink);
     }
 
     /* Markmap internal styling overrides for serene readability in light & dark mode */
@@ -975,6 +1089,7 @@
           <span><span class="legend-dot" style="background:var(--falsified-line);"></span>证伪 <strong id="cnt-falsified">0</strong></span>
         </div>
       </div>
+      <div id="top-loading-bar" class="top-loading-bar hidden" aria-hidden="true"></div>
     </header>
 
     <!-- Error Banner (Shown whenever Apps Script returns ok:false or network fails) -->
@@ -984,10 +1099,23 @@
     </div>
 
     <!-- Main Interactive Markmap Canvas -->
-    <main class="canvas-wrap">
+    <main class="canvas-wrap" id="canvas-wrap">
       <svg id="markmap-svg"></svg>
 
+      <!-- Floating Refresh / Sync Loading Pill -->
+      <div id="canvas-loading-pill" class="canvas-loading-pill hidden" role="status" aria-live="polite">
+        <span class="rm-spinner"></span>
+        <span id="canvas-loading-text">正在从云端加载...</span>
+      </div>
+
       <div id="canvas-status-pill" class="canvas-status-pill hidden"></div>
+
+      <!-- Bottom-Right Zoom & Fit Controls -->
+      <div id="canvas-zoom-controls" class="canvas-zoom-controls hidden" aria-label="缩放与居中控制">
+        <button type="button" id="btn-zoom-out" title="缩小">−</button>
+        <button type="button" id="btn-zoom-in" title="放大">+</button>
+        <button type="button" id="btn-zoom-fit" title="居中适配画面" style="font-size:11.5px;">居中</button>
+      </div>
 
       <!-- Direct Node Quick Action Floating Panel -->
       <section id="node-action-card" class="node-action-card hidden" aria-label="节点快捷操作">
@@ -1327,7 +1455,8 @@
         const el = $('canvas-overlay');
         el.classList.remove('hidden');
         $('overlay-card-content').innerHTML = `
-          <div style="font-size:16px;font-weight:600;margin-bottom:8px;${showSpinner ? 'opacity:0.85;' : ''}">${esc(title)}</div>
+          ${showSpinner ? '<div style="margin-bottom:14px;"><span class="rm-spinner lg"></span></div>' : ''}
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;">${esc(title)}</div>
           <p style="margin:0${showConfigBtn ? ' 0 16px' : ''};font-size:13px;color:var(--ink-muted);line-height:1.6;">${esc(desc)}</p>
           ${showConfigBtn ? '<button type="button" id="btn-overlay-config" class="btn btn-primary btn-block">打开连接设置</button>' : ''}
         `;
@@ -1599,10 +1728,11 @@
         $('legend-counts').classList.toggle('hidden', !hasDoc);
 
         const pill = $('canvas-status-pill');
+        const zoomCtrl = $('canvas-zoom-controls');
         if (hasDoc && state.selectedLineIdx === null) {
           pill.classList.remove('hidden');
           const parts = [
-            '点击任意节点直接编辑',
+            '拖拽或双指滑动平移 · 点击节点直接编辑',
             `共识 ${state.stats.locked}`,
             `试探 ${state.stats.exploring}`,
             state.hideFalsified ? `已隐证伪 ${state.stats.hiddenBranches} 支` : `证伪 ${state.stats.falsified}`
@@ -1611,9 +1741,23 @@
         } else {
           pill.classList.add('hidden');
         }
+        if (zoomCtrl) {
+          const hideZoomOnMobilePanel = window.innerWidth < 760 && state.selectedLineIdx !== null;
+          zoomCtrl.classList.toggle('hidden', !hasDoc || hideZoomOnMobilePanel);
+        }
       }
 
-      async function renderMindmap(shouldFit = true) {
+      function syncSelectionHighlightDom() {
+        document.querySelectorAll('#markmap-svg .rm-node-wrap.rm-node-selected').forEach(el => {
+          el.classList.remove('rm-node-selected');
+        });
+        if (state.selectedLineIdx !== null) {
+          const target = document.querySelector(`#markmap-svg .rm-node-wrap[data-rm-line="${state.selectedLineIdx}"]`);
+          if (target) target.classList.add('rm-node-selected');
+        }
+      }
+
+      async function renderMindmap(shouldFit = true, customDuration = null) {
         if (!state.rawMarkdown) {
           updateToolbarState();
           return;
@@ -1637,13 +1781,14 @@
         const svgEl = $('markmap-svg');
         const mmOptions = {
           autoFit: false,
-          duration: 280,
+          duration: customDuration !== null ? customDuration : 180,
           maxWidth: 340,
           spacingHorizontal: 78,
           spacingVertical: 10,
           paddingX: 12,
           zoom: true,
-          pan: true,
+          pan: false,         // Managed cleanly by our 4-direction wheel panner + d3 drag pan
+          scrollForPan: true, // Always allow wheel/touchpad scrolling to pan on Windows & Mac; Ctrl+Wheel/Pinch zooms
           color: branchColorForNode
         };
 
@@ -1656,6 +1801,7 @@
         }
 
         hideCanvasOverlay();
+        syncSelectionHighlightDom();
         updateToolbarState();
 
         if (shouldFit) {
@@ -1876,6 +2022,7 @@
           return;
         }
         state.autoSaving = true;
+        $('top-loading-bar').classList.remove('hidden');
         updateSyncBadge('同步云端中...');
         hideErrorBanner();
 
@@ -1898,6 +2045,7 @@
           showErrorBanner(`节点修改已本地生效，但写回云端失败：${err.message}`);
         } finally {
           state.autoSaving = false;
+          if (!state.loading) $('top-loading-bar').classList.add('hidden');
           if (state.pendingAutoSave) {
             state.pendingAutoSave = false;
             persistMarkdownToCloud();
@@ -1911,7 +2059,7 @@
       }
 
       async function applyDirectNodeMutation(nextMd, opts = {}) {
-        const { focusLine = null, toastMsg = '', pushUndo = true, refit = false } = opts;
+        const { focusLine = null, toastMsg = '', pushUndo = true, refit = false, instant = false } = opts;
         if (pushUndo && state.rawMarkdown !== nextMd) {
           state.undoStack.push(state.rawMarkdown);
           if (state.undoStack.length > 20) state.undoStack.shift();
@@ -1922,20 +2070,21 @@
         state.deleteArmedLine = null;
         state.selectedLineIdx = (typeof focusLine === 'number' && focusLine >= 0) ? focusLine : null;
 
-        await renderMindmap(refit);
+        await renderMindmap(refit, instant ? 0 : 140);
         renderNodeActionPanel();
         if (toastMsg) showToast(toastMsg);
         persistMarkdownToCloud();
       }
 
-      async function selectNodeByLine(lineIdx) {
+      // Direct highlight toggle ONLY — NEVER calls mm.setData() so tree NEVER jumps or animates!
+      function selectNodeByLine(lineIdx) {
         if (typeof lineIdx !== 'number' || lineIdx < 0) return;
         const lines = String(state.rawMarkdown || '').replace(/\r\n/g, '\n').split('\n');
         if (lineIdx >= lines.length) return;
         state.selectedLineIdx = lineIdx;
         state.addMode = null;
         state.deleteArmedLine = null;
-        await renderMindmap(false);
+        syncSelectionHighlightDom();
         renderNodeActionPanel();
       }
 
@@ -1945,7 +2094,8 @@
         state.addMode = null;
         state.deleteArmedLine = null;
         $('node-action-card').classList.add('hidden');
-        renderMindmap(false);
+        syncSelectionHighlightDom();
+        updateToolbarState();
       }
 
       function renderNodeActionPanel() {
@@ -2064,10 +2214,8 @@
           return;
         }
         hideErrorBanner();
-        setRefreshing(true);
-        if (!state.rawMarkdown) {
-          showCanvasOverlay('正在拉取课题列表...', '通过安全 POST 接口连接云端共识树。', false, true);
-        }
+        setRefreshing(true, '正在拉取课题列表...');
+        showCanvasOverlay('正在拉取课题列表...', '通过安全 POST 接口连接你的 Google Drive 科研共识树。', false, true);
 
         try {
           const data = await callGasApi({ action: 'list' });
@@ -2105,9 +2253,29 @@
       async function loadFileContent(fileId) {
         if (!fileId) return;
         hideErrorBanner();
-        setRefreshing(true);
-        if (!state.rawMarkdown) {
-          showCanvasOverlay('正在加载共识树...', '解析结构并渲染思维导图。', false, true);
+        const isSwitchingFile = !state.currentFile || state.currentFile.id !== fileId;
+        const targetMeta = state.files.find(f => f.id === fileId);
+        const targetLabel = targetMeta?.name ? `「${targetMeta.name}」` : '共识树';
+
+        // Close node selection immediately so stale panel never misleads user
+        state.selectedLineIdx = null;
+        state.addMode = null;
+        state.deleteArmedLine = null;
+        $('node-action-card').classList.add('hidden');
+
+        if (isSwitchingFile) {
+          // Immediately clear stale mindmap & show clear animated spinner overlay!
+          state.rawMarkdown = '';
+          if (state.mm) {
+            $('markmap-svg').innerHTML = '';
+            state.mm = null;
+          }
+          updateToolbarState();
+          showCanvasOverlay(`正在加载 ${targetLabel}...`, '正在从 Google Drive 拉取最新内容并构建导图。', false, true);
+          setRefreshing(true, '');
+        } else {
+          // Refreshing same file: show top progress bar + frosted loading pill & dim old canvas
+          setRefreshing(true, `正在刷新 ${targetLabel}...`);
         }
 
         try {
@@ -2143,10 +2311,24 @@
         }
       }
 
-      function setRefreshing(active) {
+      function setRefreshing(active, pillText = '') {
         state.loading = active;
         $('btn-refresh').disabled = active;
         $('btn-refresh').classList.toggle('spinning', active);
+        if (state.files.length > 0) $('file-select').disabled = active;
+        $('top-loading-bar').classList.toggle('hidden', !active && !state.autoSaving);
+
+        const wrap = $('canvas-wrap');
+        const pill = $('canvas-loading-pill');
+        const overlayVisible = !$('canvas-overlay').classList.contains('hidden');
+        if (active && pillText && !overlayVisible) {
+          $('canvas-loading-text').textContent = pillText;
+          pill.classList.remove('hidden');
+          wrap.classList.add('is-loading');
+        } else {
+          pill.classList.add('hidden');
+          wrap.classList.remove('is-loading');
+        }
       }
 
       // =====================================================================
@@ -2348,14 +2530,43 @@
         // Undo last direct node edit
         $('btn-undo').onclick = undoLastDirectEdit;
 
-        // Direct Click-to-Select Node on Markmap SVG (preserves drag-pan & circle-fold!)
+        // Direct Click-to-Select + Grabbing Cursor + Smooth 4-Direction Pan (Wheel & Touchpad)
         const svgEl = $('markmap-svg');
+        const canvasWrap = $('canvas-wrap');
         let ptrDownX = 0;
         let ptrDownY = 0;
         svgEl.addEventListener('pointerdown', (e) => {
           ptrDownX = e.clientX;
           ptrDownY = e.clientY;
+          if (!e.target.closest('circle') && !e.target.closest('a')) {
+            canvasWrap.classList.add('panning');
+          }
         });
+        const stopGrabbing = () => canvasWrap.classList.remove('panning');
+        window.addEventListener('pointerup', stopGrabbing);
+        window.addEventListener('pointercancel', stopGrabbing);
+
+        // Smooth 4-direction panning on touchpad 2-finger scroll & mouse wheel (Ctrl+Wheel / Pinch still zooms!)
+        svgEl.addEventListener('wheel', (e) => {
+          if (!state.mm || !window.d3) return;
+          if (e.ctrlKey || e.metaKey) return; // Let d3.zoom handle smooth zoom!
+          e.preventDefault();
+          const t = window.d3.zoomTransform(svgEl);
+          let dx = e.deltaX;
+          let dy = e.deltaY;
+          if (e.shiftKey && dx === 0) {
+            dx = dy;
+            dy = 0;
+          }
+          const next = t.translate(-dx / t.k, -dy / t.k);
+          state.mm.svg.call(state.mm.zoom.transform, next);
+        }, { passive: false });
+
+        // Bottom-right Zoom & Center buttons
+        $('btn-zoom-in').onclick = () => { if (state.mm) state.mm.rescale(1.25); };
+        $('btn-zoom-out').onclick = () => { if (state.mm) state.mm.rescale(0.8); };
+        $('btn-zoom-fit').onclick = () => { if (state.mm) state.mm.fit(); };
+
         svgEl.addEventListener('click', (e) => {
           if (Math.hypot(e.clientX - ptrDownX, e.clientY - ptrDownY) > 6) return;
           if (e.target.closest('circle') || e.target.closest('a')) return;
@@ -2385,7 +2596,7 @@
             showToast('内容未变化');
             return;
           }
-          applyDirectNodeMutation(res.markdown, { focusLine: res.focusLine, toastMsg: '已更新节点文字' });
+          applyDirectNodeMutation(res.markdown, { focusLine: res.focusLine, toastMsg: '已更新节点文字', instant: true });
         };
         $('na-btn-rename').onclick = commitRename;
         $('na-text-input').addEventListener('keydown', (e) => {
@@ -2405,6 +2616,7 @@
             const hiddenImmediately = state.hideFalsified && nextTag === '[已证伪/留档]';
             applyDirectNodeMutation(res.markdown, {
               focusLine: hiddenImmediately ? null : res.focusLine,
+              instant: true,
               toastMsg: hiddenImmediately
                 ? '已标为「已证伪/留档」（当前已开启隐藏）'
                 : (nextTag ? `状态已切换为 ${nextTag}` : '已清除状态标签')
