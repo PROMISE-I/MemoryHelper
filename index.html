@@ -775,6 +775,181 @@
       border-color: var(--sage-border);
     }
 
+    /* Appendix E: Lightweight Book-Margin Quote Strip on Ignition */
+    .ignition-quote-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 10px 13px;
+      border-radius: var(--radius-md);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-soft);
+      border-left: 2.5px solid var(--sage-border);
+    }
+
+    .ignition-quote-main {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+      padding: 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .ignition-quote-text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .ignition-quote-src {
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--ink-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ignition-quote-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .ignition-quote-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 8px;
+      min-height: 28px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ignition-quote-btn:hover {
+      color: var(--sage);
+      border-color: var(--sage-border);
+      background: var(--sage-soft);
+    }
+
+    /* Appendix F-9: AI Discover Panel on Review Back Face */
+    .discover-panel {
+      margin-top: 10px;
+      padding: 11px 12px;
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      border: 1px solid var(--sage-border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .discover-item {
+      width: 100%;
+      text-align: left;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-soft);
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .discover-item:hover {
+      border-color: var(--sage-border);
+      background: var(--sage-soft);
+    }
+
+    /* Appendix F-3: Zero-Dependency AI Model Combo-Box */
+    .combo-wrap {
+      position: relative;
+    }
+
+    .combo-toggle-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: var(--ink-muted);
+      background: transparent;
+    }
+
+    .combo-toggle-btn:hover {
+      background: var(--surface-soft);
+      color: var(--ink);
+    }
+
+    .combo-menu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 5px);
+      z-index: 45;
+      max-height: 250px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+      padding: 6px;
+    }
+
+    .combo-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      padding: 6px 8px 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .combo-option {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .combo-option:hover, .combo-option.active {
+      background: var(--sage-soft);
+      color: var(--sage);
+    }
+
+    .combo-empty-hint {
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+
     .evidence-list {
       display: flex;
       flex-direction: column;
@@ -917,6 +1092,7 @@
       inset: 0;
       transform-origin: 0 0;
       will-change: transform;
+      touch-action: none;
     }
 
     .forest-svg {
@@ -1673,11 +1849,42 @@
         SESSION: 'neihua_auth_session_v1',
         AI_LOCAL: 'neihua_ai_local_cfg_v1',
         THEME: 'neihua_theme_v1',
+        QUOTE_POOL: 'neihua_quote_pool_v1',
         CACHE_PREFIX: 'neihua_cache_v3_',
         SYNC_QUEUE_PREFIX: 'neihua_sync_q_v3_',
         LOG_BATCH_PREFIX: 'neihua_log_batch_v3_',
         DRAFT_PREFIX: 'neihua_draft_v2_'
       };
+
+      // Appendix E: High-Quality Verifiable Anti-Chicken-Soup Fallback Quotes (0ms Offline Ready)
+      const FALLBACK_QUOTES = [
+        { quote: '如果我知道我会死在哪里，我就永远不去那个地方。', source: '查理·芒格', domain_tag: '认知与决策' },
+        { quote: '困扰我们的不是事情本身，而是我们对事情的看法。', source: '爱比克泰德', domain_tag: '心理学' },
+        { quote: '第一原则是你绝不能欺骗自己，而你自己恰恰是最容易被欺骗的人。', source: '理查德·费曼', domain_tag: '认知与决策' },
+        { quote: '凡是能用愚蠢解释的，就不要归因于恶意。', source: '汉隆剃刀', domain_tag: '博弈与人性' },
+        { quote: '当一项指标成为目标时，它就不再是一个好指标。', source: '古德哈特定律', domain_tag: '经济学' },
+        { quote: '我们看到的只是观点而非事实，我们听到的只是意见而非真相。', source: '马可·奥勒留《沉思录》', domain_tag: '哲学' },
+        { quote: '好东西往往在边际上发生，但崩溃往往在非线性处降临。', source: '纳西姆·塔勒布', domain_tag: '经济学' },
+        { quote: '知人者智，自知者明；胜人者有力，自胜者强。', source: '《道德经》', domain_tag: '自我觉察' },
+        { quote: '地图不是疆域。', source: '阿尔弗雷德·科日布斯基', domain_tag: '认知与决策' },
+        { quote: '在没有充分理由之前，永远不要轻易拆除一道栅栏，直到你知道它为何而建。', source: '切斯特顿栅栏', domain_tag: '社会学' }
+      ];
+
+      // Appendix F-3: Grouped Recommended AI Model List for Zero-Dependency Combo-Box
+      const AI_MODEL_GROUPS = [
+        {
+          label: 'OpenAI 主力 / 旗舰',
+          models: ['gpt-6.1-terra', 'gpt-6-luna', 'gpt-5.2', 'gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o']
+        },
+        {
+          label: 'OpenAI 推理系列',
+          models: ['o3', 'o4-mini', 'o3-mini']
+        },
+        {
+          label: '其他兼容备选',
+          models: ['deepseek-chat', 'deepseek-reasoner', 'gemini-2.5-flash', 'gemini-2.5-pro']
+        }
+      ];
 
       const DEFAULT_DAY_SCHEDULE = {
         morning: ['科研工作'],
@@ -1821,7 +2028,12 @@
           currentAnchorId: null,
           showRawAnchor: false,
           switchCount: 0,
-          refreshingEvidence: false
+          refreshingEvidence: false,
+          // Appendix E: Local Quote Pool & Session State
+          quoteSessionInitialized: false,
+          currentQuote: null,
+          quoteLoading: false,
+          quoteRefilling: false
         },
 
         // Review Session State (1.0 Daily Preservation intact)
@@ -1838,6 +2050,7 @@
           editedSlotIndex: null,
           editedHistoryIdx: null,
           activeTest: null,
+          activeTestReveal: false,
           activeTestLoading: false,
           activeTestTriggered: false,
           activeTestExtraPrompt: '',
@@ -1845,6 +2058,10 @@
           scaffoldLoading: false,
           scaffoldTriggered: false,
           scaffoldExtraPrompt: '',
+          discoverItems: null,
+          discoverLoading: false,
+          discoverError: '',
+          discoverExtraPrompt: '',
           undoStack: []
         },
 
@@ -2700,6 +2917,7 @@
         state.review.editedSlotIndex = null;
         state.review.editedHistoryIdx = null;
         state.review.activeTest = null;
+        state.review.activeTestReveal = false;
         state.review.activeTestLoading = false;
         state.review.activeTestTriggered = false;
         state.review.activeTestExtraPrompt = '';
@@ -2707,6 +2925,10 @@
         state.review.scaffoldLoading = false;
         state.review.scaffoldTriggered = false;
         state.review.scaffoldExtraPrompt = '';
+        state.review.discoverItems = null;
+        state.review.discoverLoading = false;
+        state.review.discoverError = '';
+        state.review.discoverExtraPrompt = '';
       }
 
       // =====================================================================
@@ -2842,6 +3064,9 @@
         state.forest.reorgPlan = null;
         state.ignition.selectedTag = '__recommended__';
         state.ignition.currentAnchorId = null;
+        state.ignition.quoteSessionInitialized = false;
+        state.ignition.currentQuote = null;
+        state.ignition.quoteLoading = false;
         clearCaptureDraft();
         clearForestCaptureDraft();
         state.appMounted = false;
@@ -3927,13 +4152,13 @@
         return `${baseRule}\n- 用户卡片库目前为空，请直接按上述底层学科/机制原则起一个 2–5 字的上位大类名称。`;
       }
 
-      // AI 1: Unified Card Split & Denoised Single-Card Extractor (5 Anti-Distortion Iron Rules + Few-Shot + Angle Switch)
+      // AI 1: Unified Card Split & Denoised Single-Card Extractor (Global Thesis First + 5 Anti-Distortion Iron Rules + Few-Shot + Angle Switch)
       async function aiSplitCapture(rawText, excludedPoints = [], customPrompt = '') {
         const t0 = Date.now();
         const existing = getExistingDomains(false).map(d => d.name);
         const domainRule = buildDomainClassificationRule(existing, false);
 
-        const baseSys = `你是“每日保鲜”的单卡拆解与去噪提炼助手。无论用户是随手口述/输入的一段记录，还是复制粘贴的长文稿，都请严格遵守以下 5 条防失真铁律，只返回 1 张保鲜卡的纯 JSON：
+        const baseSys = `你是“每日保鲜”的单卡拆解与去噪提炼助手。无论用户是随手口述/输入的一段记录，还是复制粘贴的长文稿，都请先通读全文把握全局主轴，并严格遵守以下 5 条防失真铁律，只返回 1 张保鲜卡的纯 JSON：
 {
   "front_fact": "...",
   "back_anchor": "...",
@@ -3941,8 +4166,8 @@
 }
 
 【5 条不可违背的防失真铁律】
-1. 严格只生成 1 张卡：无论原文有多长、包含多少个观点，每次必须只挑选唯一一个最核心、最反常识或最有启发的观点，绝不输出多张卡片、绝不输出编号列表或拼盘总结。
-2. 正面（front_fact）保留原话、严禁抽象化：剥离出最具体、最有画面感、最戳人的原话、客观事实或对话片段（可顺手删掉明显口水噪音或无意义寒暄），禁止生硬切碎句子，也绝对禁止改写成干巴巴的教科书式抽象概括。
+1. 先定全局主轴、严格只生成 1 张卡：无论原文有多长、包含多少个观点，必须先通读全文，锁定作者整段话最核心的【全局总论点 / 反常识主轴】（主动跳过开头寒暄铺垫、过渡废话和局部边角举例），每次只挑选唯一一个最核心的主轴观点，绝不输出多张卡片、绝不输出编号列表或拼盘总结，杜绝只抓局部开头两句交差。
+2. 正面（front_fact）落位摘取承载全局主轴的具象原话、严禁抽象化：锁定全局主轴后，回到原文精准摘取直接承载该主轴、最具体、最有画面感、最戳人的原话/事实/对话段落（可顺手删掉明显口水噪音），禁止生硬切碎句子，也绝对禁止改写成干巴巴的教科书式抽象概括。
 3. 背面最初感受（back_anchor）有则保留原味，无则留空：
    - 如果原文里包含用户自己写下的直觉、情绪或感触，严格保留用户原话大白话口吻，严禁润色成书面语或说教；
    - 如果原文是他人口述/长文稿且自带一句一针见血的“点睛原话/核心结论”，直接摘录这句原话作为 back_anchor（不要过度润色）；
@@ -4011,16 +4236,22 @@ ${domainRule}`;
         }
       }
 
-      // AI 1c: Generate Editable Starter Evolution Tag (+ Discipline/Mechanism Category) for Manual Capture
+      // AI 1c: Generate Editable Starter Evolution Tag (Appendix F-7: Anti-Surface-Summary, Dig Underlying Action Rule)
       async function aiSuggestInitialTag(frontFact, backAnchor, currentDomain = '', customPrompt = '') {
         const existing = getExistingDomains(false).map(d => d.name);
         const domainRule = buildDomainClassificationRule(existing, false);
 
-        const baseSys = `你是克制的认知词条助手。根据用户写下的事实与最初感受，提炼 1 个简短的初始进化词条作为草稿（供用户再编辑），并按底层学科/机制归类。
+        const baseSys = `你是锋利、克制的底层认知词条助手。根据用户写下的事实与最初感受，深挖背后的潜台词与底层行动准则，提炼 1 个初始进化词条（2–10 字）并按底层学科/机制归类。
 严格规则：
-1. 返回纯 JSON：{"initial_tag": "2到10字精炼短词或短句", "domain_tag": "2到5字上位类别名"}。
-2. initial_tag 必须克制凝练、抓住核心机制或直觉关键词，不要写鸡汤或长句。
-3. ${domainRule}`;
+1. 返回纯 JSON：{"initial_tag": "2到10字底层机制或行动底牌词条", "domain_tag": "2到5字上位类别名"}。
+2. 【反概括铁律】严禁复述原话的表层主语和动词做缩写概括！不要写成新闻标题或字面缩写。
+3. 【挖底牌追问】必须追问：“这段话真正戳破了什么错觉？给我的底层行动底牌是什么？”
+4. 【正反对比标尺】：
+   - 原文讲“女生如果喜欢你就会自己找话题，费劲斟酌聊天说明没看上你”：
+   - ❌ 错误（表面缩写概括）：「女生喜欢会主动聊天」「跟女生聊天不用找话题」
+   - ✅ 正确（深挖底层底牌）：「筛选优于说服」或「费力本身即答案」
+5. 严格控制在 2–10 个中文字，不要鸡汤、不要说教。
+6. ${domainRule}`;
 
         const baseUser = `事实 / 原话：${frontFact}\n最初感受：${backAnchor || '未填写'}\n当前分类：${currentDomain || '未分类'}`;
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
@@ -4031,21 +4262,20 @@ ${domainRule}`;
         };
       }
 
-      // AI 2: Review Active Recall Micro-Test (Scientifically aligned: zero-scoring, low-load, context-transfer)
+      // AI 2: Review Active Recall Micro-Test (Appendix F-4: Concrete Decision / Spot-the-Flaw Scenario + Collapsible Reference Point)
       async function aiGenerateActiveTest(card, customPrompt = '') {
         const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags.filter(Boolean) : [];
-        const hasEvo = tags.length > 0;
-        const baseSys = hasEvo
-          ? `你是遵循认知科学的主动提取微测出题人。目标：打破“看原故事脸熟”的语境依赖，帮用户做一次极轻的跨场景提取测试。
+        const baseSys = `你是遵循认知科学的实战场景决策/找茬出题人。目标：彻底打破“背概念脸熟”，用具体现实情境检验用户是否真能用出这张卡背后的底层认知。
 严格规则：
-1. 返回 JSON：{"mode": "场景迁移测", "prompt": "不超过45个中文字的一句话"}。
-2. 构造一个与原事实【不同领域】的日常/工作微场景（半句话），轻问“遇到这种情况，你会想起哪条规律或做法？”。
-3. 严禁泄露原卡片的词条或答案，严禁出选择题、严禁打分、严禁说教，把思考留白给用户 3 秒自测。`
-          : `你是遵循认知科学的主动提取微测出题人。目标：用极低认知负荷的侧面提示，帮用户真正主动回想起当初的感受与洞察，而不是机械扫读原话。
-严格规则：
-1. 返回 JSON：{"mode": "线索回忆测", "prompt": "不超过45个中文字的一句话"}。
-2. 基于原事实换一个轻巧的切入问法（比如追问当时最触动你的转折点、反常识点或隐性代价），不直接剧透用户的最初感受。
-3. 严禁泄露答案、严禁出选择题、严禁打分、严禁说教。`;
+1. 返回纯 JSON：
+{
+  "mode": "场景决策测 或 找茬微测",
+  "prompt": "2到3句带现实干扰项的具体情境描述 + 尖锐二选一、找错或具体行动判断（60到130字）",
+  "reference_point": "1到2句一针见血的参考破局点（点明该场景的关键陷阱与底层动作，供用户心里作答后点开核对，<=70字）"
+}
+2. 【严禁模板废话】绝对禁止输出“在 xxx 场景下你想到了什么原则/道理/卡片？”、“遇到这种情况你会想起哪条规律？”这类懒惰万能模板问法！
+3. 【强制场景化与带干扰项】构造一个贴近日常/工作/人际的真实微场景（最好跨领域迁移，且绝不直接点破原卡片主题词、原话或词条），在情境里自然埋入 1 个让人容易上钩的表面干扰项，最后抛出尖锐具体的判断（例如：“对方刚说出这句话，问题出在哪？你会选 A（具体做法1）还是 B（具体做法2）？”）。
+4. 严禁打分评级、严禁长篇说教。`;
 
         const baseUser = `事实 / 原话：${card.front_fact}\n最初感受：${card.back_anchor}\n最新认识：${tags.join('、') || '暂无'}`;
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
@@ -4053,9 +4283,47 @@ ${domainRule}`;
         const testPrompt = String(res.prompt || '').trim();
         if (!testPrompt) throw new Error('未能生成测试题');
         return {
-          mode: String(res.mode || (hasEvo ? '场景迁移测' : '线索回忆测')).trim().slice(0, 10),
-          prompt: testPrompt
+          mode: String(res.mode || '场景决策测').trim().slice(0, 10),
+          prompt: testPrompt,
+          reference_point: String(res.reference_point || '').trim()
         };
+      }
+
+      // AI 2c: Evolution Tags "AI 发现" (Appendix F-9: Uncover Blind Spots / Reverse Deductions / Higher-Level Transfers)
+      async function aiDiscoverEvolutionTags(card, customPrompt = '') {
+        const t0 = Date.now();
+        const tags = Array.isArray(card.evolution_tags) ? card.evolution_tags.filter(Boolean) : [];
+        const baseSys = `你是“每日保鲜”的盲区洞察与高层迁移参谋。综合这张卡的事实原话、最初感受与用户已有的最新认识，专门挖掘用户尚未点破的盲区、反面推演或更高层迁移视角。
+严格规则：
+1. 返回纯 JSON：
+{
+  "discoveries": [
+    { "tag": "4到12字锋利候选词条", "insight": "1句大白话启发说明（<=40字）" },
+    { "tag": "另一个4到12字锋利候选词条", "insight": "1句大白话启发说明（<=40字）" }
+  ]
+}
+2. 必须严格输出 2 个彼此不同维度的候选词条（例如：1 个反向推演/边界盲区 + 1 个跨场景高层迁移）。
+3. 严禁重复或同义改写已有词条，严禁停留在表面复述事实，严禁空洞鸡汤或长篇说教。`;
+
+        const baseUser = `事实 / 原话：${card.front_fact}\n最初感受：${card.back_anchor || '暂无'}\n已有最新认识：${tags.join('、') || '暂无'}\n当前底层分类：${normalizeDomainLabel(card.domain_tag)}`;
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        try {
+          const res = await callOpenAiCompatible(sys, user, true);
+          const list = Array.isArray(res.discoveries) ? res.discoveries : [];
+          const cleaned = list
+            .map(item => ({
+              tag: String(item?.tag || '').trim().slice(0, 20),
+              insight: String(item?.insight || '').trim().slice(0, 80)
+            }))
+            .filter(item => item.tag)
+            .slice(0, 2);
+          if (cleaned.length === 0) throw new Error('未能挖掘出新的盲区视角');
+          trackActivity('cabinet', 'evolution_discover', card.id, { ok: true, count: cleaned.length }, Date.now() - t0);
+          return cleaned;
+        } catch (err) {
+          trackActivity('cabinet', 'evolution_discover', card.id, { ok: false, error: err.message }, Date.now() - t0);
+          throw err;
+        }
       }
 
       // AI 2b: Review Scaffolding (2-3 brief structured questions, NEVER summarize)
@@ -4127,39 +4395,120 @@ ${domainRule}`;
         return picked;
       }
 
-      async function runSilentCrossDomainMatch(targetCard) {
-        if (!isAiConfigured() || !targetCard?.id) return;
-        const candidates = buildCrossDomainCandidatePool(targetCard, 55);
-        if (candidates.length === 0) return;
+      async function runSilentCrossDomainMatch(targetCard, { manual = false, customPrompt = '' } = {}) {
+        if (!isAiConfigured() || !targetCard?.id) {
+          if (manual && !isAiConfigured()) promptConfigureAi();
+          return null;
+        }
+        const targetDom = normalizeDomainLabel(targetCard.domain_tag);
+        // Code-layer hard filter: strictly exclude same domain_tag cards
+        const candidates = buildCrossDomainCandidatePool(targetCard, 55).filter(c =>
+          normalizeDomainLabel(c.domain_tag) !== targetDom
+        );
+        if (candidates.length === 0) {
+          if (manual) showToast('当前卡片库暂无其他领域的候选卡片');
+          return null;
+        }
 
+        const t0 = Date.now();
         try {
-          const sys = `你是后台静默跨界碰瓷器。判断目标卡片与不同领域的历史候选卡片中，是否存在底层机制或通用规律上的高度共振（尤其关注进化词条反映的深层规律）。
-规则：
-- 若存在令人惊喜的底层结构相似性，返回 {"match_id": "对应候选卡片id"}。
-- 若没有足够强的底层相似性，切勿硬凑，返回 {"match_id": ""}。
-- 严禁返回解释或剧透原因。`;
-          const listStr = candidates.map(c =>
-            `ID:${c.id} | 类别:${normalizeDomainLabel(c.domain_tag)} | 事实:${String(c.front_fact).slice(0, 52)} | 进化词条:${(c.evolution_tags || []).join('/') || '暂无'}`
-          ).join('\n');
-          const prompt = `目标卡片（${normalizeDomainLabel(targetCard.domain_tag)}）：\n事实：${targetCard.front_fact}\n感受：${targetCard.back_anchor}\n最新进化词条：${(targetCard.evolution_tags || []).join(' / ') || '暂无'}\n\n不同领域候选：\n${listStr}`;
+          const baseSys = `你是“每日保鲜”的跨领域底层机制同构探测器（跨界碰瓷器）。你的任务是发现跨学科的深层结构共鸣，宁缺毋滥。
+严格规则：
+1. 返回纯 JSON：
+{
+  "target_mechanism": "用一句话抽离当前卡片的底层因果机制（如：用筛选替代说服）",
+  "match_id": "存在强机制同构的候选卡片ID；若无真正强共鸣必须返回空字符串 \"\"",
+  "bridge_hint": "若命中，严格按格式输出：A 领域的 X 机制 ≈ B 领域的 Y 机制（<=42字）；未命中返回空字符串 \"\""
+}
+2. 【强制先抽机制再匹配】必须先抽离当前卡片背后的底层因果/博弈/认知机制，再扫描不同领域候选卡，寻找【机制同构】的那一张。
+3. 【严禁字面关键词硬凑】绝对禁止因为两张卡都出现“客户/朋友/聊天/钱/工作”等表层字眼就硬连！
+4. 【开放空返回出口】所有候选均已排除同领域卡片；如果没有真正令人眼前一亮的底层机制同构，必须老实返回 {"target_mechanism":"...","match_id":"","bridge_hint":""}，绝不强凑！`;
 
-          const res = await callOpenAiCompatible(sys, prompt, true);
-          const match = candidates.find(c => c.id === res.match_id);
+          const listStr = candidates.map(c =>
+            `ID:${c.id} | 领域:${normalizeDomainLabel(c.domain_tag)} | 事实:${String(c.front_fact).slice(0, 60)} | 进化词条:${(c.evolution_tags || []).join('/') || '暂无'}`
+          ).join('\n');
+          const baseUser = `当前卡片（领域：${targetDom}）：\n事实：${targetCard.front_fact}\n最初感受：${targetCard.back_anchor}\n最新认识：${(targetCard.evolution_tags || []).join(' / ') || '暂无'}\n\n不同领域候选池：\n${listStr}`;
+          const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+
+          const res = await callOpenAiCompatible(sys, user, true);
+          const match = candidates.find(c =>
+            c.id === res.match_id &&
+            normalizeDomainLabel(c.domain_tag) !== targetDom
+          );
           if (match) {
+            const matchDom = normalizeDomainLabel(match.domain_tag);
+            const rawBridge = String(res.bridge_hint || '').trim().slice(0, 80);
+            const bridgeHint = rawBridge || `${targetDom}的底层机制 ≈ ${matchDom}的同构机制`;
             updateCardOptimistic(targetCard.id, {
               cross_link_id: match.id,
-              cross_link_hint: normalizeDomainLabel(match.domain_tag)
+              cross_link_hint: bridgeHint
             });
             if (!match.cross_link_id) {
               updateCardOptimistic(match.id, {
                 cross_link_id: targetCard.id,
-                cross_link_hint: normalizeDomainLabel(targetCard.domain_tag)
+                cross_link_hint: bridgeHint
               });
             }
             logActivityCloud('ai_usage', targetCard.id, { feature: 'cross_link', adopted: true });
+            trackActivity('cabinet', 'ai_trigger', targetCard.id, { feature: 'cross_link', ok: true, matched: true }, Date.now() - t0);
+            return { match, bridgeHint };
+          } else {
+            if (manual) {
+              updateCardOptimistic(targetCard.id, { cross_link_id: null, cross_link_hint: null });
+              showToast('当前卡片库暂无强机制共鸣的跨领域卡片');
+            }
+            trackActivity('cabinet', 'ai_trigger', targetCard.id, { feature: 'cross_link', ok: true, matched: false }, Date.now() - t0);
+            return null;
           }
-        } catch (_) {
-          // Silent background operation
+        } catch (err) {
+          trackActivity('cabinet', 'ai_trigger', targetCard.id, { feature: 'cross_link', ok: false, error: err.message }, Date.now() - t0);
+          if (manual) {
+            showToast(err.message || '跨领域匹配调用失败', 4000);
+          }
+          return null;
+        }
+      }
+
+      // Appendix E: AI Batch Quote Replenisher (Anti-Chicken-Soup, Diverse, Verifiable, 10 Quotes per Batch)
+      async function aiFetchQuotesBatch(recentList = []) {
+        const t0 = Date.now();
+        const existingDoms = getExistingDomains(false).map(d => d.name);
+        const domainRule = buildDomainClassificationRule(existingDoms, false);
+
+        const baseSys = `你是“启动点火页”的名言警句选编官。请一次性甄选 10 条锋利、有启发性的真实名言警句，以严格 JSON 格式返回：
+{
+  "quotes": [
+    { "quote": "15到50字锋利短句", "source": "作者或出处（不带破折号）", "domain_tag": "2到5字底层学科/机制分类" }
+  ]
+}
+
+【不可违背的 3 条选句铁律】
+1. 出处广泛多元：必须在【中西古典哲学、斯多葛学派、科学史与数学家/物理学家笔记、文学与历史、心理学、投资与商业传记、经典电影台词】等跨领域交叉轮换，严禁连续多条同质化或集中在同一作者。
+2. 反鸡汤、重锋利：严禁“努力就会成功”“越努力越幸运”之类空洞励志口号；优先挑选反常识、具象、揭示底层机制、戳破认知盲区的短句（严格 15–50 字，适配手机一眼扫完）。
+3. 出处真实可考：严禁杜撰名人语录，严禁把网络段子安在鲁迅、爱因斯坦、莫言名下；不确定真实出处的句子一律弃用。
+${domainRule}`;
+
+        const recentStr = Array.isArray(recentList) && recentList.length > 0
+          ? recentList.slice(-30).map((r, i) => `${i + 1}. ${r}`).join('\n')
+          : '暂无历史记录';
+        const baseUser = `请批量甄选 10 条新的跨领域锋利名言，严格避开以下最近展示过的名言/出处：\n${recentStr}`;
+
+        try {
+          const res = await callOpenAiCompatible(baseSys, baseUser, true);
+          const rawArr = Array.isArray(res) ? res : (Array.isArray(res?.quotes) ? res.quotes : []);
+          const cleaned = rawArr
+            .map(item => ({
+              quote: String(item?.quote || '').replace(/^[「“"]|[」”"]$/g, '').trim(),
+              source: String(item?.source || '').replace(/^[—\-–\s]+/, '').trim() || '佚名',
+              domain_tag: normalizeDomainLabel(item?.domain_tag)
+            }))
+            .filter(item => item.quote.length >= 6 && item.quote.length <= 90)
+            .slice(0, 10);
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'ignition_quote_batch', ok: true, count: cleaned.length }, Date.now() - t0);
+          return cleaned;
+        } catch (err) {
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'ignition_quote_batch', ok: false, error: err.message }, Date.now() - t0);
+          throw err;
         }
       }
 
@@ -4246,17 +4595,18 @@ ${domainRule}
 
         const baseSys = `你是“破局森林”的问题拆解参谋。请把用户输入的一段模糊难题、卡壳或想法，整理成 1 个清晰、可挂入破局森林的问题节点草稿。
 铁律：
-1. 严禁过度润色或空洞说教，保留用户真实关切与具体场景；corrected_problem 仅做轻纠错断句。
-2. 允许独立或并列，绝不把毫不相关的想法硬塞到不合适的父节点下。
-3. 严禁建议挂载到 is_meta 元问题节点下。
-4. 返回纯 JSON：
+1. 【只做减法、严禁外推（refined_problem 最高铁律）】：用户写下的多句话往往是围绕【唯一核心】展开的解释、情绪与举例。refined_problem 只能剥离噪音、精准抽出那 1 条主心骨（严格 1–2 句话封顶）；严禁面面俱到罗列 1/2/3 点，严禁引入原文未提及的新维度、补充建议或外推出来的次生结论！
+2. 行动项隔离：若需要下一步动作，只能写入独立的 next_micro_step 字段，绝不允许混入 refined_problem 污染核心总结。
+3. 严禁过度润色或空洞说教，保留用户真实关切与具体场景；corrected_problem 仅做轻纠错断句。
+4. 允许独立或并列，绝不把毫不相关的想法硬塞到不合适的父节点下；严禁建议挂载到 is_meta 元问题节点下。
+5. 返回纯 JSON：
 {
   "corrected_problem": "轻纠错断句后的问题原述（保留原口吻）",
   "implicit_intent": "一句 25 字内简短提示：你可能真正在意的卡点或潜台词",
   "tree_label": "归属领域树名（优先复用已有树：${existingTrees.join('、') || '综合破局'}）",
   "parent_id": "若自然归属某已有父节点填其ID，否则填空字符串 \"\" 表示独立或并列节点",
   "short_title": "8到16字折叠短语（用于在森林画布展示）",
-  "refined_problem": "一两句清晰具象的问题表述（降低模糊感，不失真）",
+  "refined_problem": "严格 1–2 句直击主心骨的核心问题总结（只做减法、不列1/2/3、不外推、不含行动建议）",
   "next_micro_step": "15分钟内立刻可动手的最小抓手（若暂不需要可填空字符串 \"\"）"
 }`;
 
@@ -4393,11 +4743,14 @@ ${domainRule}
         const t0 = Date.now();
         const children = state.forestNodes.filter(n => n.parent_id === node.id);
         const histText = (node.analysis_history || []).slice(-6).map(h => `- [${formatTime(h.at)}] ${h.content}`).join('\n') || '暂无';
-        const baseSys = `你是破局森林的明朝内阁参谋。帮用户把一个模糊或推进中的节点具象化，并草拟 2–3 个可拆解的子问题（如果有些思路本来就无法强行归为严格父子关系，允许标为 parallel 并列节点）。
-严禁替用户擅自定论或长篇说教。返回纯 JSON：
+        const baseSys = `你是破局森林的明朝内阁参谋。帮用户把一个模糊或推进中的节点做减法凝练，并按需草拟 2–3 个可拆解的子问题（如果有些思路本来就无法强行归为严格父子关系，允许标为 parallel 并列节点）。
+铁律：
+1. 【只做减法、严禁外推（refined_problem 最高铁律）】：用户的原始表述与历史记录往往是围绕【唯一核心】展开的多句解释与举例。refined_problem 只能剥离噪音，精准抽出那 1 条核心主心骨（严格 1–2 句话封顶）；严禁面面俱到罗列 1/2/3 点，严禁引入原文未提及的新维度、补充建议或外推出来的次生结论！
+2. 行动项隔离：所有行动动作只放入独立的 next_micro_step 字段，绝不混入 refined_problem 污染核心总结。
+3. 严禁替用户擅自定论或长篇说教。返回纯 JSON：
 {
   "short_title": "8到16字精炼节点短语",
-  "refined_problem": "一两句清晰具象的问题表述（保留用户原意，不失真）",
+  "refined_problem": "严格 1–2 句直击主心骨的核心总结（只做减法、不列1/2/3、不外推、不含行动建议）",
   "next_micro_step": "15分钟内可立即开始的最小具体抓手",
   "sub_nodes": [
     {"short_title": "子问题1短语", "raw_problem": "具体一句话", "is_parallel": false},
@@ -5091,6 +5444,185 @@ ${domainRule}
         });
       }
 
+      // =====================================================================
+      // Appendix E: Ignition Local Quote Pool (0ms Switch + Background AI Refill + 1-Tap Quote->Card)
+      // =====================================================================
+      function quoteFingerprint(q) {
+        if (!q) return '';
+        return `${String(q.quote || '').slice(0, 22)}|${String(q.source || '').trim()}`;
+      }
+
+      function loadQuotePoolState() {
+        const stored = loadJsonStorage(STORAGE_KEYS.QUOTE_POOL, null);
+        const queue = Array.isArray(stored?.queue)
+          ? stored.queue.filter(q => q && q.quote).map(q => ({
+              quote: String(q.quote).trim(),
+              source: String(q.source || '佚名').trim(),
+              domain_tag: normalizeDomainLabel(q.domain_tag)
+            }))
+          : [];
+        const recent = Array.isArray(stored?.recent) ? stored.recent.slice(-30) : [];
+        return { queue, recent };
+      }
+
+      function saveQuotePoolState(pool) {
+        saveJsonStorage(STORAGE_KEYS.QUOTE_POOL, {
+          queue: (pool.queue || []).slice(0, 20),
+          recent: (pool.recent || []).slice(-30)
+        });
+      }
+
+      function pickNextFallbackQuote(recentList = [], excludeFp = '') {
+        const recentSet = new Set(recentList.slice(-30));
+        const unseen = FALLBACK_QUOTES.filter(q => !recentSet.has(quoteFingerprint(q)) && quoteFingerprint(q) !== excludeFp);
+        const candidates = unseen.length > 0
+          ? unseen
+          : FALLBACK_QUOTES.filter(q => quoteFingerprint(q) !== excludeFp);
+        const list = candidates.length > 0 ? candidates : FALLBACK_QUOTES;
+        return { ...list[Math.floor(Math.random() * list.length)] };
+      }
+
+      async function replenishQuotePoolBackground() {
+        if (state.ignition.quoteRefilling || !isAiConfigured()) return;
+        const pool = loadQuotePoolState();
+        if (pool.queue.length >= 3) return;
+        state.ignition.quoteRefilling = true;
+        try {
+          const batch = await aiFetchQuotesBatch(pool.recent);
+          if (batch.length > 0) {
+            const freshPool = loadQuotePoolState();
+            const existingFps = new Set([
+              ...freshPool.recent,
+              ...freshPool.queue.map(quoteFingerprint),
+              quoteFingerprint(state.ignition.currentQuote)
+            ]);
+            const toAdd = batch.filter(q => {
+              const fp = quoteFingerprint(q);
+              if (existingFps.has(fp)) return false;
+              existingFps.add(fp);
+              return true;
+            });
+            freshPool.queue = [...freshPool.queue, ...toAdd].slice(0, 15);
+            saveQuotePoolState(freshPool);
+          }
+        } catch (_) {
+          // Silent background refill: never interrupt user on ignition load
+        } finally {
+          state.ignition.quoteRefilling = false;
+        }
+      }
+
+      function popNextQuoteInstant() {
+        const pool = loadQuotePoolState();
+        const curFp = quoteFingerprint(state.ignition.currentQuote);
+        let next = null;
+        while (pool.queue.length > 0) {
+          const cand = pool.queue.shift();
+          if (cand && cand.quote && quoteFingerprint(cand) !== curFp) {
+            next = cand;
+            break;
+          }
+        }
+        const fromQueue = Boolean(next);
+        if (!next) {
+          next = pickNextFallbackQuote(pool.recent, curFp);
+        }
+        const fp = quoteFingerprint(next);
+        pool.recent = [...pool.recent.filter(x => x !== fp), fp].slice(-30);
+        saveQuotePoolState(pool);
+        state.ignition.currentQuote = next;
+        if (pool.queue.length < 3 && isAiConfigured()) {
+          replenishQuotePoolBackground();
+        }
+        return { quote: next, fromQueue, remaining: pool.queue.length };
+      }
+
+      function ensureSessionQuoteReady() {
+        if (!state.ignition.quoteSessionInitialized || !state.ignition.currentQuote) {
+          state.ignition.quoteSessionInitialized = true;
+          popNextQuoteInstant();
+        }
+        return state.ignition.currentQuote;
+      }
+
+      async function handleQuoteRefreshClick() {
+        if (state.ignition.quoteLoading) return;
+        const prev = state.ignition.currentQuote;
+        trackActivity('ignition', 'quote_refresh', null, {
+          prev_source: prev?.source || ''
+        });
+
+        const pool = loadQuotePoolState();
+        if (pool.queue.length > 0 || !isAiConfigured()) {
+          popNextQuoteInstant();
+          renderIgnitionTab();
+          return;
+        }
+
+        // Queue exhausted & AI configured: show subtle loading on refresh button and fetch fresh batch
+        state.ignition.quoteLoading = true;
+        renderIgnitionTab();
+        try {
+          const batch = await aiFetchQuotesBatch(pool.recent);
+          if (batch.length > 0) {
+            const freshPool = loadQuotePoolState();
+            const curFp = quoteFingerprint(prev);
+            const deduped = batch.filter(q => quoteFingerprint(q) !== curFp);
+            freshPool.queue = [...deduped, ...freshPool.queue].slice(0, 15);
+            saveQuotePoolState(freshPool);
+          }
+          popNextQuoteInstant();
+        } catch (err) {
+          showToast(err.message || '名言补货失败，已切换本地精选', 3800);
+          popNextQuoteInstant();
+        } finally {
+          state.ignition.quoteLoading = false;
+          renderIgnitionTab();
+        }
+      }
+
+      function openQuoteToCard(q) {
+        if (!q || !q.quote) return;
+        trackActivity('ignition', 'quote_to_card', null, {
+          source: q.source || '',
+          domain_tag: q.domain_tag || ''
+        });
+
+        const formattedFront = `「${q.quote}」—— ${q.source || '佚名'}`;
+        const dom = (q.domain_tag && q.domain_tag !== UNCLASSIFIED_LABEL) ? q.domain_tag : '';
+
+        const hasManualFormContent = Boolean(
+          !state.capture.formFilledByAi &&
+          (state.capture.front.trim() || state.capture.anchor.trim())
+        );
+
+        if (hasManualFormContent) {
+          state.capture.aiPendingOverwrite = {
+            front_fact: formattedFront,
+            back_anchor: '',
+            domain_tag: dom || UNCLASSIFIED_LABEL,
+            fromQuote: true
+          };
+          switchTab('capture-card');
+          showToast('已载入名言，请确认是否替换下方手写内容');
+          return;
+        }
+
+        state.capture.front = formattedFront;
+        state.capture.anchor = '';
+        state.capture.domainTag = dom;
+        state.capture.anchorMissingHint = false;
+        state.capture.formFilledByAi = true;
+        state.capture.aiPendingOverwrite = null;
+        state.capture.aiError = '';
+        state.capture.aiSplitUsed = false;
+        state.capture.aiSplitSnapshot = null;
+        persistCaptureDraft();
+        switchTab('capture-card');
+        showToast('已预填名言，写下你此刻的延伸感悟吧');
+        setTimeout(() => document.getElementById('cap-anchor')?.focus(), 90);
+      }
+
       function renderIgnitionTab() {
         const container = document.getElementById('view-ignition');
         if (!container) return;
@@ -5113,6 +5645,8 @@ ${domainRule}
             selectIgnitionAnchor(anchor, 'ignition_view');
           }
         }
+
+        const activeQuote = ensureSessionQuoteReady();
 
         const slotLabel = getTimeSlotLabel();
         const slotThemes = (state.prefs.day_schedule?.[getCurrentTimeSlot()] || []).slice(0, 3).join(' · ');
@@ -5240,6 +5774,24 @@ ${domainRule}
             </div>
           </div>
 
+          <!-- Appendix E: Lightweight Book-Margin Quote Bar (0ms Switch + 1-Tap Extend to Card) -->
+          ${activeQuote ? `
+            <div class="ignition-quote-bar anim-up" id="ign-quote-bar">
+              <button type="button" class="ignition-quote-main" id="btn-ign-quote-text" title="点击将此句延伸为保鲜卡">
+                <p class="ignition-quote-text" id="ign-quote-text">「${esc(activeQuote.quote)}」</p>
+                <div class="ignition-quote-src" id="ign-quote-src">—— ${esc(activeQuote.source)}</div>
+              </button>
+              <div class="ignition-quote-actions">
+                <button type="button" class="ignition-quote-btn" id="btn-ign-quote-card" title="延伸记卡">
+                  ${ICONS.edit}<span>记卡</span>
+                </button>
+                <button type="button" class="ignition-quote-btn" id="btn-ign-quote-refresh" ${state.ignition.quoteLoading ? 'disabled' : ''} title="换一句">
+                  <span class="${state.ignition.quoteLoading ? 'anim-pulse' : ''}" style="display:inline-flex;">${ICONS.refresh}</span><span>${state.ignition.quoteLoading ? '...' : '刷新'}</span>
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- Dual-Engine Entry Routing -->
           <div class="route-grid anim-up">
             <button type="button" class="route-card primary-tint" id="btn-go-forest">
@@ -5271,6 +5823,14 @@ ${domainRule}
         document.getElementById('btn-manage-anchors').onclick = openDesireAnchorPoolModal;
         document.getElementById('btn-go-forest').onclick = () => switchTab('forest');
         document.getElementById('btn-go-preserve').onclick = () => switchTab('review');
+
+        // Appendix E Quote Bar Listeners
+        const quoteTextBtn = document.getElementById('btn-ign-quote-text');
+        const quoteCardBtn = document.getElementById('btn-ign-quote-card');
+        const quoteRefreshBtn = document.getElementById('btn-ign-quote-refresh');
+        if (quoteTextBtn && activeQuote) quoteTextBtn.onclick = () => openQuoteToCard(activeQuote);
+        if (quoteCardBtn && activeQuote) quoteCardBtn.onclick = () => openQuoteToCard(activeQuote);
+        if (quoteRefreshBtn) quoteRefreshBtn.onclick = handleQuoteRefreshClick;
 
         const cabShortcut = document.getElementById('btn-ign-cabinet');
         if (cabShortcut) cabShortcut.onclick = () => switchTab('cabinet');
@@ -5465,28 +6025,30 @@ ${domainRule}
         };
       }
 
-      // Ignition Quick Capture Modal (Triggered by FAB on Ignition page)
-      function openQuickDesireModal() {
-        const trees = state.forestNodes.filter(n => !n.parent_id && !n.is_meta);
+      // Ignition & Forest Quick Desire Capture Modal (supports prefillTag & preselectNodeId)
+      function openQuickDesireModal(opts = {}) {
+        const prefillTagOpt = typeof opts?.prefillTag === 'string' ? opts.prefillTag.trim() : '';
+        const preselectNodeId = opts?.preselectNodeId || '';
+        const trees = state.forestNodes.filter(n => !n.parent_id && (!n.is_meta || prefillTagOpt === '元系统'));
         const existingTags = Array.from(new Set([
+          ...(prefillTagOpt ? [prefillTagOpt] : []),
           getTimeSlotLabel(),
           ...getIgnitionAnchorTags().filter(t => t.tag !== '__untagged__').map(t => t.tag)
         ])).slice(0, 12);
-        const prefillTag = (state.ignition.selectedTag && !state.ignition.selectedTag.startsWith('__'))
-          ? state.ignition.selectedTag
-          : '';
+        const prefillTag = prefillTagOpt
+          || ((state.ignition.selectedTag && !state.ignition.selectedTag.startsWith('__')) ? state.ignition.selectedTag : '');
 
         openModal(`
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <h3 style="margin:0;font-size:16px;font-weight:600;">新增渴望锚点</h3>
+              <h3 style="margin:0;font-size:16px;font-weight:600;">${prefillTagOpt ? `为「${esc(prefillTagOpt)}」添加渴望` : '新增渴望锚点'}</h3>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
 
             <textarea id="qdes-raw" class="textarea" rows="3" placeholder="写下让你心头一热的渴望画面或状态"></textarea>
 
             <div>
-              <input id="qdes-tags" class="input" style="font-size:13px;" type="text" value="${esc(prefillTag)}" placeholder="标签（逗号分隔，用于点火页按标签筛选）" />
+              <input id="qdes-tags" class="input" style="font-size:13px;" type="text" value="${esc(prefillTag)}" placeholder="标签（逗号分隔，用于点火页按标签筛选与匹配问题树）" />
               ${existingTags.length ? `
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="qdes-tag-chips">
                   ${existingTags.map(t => `<button type="button" class="preset-chip" data-qdes-chip="${esc(t)}">+ ${esc(t)}</button>`).join('')}
@@ -5496,7 +6058,7 @@ ${domainRule}
 
             <select id="qdes-node" class="select" style="font-size:13px;">
               <option value="">不绑定特定问题树</option>
-              ${trees.map(n => `<option value="${esc(n.id)}">挂到：${esc(n.tree_label)} · ${esc(n.short_title.slice(0, 12))}</option>`).join('')}
+              ${trees.map(n => `<option value="${esc(n.id)}" ${n.id === preselectNodeId ? 'selected' : ''}>挂到：${esc(n.tree_label)} · ${esc(n.short_title.slice(0, 12))}</option>`).join('')}
             </select>
 
             <button type="button" class="btn btn-primary btn-block" id="btn-qdes-save">存进渴望池并展示</button>
@@ -5520,7 +6082,7 @@ ${domainRule}
           };
         });
 
-        document.getElementById('btn-qdes-open-pool').onclick = () => openDesireAnchorPoolModal();
+        document.getElementById('btn-qdes-open-pool').onclick = () => openDesireAnchorPoolModal(preselectNodeId || null);
 
         document.getElementById('btn-qdes-save').onclick = () => {
           const raw = document.getElementById('qdes-raw').value.trim();
@@ -5543,8 +6105,9 @@ ${domainRule}
             state.ignition.selectedTag = scenes[0] || '__all__';
           }
           closeModal();
-          renderIgnitionTab();
-          showToast('已存进渴望池并展示');
+          if (state.activeTab === 'ignition') renderIgnitionTab();
+          if (state.activeTab === 'forest') renderForestTab();
+          showToast(prefillTagOpt ? `已为「${prefillTagOpt}」挂上专属渴望` : '已存进渴望池并展示');
         };
 
         setTimeout(() => document.getElementById('qdes-raw')?.focus(), 60);
@@ -5830,13 +6393,25 @@ ${domainRule}
               </div>
             `;
           } else if (testData) {
+            const hasRef = Boolean(testData.reference_point);
+            const revealed = Boolean(state.review.activeTestReveal);
             testPanelHtml = `
               <div class="active-test-box anim-up">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-                  <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ ${esc(testData.mode)} · 心里想 3 秒即可</span>
+                  <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ ${esc(testData.mode)} · 心里先作答</span>
                   <button type="button" class="btn-ghost btn-xs" id="btn-active-test-refresh" style="color:var(--sage);padding:2px 6px;">换一题</button>
                 </div>
-                <p style="margin:0;font-size:14px;line-height:1.65;color:var(--ink);">${esc(testData.prompt)}</p>
+                <p style="margin:0;font-size:14px;line-height:1.68;color:var(--ink);white-space:pre-wrap;">${esc(testData.prompt)}</p>
+                ${hasRef ? `
+                  <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--sage-border);">
+                    <button type="button" class="btn-ghost btn-xs" id="btn-active-test-reveal" style="color:var(--sage);padding:2px 6px;margin-left:-6px;">
+                      ${revealed ? '收起参考破局点' : '查看参考破局点'}
+                    </button>
+                    ${revealed ? `
+                      <p id="active-test-ref-text" class="anim-up" style="margin:6px 0 0;font-size:13px;line-height:1.6;color:var(--ink-secondary);background:var(--surface);padding:9px 11px;border-radius:10px;border:1px solid var(--border-soft);">${esc(testData.reference_point)}</p>
+                    ` : ''}
+                  </div>
+                ` : ''}
               </div>
             `;
           }
@@ -5878,6 +6453,13 @@ ${domainRule}
           if (testBtn) testBtn.onclick = onRequestActiveTest;
           const refreshTestBtn = document.getElementById('btn-active-test-refresh');
           if (refreshTestBtn) refreshTestBtn.onclick = onRequestActiveTest;
+          const revealRefBtn = document.getElementById('btn-active-test-reveal');
+          if (revealRefBtn) {
+            revealRefBtn.onclick = () => {
+              state.review.activeTestReveal = !state.review.activeTestReveal;
+              renderReviewTab();
+            };
+          }
           return;
         }
 
@@ -5929,6 +6511,37 @@ ${domainRule}
           `;
         }
 
+        let discoverHtml = '';
+        if (state.review.discoverLoading) {
+          discoverHtml = `
+            <div class="discover-panel anim-pulse" style="font-size:12px;color:var(--sage);">
+              正在挖掘盲区与更高层迁移视角...
+            </div>
+          `;
+        } else if (state.review.discoverError) {
+          discoverHtml = `
+            <div class="inline-notice terra" style="margin-top:10px;" role="alert">${esc(state.review.discoverError)}</div>
+          `;
+        } else if (Array.isArray(state.review.discoverItems) && state.review.discoverItems.length > 0) {
+          discoverHtml = `
+            <div class="discover-panel anim-up" id="evo-discover-panel">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ AI 发现 · 盲区与迁移视角（点选即可采纳）</span>
+                <button type="button" class="btn-ghost btn-xs" id="btn-evo-discover-close" style="padding:1px 6px;min-height:22px;">收起</button>
+              </div>
+              ${state.review.discoverItems.map((item, idx) => `
+                <button type="button" class="discover-item" data-disc-idx="${idx}" ${edited ? 'disabled' : ''}>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
+                    <strong style="font-size:13px;color:var(--ink);">${esc(item.tag)}</strong>
+                    <span style="font-size:11px;color:var(--sage);font-weight:500;flex-shrink:0;">${isFull ? '去压缩采纳' : '采纳填入'}</span>
+                  </div>
+                  ${item.insight ? `<div style="font-size:12px;color:var(--ink-secondary);line-height:1.5;">${esc(item.insight)}</div>` : ''}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
+
         container.innerHTML = `
           ${renderReviewHeader()}
           <div class="review-stage anim-up">
@@ -5956,14 +6569,23 @@ ${domainRule}
                 <p class="muted-body-text">${esc(card.back_anchor)}</p>
               </div>
 
-              <!-- Muted Grey Evolution Layer (3 Single-Line Slots) -->
+              <!-- Muted Grey Evolution Layer (3 Single-Line Slots + Appendix F-9 AI Discover) -->
               <div class="card-soft" style="padding:14px 16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;">
-                  <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">最新认识</span>
-                  <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${tags.length} / 3</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:12px;font-weight:500;color:var(--ink-muted);">最新认识</span>
+                    <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${tags.length} / 3</span>
+                  </div>
+                  <button type="button" class="btn btn-sage-soft btn-xs" id="btn-evo-discover" style="padding:3px 9px;min-height:26px;" ${state.review.discoverLoading ? 'disabled' : ''}>
+                    ${ICONS.sparkle} <span>${state.review.discoverLoading ? '发现中...' : 'AI 发现'}</span>
+                  </button>
                 </div>
 
+                ${renderAiExtraPromptHtml('rev-discover-extra', '例如：从反面找漏洞 / 往科研或商业迁移（优先按此发现）', state.review.discoverExtraPrompt)}
+
                 <div class="evo-slots-grid">${slotsHtml}</div>
+
+                ${discoverHtml}
 
                 ${!edited && isFull ? `
                   <div style="margin-top:10px;">
@@ -5992,7 +6614,7 @@ ${domainRule}
 
                 ${linkedCard ? `
                   <button type="button" class="cross-shimmer" id="btn-cross-peek">
-                    <span>✦ 发现一张跨领域相似卡</span>
+                    <span style="text-align:left;min-width:0;">✦ ${esc(card.cross_link_hint && card.cross_link_hint.includes('≈') ? card.cross_link_hint : '发现一张跨领域相似卡')}</span>
                     <span style="flex-shrink:0;display:inline-flex;">${ICONS.chevronRight}</span>
                   </button>
                 ` : ''}
@@ -6016,6 +6638,41 @@ ${domainRule}
         if (scafExtraEl) {
           scafExtraEl.oninput = () => { state.review.scaffoldExtraPrompt = scafExtraEl.value; };
         }
+        const discExtraEl = document.getElementById('rev-discover-extra');
+        if (discExtraEl) {
+          discExtraEl.oninput = () => { state.review.discoverExtraPrompt = discExtraEl.value; };
+        }
+        const discBtn = document.getElementById('btn-evo-discover');
+        if (discBtn) discBtn.onclick = onRequestEvoDiscover;
+        const discCloseBtn = document.getElementById('btn-evo-discover-close');
+        if (discCloseBtn) {
+          discCloseBtn.onclick = () => {
+            state.review.discoverItems = null;
+            state.review.discoverError = '';
+            renderReviewTab();
+          };
+        }
+        container.querySelectorAll('[data-disc-idx]').forEach(btn => {
+          btn.onclick = () => {
+            if (state.review.editedThisReview) {
+              showToast('本轮复习已微调过词条，把消化留给后台吧');
+              return;
+            }
+            const item = state.review.discoverItems?.[Number(btn.getAttribute('data-disc-idx'))];
+            if (!item || !item.tag) return;
+            const curTags = Array.isArray(card.evolution_tags) ? [...card.evolution_tags] : [];
+            if (curTags.length >= 3) {
+              trackActivity('cabinet', 'ai_decision', card.id, { feature: 'evolution_discover', decision: 'open_compress', tag: item.tag });
+              openCompressModal(card, null, item.tag);
+              return;
+            }
+            const before = [...curTags];
+            const after = [...curTags, item.tag];
+            state.review.discoverItems = null;
+            trackActivity('cabinet', 'ai_decision', card.id, { feature: 'evolution_discover', decision: 'approved', tag: item.tag });
+            commitEvolution(card, 'discover_add', before, after, after.length - 1, false);
+          };
+        });
         document.getElementById('btn-review-edit-card').onclick = () => openCardEditModal(card, { fromReview: true });
 
         container.querySelectorAll('.evo-capsule').forEach(btn => {
@@ -6036,6 +6693,29 @@ ${domainRule}
         }
       }
 
+      async function onRequestEvoDiscover() {
+        const card = getCurrentReviewCard();
+        if (!card || state.review.discoverLoading) return;
+        if (!isAiConfigured()) {
+          promptConfigureAi();
+          return;
+        }
+        const customPrompt = readAiExtraPrompt('rev-discover-extra', state.review.discoverExtraPrompt);
+        state.review.discoverExtraPrompt = customPrompt;
+        state.review.discoverLoading = true;
+        state.review.discoverError = '';
+        renderReviewTab();
+        try {
+          state.review.discoverItems = await aiDiscoverEvolutionTags(card, customPrompt);
+        } catch (err) {
+          state.review.discoverError = err.message || 'AI 发现失败';
+          showToast(err.message || 'AI 发现失败', 4000);
+        } finally {
+          state.review.discoverLoading = false;
+          renderReviewTab();
+        }
+      }
+
       async function onRequestActiveTest() {
         const card = getCurrentReviewCard();
         if (!card || state.review.activeTestLoading) return;
@@ -6046,6 +6726,7 @@ ${domainRule}
         const customPrompt = readAiExtraPrompt('rev-test-extra', state.review.activeTestExtraPrompt);
         state.review.activeTestExtraPrompt = customPrompt;
         state.review.activeTestLoading = true;
+        state.review.activeTestReveal = false;
         state.review.activeTestTriggered = true;
         renderReviewTab();
 
@@ -6053,13 +6734,7 @@ ${domainRule}
           state.review.activeTest = await aiGenerateActiveTest(card, customPrompt);
         } catch (err) {
           showToast(err.message || '测试生成失败', 4000);
-          const hasEvo = Array.isArray(card.evolution_tags) && card.evolution_tags.length > 0;
-          state.review.activeTest = {
-            mode: hasEvo ? '场景迁移测' : '线索回忆测',
-            prompt: hasEvo
-              ? '如果把这件事换到工作或亲密关系里，你会先注意什么？'
-              : '当时看到这件事，最先戳中你的那一下是什么感觉？'
-          };
+          state.review.activeTest = null;
         } finally {
           state.review.activeTestLoading = false;
           renderReviewTab();
@@ -6256,8 +6931,8 @@ ${domainRule}
         }
       }
 
-      // --- AI Concept Compressor Modal (Now with editable refinement before commit!) ---
-      function openCompressModal(card, onDoneCallback = null) {
+      // --- AI Concept Compressor Modal (Now with editable refinement & optional prefill from AI Discover!) ---
+      function openCompressModal(card, onDoneCallback = null, prefillIdea = '') {
         if (!onDoneCallback && state.review.editedThisReview) return;
         if (!isAiConfigured()) {
           promptConfigureAi();
@@ -6278,7 +6953,7 @@ ${domainRule}
 
             <div>
               <label class="field-label" for="m-comp-idea">新想法</label>
-              <input id="m-comp-idea" class="input" type="text" maxlength="60" placeholder="写下你想加进来的新感悟" />
+              <input id="m-comp-idea" class="input" type="text" maxlength="60" value="${esc(prefillIdea)}" placeholder="写下你想加进来的新感悟" />
               ${renderAiExtraPromptHtml('comp-ai-extra', '例如：偏心理学专业词 / 控制在 4 字以内（优先按此压缩）')}
             </div>
 
@@ -6418,10 +7093,12 @@ ${domainRule}
         renderReviewTab();
       }
 
-      // --- Cross-Domain Peek Modal (Zero Spoiler) ---
+      // --- Cross-Domain Peek Modal (Shows Mechanism Isomorphism Mapping) ---
       function openCrossDomainModal(currentCard, linkedCard) {
         logActivityCloud('ai_usage', currentCard.id, { feature: 'cross_link_peek', adopted: true });
         const tags = Array.isArray(linkedCard.evolution_tags) ? linkedCard.evolution_tags : [];
+        const bridge = String(currentCard.cross_link_hint || '').trim();
+        const hasMechanismBridge = bridge.includes('≈');
 
         openModal(`
           <div style="display:flex;flex-direction:column;gap:14px;">
@@ -6432,9 +7109,13 @@ ${domainRule}
               </div>
               <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
             </div>
-            <p style="margin:0;font-size:12px;color:var(--ink-muted);">
-              仅将不同领域的两块砖推到一起，不做剧透，剩下的交给大脑自然碰撞。
-            </p>
+            ${hasMechanismBridge ? `
+              <div class="inline-notice terra" style="margin:0;font-weight:500;">${esc(bridge)}</div>
+            ` : `
+              <p style="margin:0;font-size:12px;color:var(--ink-muted);">
+                跨领域底层机制同构参考，看看两张卡背后是不是同一个因果结构。
+              </p>
+            `}
             <div class="card-soft" style="display:flex;flex-direction:column;gap:10px;">
               <div>
                 <div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">事实线索</div>
@@ -6522,7 +7203,7 @@ ${domainRule}
 
             ${pendingOw ? `
               <div class="card-soft anim-up" style="border:1px solid var(--terra-border);background:var(--terra-soft);padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
-                <div style="font-size:12px;color:var(--terra);font-weight:500;">下方表单已有手动填写的内容，是否用本次拆解结果替换？</div>
+                <div style="font-size:12px;color:var(--terra);font-weight:500;">${pendingOw.fromQuote ? '下方表单已有手动填写的内容，是否用这条名言替换？' : '下方表单已有手动填写的内容，是否用本次拆解结果替换？'}</div>
                 <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">
                   <div class="line-clamp-2"><strong>拟预填正面：</strong>${esc(pendingOw.front_fact)}</div>
                   ${pendingOw.back_anchor ? `<div class="line-clamp-2" style="margin-top:3px;"><strong>拟预填感受：</strong>${esc(pendingOw.back_anchor)}</div>` : `<div style="margin-top:3px;color:var(--ink-muted);">背面感受留空（供你自己写）</div>`}
@@ -6695,11 +7376,11 @@ ${domainRule}
           state.capture.front = res.front_fact;
           state.capture.anchor = res.back_anchor;
           state.capture.domainTag = res.domain_tag === UNCLASSIFIED_LABEL ? '' : res.domain_tag;
-          state.capture.anchorMissingHint = !res.back_anchor;
+          state.capture.anchorMissingHint = !res.back_anchor && !res.fromQuote;
           state.capture.formFilledByAi = true;
           state.capture.aiPendingOverwrite = null;
-          state.capture.aiSplitUsed = true;
-          state.capture.aiSplitSnapshot = {
+          state.capture.aiSplitUsed = !res.fromQuote;
+          state.capture.aiSplitSnapshot = res.fromQuote ? null : {
             front_fact: res.front_fact,
             back_anchor: res.back_anchor,
             domain_tag: state.capture.domainTag
@@ -6708,7 +7389,10 @@ ${domainRule}
           renderCardCaptureTab();
           const formEl = document.getElementById('cap-form-panel');
           if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          if (!res.back_anchor) {
+          if (res.fromQuote) {
+            showToast('已预填名言，写下你此刻的延伸感悟吧');
+            setTimeout(() => document.getElementById('cap-anchor')?.focus(), 100);
+          } else if (!res.back_anchor) {
             showToast('已拆出正面原话，背面留空供你自己写感悟');
             setTimeout(() => document.getElementById('cap-anchor')?.focus(), 100);
           } else {
@@ -7477,14 +8161,24 @@ ${domainRule}
         state.forest.panY = Math.round(28 - minY * fitScale);
       }
 
+      // Appendix F-2: Strictly Isolate Tree-Top Desire Anchors by Tree Category (Zero Cross-Tree Fallback)
       function getForestCoverAnchors(selectedTree) {
-        if (selectedTree !== '全部树') {
-          const treeNodeIds = new Set(state.forestNodes.filter(n => n.tree_label === selectedTree).map(n => n.id));
-          const linked = state.desireAnchors.filter(a => a.linked_node_id && treeNodeIds.has(a.linked_node_id));
-          if (linked.length > 0) return linked;
+        const all = state.desireAnchors.filter(a => a && a.raw_text);
+        if (selectedTree === '全部树') {
+          const nonMeta = all.filter(a => !a.is_meta);
+          return nonMeta.length > 0 ? nonMeta : all;
         }
-        const nonMeta = state.desireAnchors.filter(a => !a.is_meta);
-        return nonMeta.length > 0 ? nonMeta : state.desireAnchors;
+        const treeLabel = String(selectedTree || '').trim();
+        const isMetaTree = treeLabel === '元系统' || state.forestNodes.some(n => n.tree_label === treeLabel && n.is_meta);
+        const treeNodeIds = new Set(state.forestNodes.filter(n => n.tree_label === treeLabel).map(n => n.id));
+        return all.filter(a => {
+          // Meta desire anchor strictly confined to the 元系统 meta tree only
+          if (a.is_meta && !isMetaTree) return false;
+          if (isMetaTree && a.is_meta) return true;
+          const byLinkedNode = Boolean(a.linked_node_id && treeNodeIds.has(a.linked_node_id));
+          const bySceneTag = Array.isArray(a.scene_tags) && a.scene_tags.some(t => String(t).trim() === treeLabel);
+          return byLinkedNode || bySceneTag;
+        });
       }
 
       function formatParallelGroupLabel(groupName) {
@@ -7759,20 +8453,31 @@ ${domainRule}
             `).join('')}
           </div>
 
-          <!-- Tree-Top Desire Anchor Cover Card -->
-          <div class="forest-cover">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-              <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ 树顶渴望锚点${state.forest.selectedTree !== '全部树' ? ` · ${esc(state.forest.selectedTree)}` : ''}</span>
-              <div style="display:flex;align-items:center;gap:4px;">
-                ${coverAnchors.length > 1 ? `
-                  <button type="button" class="btn-ghost btn-xs" id="btn-fcover-prev" style="padding:2px 5px;min-height:24px;" aria-label="上一条">${ICONS.chevronLeft}</button>
-                  <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${coverIdx + 1}/${coverAnchors.length}</span>
-                  <button type="button" class="btn-ghost btn-xs" id="btn-fcover-next" style="padding:2px 5px;min-height:24px;" aria-label="下一条">${ICONS.chevronRight}</button>
-                ` : ''}
-                <button type="button" class="btn-ghost btn-xs" id="btn-fcover-manage" style="padding:2px 7px;min-height:24px;">+ 挂渴望</button>
+          <!-- Tree-Top Desire Anchor Cover Card (Appendix F-2: Strictly Isolated per Tree) -->
+          <div class="forest-cover" id="forest-cover-card">
+            ${activeCover ? `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                <span style="font-size:11px;font-weight:600;color:var(--sage);">✦ 树顶渴望锚点${state.forest.selectedTree !== '全部树' ? ` · ${esc(state.forest.selectedTree)}` : ''}</span>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  ${coverAnchors.length > 1 ? `
+                    <button type="button" class="btn-ghost btn-xs" id="btn-fcover-prev" style="padding:2px 5px;min-height:24px;" aria-label="上一条">${ICONS.chevronLeft}</button>
+                    <span style="font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums;">${coverIdx + 1}/${coverAnchors.length}</span>
+                    <button type="button" class="btn-ghost btn-xs" id="btn-fcover-next" style="padding:2px 5px;min-height:24px;" aria-label="下一条">${ICONS.chevronRight}</button>
+                  ` : ''}
+                  <button type="button" class="btn-ghost btn-xs" id="btn-fcover-manage" style="padding:2px 7px;min-height:24px;">+ 挂渴望</button>
+                </div>
               </div>
-            </div>
-            <p style="margin:0;font-size:14px;line-height:1.6;color:var(--ink);">${esc(activeCover ? (activeCover.use_polished && activeCover.polished_text ? activeCover.polished_text : activeCover.raw_text) : DEFAULT_META_ANCHOR)}</p>
+              <p style="margin:0;font-size:14px;line-height:1.6;color:var(--ink);">${esc(activeCover.use_polished && activeCover.polished_text ? activeCover.polished_text : activeCover.raw_text)}</p>
+            ` : `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                <span id="fcover-empty-text" style="font-size:13px;color:var(--ink-muted);line-height:1.5;">
+                  ${state.forest.selectedTree === '全部树' ? '暂无渴望锚点' : `「${esc(state.forest.selectedTree)}」暂无专属渴望`}
+                </span>
+                <button type="button" class="btn btn-sage-soft btn-xs" id="btn-fcover-add-tree">
+                  ${state.forest.selectedTree === '全部树' ? '+ 添加渴望锚点' : '+ 为本树添加渴望'}
+                </button>
+              </div>
+            `}
           </div>
 
           ${reorgBannerHtml}
@@ -7817,7 +8522,20 @@ ${domainRule}
             renderForestTab();
           };
         }
-        document.getElementById('btn-fcover-manage').onclick = () => openDesireAnchorPoolModal(firstRootForTree?.id || null);
+        const fcoverManageBtn = document.getElementById('btn-fcover-manage');
+        if (fcoverManageBtn) {
+          fcoverManageBtn.onclick = () => openQuickDesireModal({
+            prefillTag: state.forest.selectedTree === '全部树' ? '' : state.forest.selectedTree,
+            preselectNodeId: firstRootForTree?.id || ''
+          });
+        }
+        const fcoverAddTreeBtn = document.getElementById('btn-fcover-add-tree');
+        if (fcoverAddTreeBtn) {
+          fcoverAddTreeBtn.onclick = () => openQuickDesireModal({
+            prefillTag: state.forest.selectedTree === '全部树' ? '' : state.forest.selectedTree,
+            preselectNodeId: firstRootForTree?.id || ''
+          });
+        }
 
         // Wire New Problem button -> Dedicated Forest Capture
         document.getElementById('btn-for-new').onclick = () =>
@@ -7937,15 +8655,20 @@ ${domainRule}
         const zoomLbl = document.getElementById('fc-zoom-label');
         if (!shell || !viewport) return;
 
+        const MIN_SCALE = 0.35;
+        const MAX_SCALE = 2.2;
+
         const applyTransform = () => {
           viewport.style.transform = `translate(${state.forest.panX}px, ${state.forest.panY}px) scale(${state.forest.scale})`;
           if (zoomLbl) zoomLbl.textContent = `${Math.round(state.forest.scale * 100)}%`;
         };
 
-        // Canvas Pan & Node Drag via Pointer Events (Zero external dependencies)
-        let dragMode = null; // 'pan' | 'node'
+        // Appendix F-1: Canvas Pan, Node Drag & Two-Finger Pinch-to-Zoom via Pointer Events
+        const activePointers = new Map(); // pointerId -> { clientX, clientY }
+        let dragMode = null; // 'pan' | 'node' | 'pinch'
         let activeNodeId = null;
         let activeNodeEl = null;
+        let primaryPointerId = null;
         let startClientX = 0;
         let startClientY = 0;
         let origPanX = 0;
@@ -7953,9 +8676,56 @@ ${domainRule}
         let origNodeX = 0;
         let origNodeY = 0;
         let movedDist = 0;
+        let pinchState = null; // { startDist, startScale, contentAnchorX, contentAnchorY }
+
+        const startPinchFromActivePointers = () => {
+          const pts = Array.from(activePointers.values());
+          if (pts.length < 2) return;
+          const [p1, p2] = pts;
+          const rect = shell.getBoundingClientRect();
+          const midX = (p1.clientX + p2.clientX) / 2 - rect.left;
+          const midY = (p1.clientY + p2.clientY) / 2 - rect.top;
+          const dist = Math.max(12, Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY));
+          const curScale = state.forest.scale || 1;
+          pinchState = {
+            startDist: dist,
+            startScale: curScale,
+            contentAnchorX: (midX - state.forest.panX) / curScale,
+            contentAnchorY: (midY - state.forest.panY) / curScale
+          };
+          dragMode = 'pinch';
+          shell.classList.remove('dragging');
+        };
+
+        const revertActiveNodeDraft = () => {
+          if (!activeNodeId || !activeNodeEl) return;
+          activeNodeEl.style.left = `${origNodeX}px`;
+          activeNodeEl.style.top = `${origNodeY}px`;
+          const nObj = effNodes.find(x => x.id === activeNodeId);
+          if (nObj && (nObj.pos_x !== origNodeX || nObj.pos_y !== origNodeY)) {
+            nObj.pos_x = origNodeX;
+            nObj.pos_y = origNodeY;
+            if (svgEl) svgEl.innerHTML = renderForestSvgEdges(effNodes);
+          }
+          activeNodeId = null;
+          activeNodeEl = null;
+        };
 
         shell.onpointerdown = (e) => {
           if (e.target.closest('.forest-canvas-controls')) return;
+          activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+          try { shell.setPointerCapture(e.pointerId); } catch (_) {}
+
+          // Second finger landed -> enter two-finger pinch-to-zoom around live midpoint
+          if (activePointers.size >= 2) {
+            if (dragMode === 'node') revertActiveNodeDraft();
+            primaryPointerId = null;
+            startPinchFromActivePointers();
+            return;
+          }
+
+          // Single finger / mouse pointer start
+          primaryPointerId = e.pointerId;
           const cardEl = e.target.closest('.forest-node-card');
           startClientX = e.clientX;
           startClientY = e.clientY;
@@ -7968,18 +8738,33 @@ ${domainRule}
             const nObj = effNodes.find(x => x.id === activeNodeId);
             origNodeX = Number(nObj?.pos_x) || 80;
             origNodeY = Number(nObj?.pos_y) || 80;
-            try { shell.setPointerCapture(e.pointerId); } catch (_) {}
           } else {
             dragMode = 'pan';
             origPanX = state.forest.panX;
             origPanY = state.forest.panY;
             shell.classList.add('dragging');
-            try { shell.setPointerCapture(e.pointerId); } catch (_) {}
           }
         };
 
         shell.onpointermove = (e) => {
-          if (!dragMode) return;
+          if (!activePointers.has(e.pointerId)) return;
+          activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
+          if (dragMode === 'pinch' && activePointers.size >= 2 && pinchState) {
+            const [p1, p2] = Array.from(activePointers.values());
+            const rect = shell.getBoundingClientRect();
+            const curMidX = (p1.clientX + p2.clientX) / 2 - rect.left;
+            const curMidY = (p1.clientY + p2.clientY) / 2 - rect.top;
+            const curDist = Math.max(12, Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY));
+            const nextScale = Number(clamp(pinchState.startScale * (curDist / pinchState.startDist), MIN_SCALE, MAX_SCALE).toFixed(3));
+            state.forest.scale = nextScale;
+            state.forest.panX = Math.round(curMidX - pinchState.contentAnchorX * nextScale);
+            state.forest.panY = Math.round(curMidY - pinchState.contentAnchorY * nextScale);
+            applyTransform();
+            return;
+          }
+
+          if (!dragMode || e.pointerId !== primaryPointerId) return;
           const dx = e.clientX - startClientX;
           const dy = e.clientY - startClientY;
           movedDist = Math.max(movedDist, Math.hypot(dx, dy));
@@ -8003,14 +8788,42 @@ ${domainRule}
         };
 
         const finishPointer = (e) => {
-          if (!dragMode) return;
+          if (activePointers.has(e.pointerId)) {
+            activePointers.delete(e.pointerId);
+          }
+          try { shell.releasePointerCapture(e.pointerId); } catch (_) {}
+
+          // Still pinching with >= 2 fingers -> re-anchor pinch cleanly
+          if (activePointers.size >= 2) {
+            startPinchFromActivePointers();
+            return;
+          }
+
+          // Transition from pinch down to 1 remaining finger -> smooth single-finger pan
+          if (dragMode === 'pinch' && activePointers.size === 1) {
+            const [remId, remPos] = Array.from(activePointers.entries())[0];
+            pinchState = null;
+            dragMode = 'pan';
+            primaryPointerId = remId;
+            startClientX = remPos.clientX;
+            startClientY = remPos.clientY;
+            origPanX = state.forest.panX;
+            origPanY = state.forest.panY;
+            movedDist = 999; // Never trigger tap after pinch
+            shell.classList.add('dragging');
+            return;
+          }
+
+          if (activePointers.size > 0) return;
+
           const mode = dragMode;
           const nid = activeNodeId;
           dragMode = null;
+          pinchState = null;
+          primaryPointerId = null;
           activeNodeId = null;
           activeNodeEl = null;
           shell.classList.remove('dragging');
-          try { shell.releasePointerCapture(e.pointerId); } catch (_) {}
 
           if (mode === 'node' && nid) {
             if (movedDist <= 6) {
@@ -8031,21 +8844,29 @@ ${domainRule}
         shell.onpointerup = finishPointer;
         shell.onpointercancel = finishPointer;
 
-        // Smooth wheel zoom on desktop
+        // Smooth wheel zoom on desktop (centered on cursor position)
         shell.onwheel = (e) => {
           e.preventDefault();
+          const rect = shell.getBoundingClientRect();
+          const cx = e.clientX - rect.left;
+          const cy = e.clientY - rect.top;
+          const prevScale = state.forest.scale || 1;
           const factor = e.deltaY < 0 ? 1.09 : 0.92;
-          const nextScale = Number(clamp(state.forest.scale * factor, 0.45, 1.65).toFixed(2));
+          const nextScale = Number(clamp(prevScale * factor, MIN_SCALE, MAX_SCALE).toFixed(2));
+          const contentX = (cx - state.forest.panX) / prevScale;
+          const contentY = (cy - state.forest.panY) / prevScale;
           state.forest.scale = nextScale;
+          state.forest.panX = Math.round(cx - contentX * nextScale);
+          state.forest.panY = Math.round(cy - contentY * nextScale);
           applyTransform();
         };
 
         document.getElementById('btn-fc-zoom-in').onclick = () => {
-          state.forest.scale = Number(clamp(state.forest.scale + 0.15, 0.45, 1.65).toFixed(2));
+          state.forest.scale = Number(clamp(state.forest.scale + 0.15, MIN_SCALE, MAX_SCALE).toFixed(2));
           applyTransform();
         };
         document.getElementById('btn-fc-zoom-out').onclick = () => {
-          state.forest.scale = Number(clamp(state.forest.scale - 0.15, 0.45, 1.65).toFixed(2));
+          state.forest.scale = Number(clamp(state.forest.scale - 0.15, MIN_SCALE, MAX_SCALE).toFixed(2));
           applyTransform();
         };
         document.getElementById('btn-fc-center').onclick = () => {
@@ -9334,10 +10155,18 @@ ${domainRule}
 
             ${linked ? `
               <div role="button" tabindex="0" id="m-detail-cross" style="padding:12px 13px;border-radius:14px;background:var(--terra-soft);border:1px solid var(--terra-border);cursor:pointer;">
-                <div style="font-size:11px;color:var(--terra);font-weight:500;margin-bottom:4px;">✦ 跨领域相似卡 · 点击查看</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+                  <span style="font-size:11px;color:var(--terra);font-weight:500;">✦ 跨领域相似卡 · 来自「${esc(normalizeDomainLabel(linked.domain_tag))}」</span>
+                  <button type="button" class="btn-ghost btn-xs" id="m-btn-rematch-cross" style="padding:1px 6px;min-height:22px;color:var(--terra);">重配</button>
+                </div>
+                ${latest.cross_link_hint && latest.cross_link_hint.includes('≈') ? `<div style="font-size:12px;color:var(--ink);font-weight:500;margin-bottom:4px;">${esc(latest.cross_link_hint)}</div>` : ''}
                 <p class="line-clamp-2" style="margin:0;font-size:12px;color:var(--ink-secondary);">${esc(linked.front_fact)}</p>
               </div>
-            ` : ''}
+            ` : `
+              <button type="button" class="btn btn-soft btn-xs btn-block" id="m-btn-find-cross" style="justify-content:center;">
+                ${ICONS.sparkle} <span>寻找跨领域机制相似卡</span>
+              </button>
+            `}
 
             <div style="padding-top:10px;border-top:1px solid var(--border-soft);">
               <div style="font-size:12px;font-weight:500;color:var(--ink-muted);margin-bottom:10px;">认识演变</div>
@@ -9378,8 +10207,28 @@ ${domainRule}
 
         const crossBox = document.getElementById('m-detail-cross');
         if (crossBox && linked) {
-          crossBox.onclick = () => openCardDetailModal(linked);
+          crossBox.onclick = (e) => {
+            if (e.target.closest('#m-btn-rematch-cross')) return;
+            openCardDetailModal(linked);
+          };
         }
+
+        const triggerManualCross = async (btn) => {
+          if (!btn) return;
+          btn.disabled = true;
+          const prevHtml = btn.innerHTML;
+          btn.textContent = '探测同构中...';
+          const found = await runSilentCrossDomainMatch(latest, { manual: true });
+          const refreshed = state.cards.find(c => c.id === latest.id) || latest;
+          if (found) {
+            showToast(`已发现跨领域同构：${found.bridgeHint}`, 3800);
+          }
+          openCardDetailModal(refreshed);
+        };
+        const findCrossBtn = document.getElementById('m-btn-find-cross');
+        if (findCrossBtn) findCrossBtn.onclick = () => triggerManualCross(findCrossBtn);
+        const rematchCrossBtn = document.getElementById('m-btn-rematch-cross');
+        if (rematchCrossBtn) rematchCrossBtn.onclick = (e) => { e.stopPropagation(); triggerManualCross(rematchCrossBtn); };
 
         document.getElementById('m-btn-edit').onclick = () => openCardEditModal(latest, { fromReview: false });
 
@@ -9972,8 +10821,14 @@ ${domainRule}
                     </div>
                   </div>
                   <div>
-                    <label class="field-label" for="ai-model">Model Name</label>
-                    <input id="ai-model" class="input" type="text" value="${esc(state.aiConfig.model)}" placeholder="gpt-6.1-terra" />
+                    <label class="field-label" for="ai-model">Model Name（点选推荐或自由输入任意模型 ID）</label>
+                    <div class="combo-wrap" id="ai-model-combo">
+                      <input id="ai-model" class="input" type="text" style="padding-right:40px;font-family:var(--font-mono);font-size:13px;" value="${esc(state.aiConfig.model)}" placeholder="如：gpt-6.1-terra / o4-mini / 自定义模型 ID" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="ai-model-dropdown" />
+                      <button type="button" class="combo-toggle-btn" id="btn-ai-model-toggle" aria-label="展开或收起推荐模型清单" title="展开推荐模型清单">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </button>
+                      <div id="ai-model-dropdown" class="combo-menu hidden" role="listbox"></div>
+                    </div>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
                     <button type="button" class="btn btn-primary btn-sm" id="btn-save-ai">保存配置</button>
@@ -10115,6 +10970,119 @@ ${domainRule}
           showToast(removed > 0 ? `已清理 ${removed} 条 30 天前明细日志` : '没有超过 30 天的旧日志需要清理');
         };
 
+        // Appendix F-3: Zero-Dependency Editable AI Model Combo-Box
+        const modelComboWrap = document.getElementById('ai-model-combo');
+        const modelInput = document.getElementById('ai-model');
+        const modelToggleBtn = document.getElementById('btn-ai-model-toggle');
+        const modelDropdown = document.getElementById('ai-model-dropdown');
+        let modelMenuOpen = false;
+
+        const closeModelDropdown = () => {
+          modelMenuOpen = false;
+          if (modelDropdown) modelDropdown.classList.add('hidden');
+          if (modelInput) modelInput.setAttribute('aria-expanded', 'false');
+        };
+
+        const renderModelDropdown = (filterText = '') => {
+          if (!modelDropdown || !modelInput) return;
+          const q = String(filterText || '').trim().toLowerCase();
+          const curVal = modelInput.value.trim();
+          const allKnown = AI_MODEL_GROUPS.flatMap(g => g.models);
+          const isExactKnown = allKnown.includes(curVal);
+
+          const groupHtmls = [];
+          AI_MODEL_GROUPS.forEach(group => {
+            const matched = q
+              ? group.models.filter(m => m.toLowerCase().includes(q) || group.label.toLowerCase().includes(q))
+              : group.models;
+            if (!matched.length) return;
+            groupHtmls.push(`
+              <div class="combo-group-label">${esc(group.label)}</div>
+              ${matched.map(m => `
+                <button type="button" class="combo-option ${m === curVal ? 'active' : ''}" role="option" aria-selected="${m === curVal ? 'true' : 'false'}" data-model-opt="${esc(m)}">
+                  <span>${esc(m)}</span>
+                  ${m === curVal ? '<span style="font-size:11px;font-family:var(--font-sans);">当前</span>' : ''}
+                </button>
+              `).join('')}
+            `);
+          });
+
+          let footerHtml = '';
+          if (curVal && !isExactKnown) {
+            footerHtml = `
+              <div style="border-top:1px solid var(--border-soft);margin-top:4px;padding-top:4px;">
+                <button type="button" class="combo-option active" data-model-opt="${esc(curVal)}">
+                  <span>${esc(curVal)}</span>
+                  <span style="font-size:11px;font-family:var(--font-sans);">使用自定义 ID</span>
+                </button>
+              </div>
+            `;
+          }
+
+          if (groupHtmls.length === 0) {
+            modelDropdown.innerHTML = `
+              <div class="combo-empty-hint">
+                未在内置清单找到「${esc(filterText)}」，可直接保存为自定义模型 ID。
+              </div>
+              ${footerHtml}
+            `;
+          } else {
+            modelDropdown.innerHTML = groupHtmls.join('') + footerHtml;
+          }
+
+          modelDropdown.querySelectorAll('[data-model-opt]').forEach(optBtn => {
+            optBtn.onmousedown = (e) => e.preventDefault(); // Keep input focus smooth on desktop
+            optBtn.onclick = () => {
+              const chosen = optBtn.getAttribute('data-model-opt') || '';
+              modelInput.value = chosen;
+              closeModelDropdown();
+            };
+          });
+        };
+
+        const openModelDropdown = (filterText = '') => {
+          renderModelDropdown(filterText);
+          modelMenuOpen = true;
+          if (modelDropdown) modelDropdown.classList.remove('hidden');
+          if (modelInput) modelInput.setAttribute('aria-expanded', 'true');
+        };
+
+        if (modelInput && modelToggleBtn && modelDropdown) {
+          modelInput.onfocus = () => {
+            // On initial focus show full grouped list so user can easily switch models
+            openModelDropdown('');
+          };
+          modelInput.oninput = () => {
+            openModelDropdown(modelInput.value);
+          };
+          modelInput.onkeydown = (e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') {
+              closeModelDropdown();
+            } else if (e.key === 'ArrowDown' && !modelMenuOpen) {
+              openModelDropdown('');
+            }
+          };
+          modelToggleBtn.onmousedown = (e) => e.preventDefault();
+          modelToggleBtn.onclick = () => {
+            if (modelMenuOpen) {
+              closeModelDropdown();
+            } else {
+              openModelDropdown('');
+              modelInput.focus();
+            }
+          };
+
+          if (window.__neihuaModelComboOutsideClick) {
+            document.removeEventListener('click', window.__neihuaModelComboOutsideClick);
+          }
+          window.__neihuaModelComboOutsideClick = (e) => {
+            if (modelMenuOpen && modelComboWrap && !modelComboWrap.contains(e.target)) {
+              closeModelDropdown();
+            }
+          };
+          document.addEventListener('click', window.__neihuaModelComboOutsideClick);
+        }
+
         // Wire AI preset buttons
         container.querySelectorAll('#ai-presets button').forEach(btn => {
           btn.onclick = () => {
@@ -10125,6 +11093,7 @@ ${domainRule}
               document.getElementById('ai-base-url').value = preset.baseUrl;
               document.getElementById('ai-model').value = preset.model;
             }
+            closeModelDropdown();
             container.querySelectorAll('#ai-presets button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
           };
