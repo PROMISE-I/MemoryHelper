@@ -2053,7 +2053,8 @@
           quoteSessionInitialized: false,
           currentQuote: null,
           quoteLoading: false,
-          quoteRefilling: false
+          quoteRefilling: false,
+          quoteExplainCache: {}
         },
 
         // Review Session State (1.0 Daily Preservation intact)
@@ -3087,6 +3088,7 @@
         state.ignition.quoteSessionInitialized = false;
         state.ignition.currentQuote = null;
         state.ignition.quoteLoading = false;
+        state.ignition.quoteExplainCache = {};
         clearCaptureDraft();
         clearForestCaptureDraft();
         state.appMounted = false;
@@ -4532,6 +4534,37 @@ ${domainRule}`;
         }
       }
 
+      // Appendix E+: On-Demand Simple Plain-Language Explanation + Everyday Example for Ignition Quote
+      async function aiExplainQuoteSimple(q, customPrompt = '', prevExample = '') {
+        const t0 = Date.now();
+        const baseSys = `你是“启动点火页”的名言大白话解读助手。用户点开了一句名言，想用 10 秒钟轻松看懂它并马上获得画面感。
+严格规则：
+1. 返回纯 JSON：
+{
+  "explanation": "1到2句极简大白话解释（直接点破核心意思，<=65字）",
+  "example": "1个极具体、接地气的日常/工作/学习小例子（1到2句，一眼就懂，<=85字）"
+}
+2. 务必简单、说人话：严禁掉书袋、严禁列 1/2/3、严禁灌鸡汤或长篇说教。
+3. 例子必须有画面感：用普通人日常会碰到的具体小事来说明，不要空谈抽象概念。`;
+
+        let baseUser = `名言：「${q.quote}」\n出处：${q.source || '佚名'}`;
+        if (prevExample) {
+          baseUser += `\n\n请避开下面这个刚举过的例子，换一个完全不同的生活或工作场景重新举例：\n${prevExample}`;
+        }
+        const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
+        try {
+          const res = await callOpenAiCompatible(sys, user, true);
+          const explanation = String(res.explanation || '').trim();
+          const example = String(res.example || '').trim();
+          if (!explanation && !example) throw new Error('未能生成解读内容');
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'quote_explain', ok: true }, Date.now() - t0);
+          return { explanation, example };
+        } catch (err) {
+          trackActivity('cabinet', 'ai_trigger', null, { feature: 'quote_explain', ok: false, error: err.message }, Date.now() - t0);
+          throw err;
+        }
+      }
+
       // AI 5: Batch Re-Categorize Existing Cards by Latest Understanding & Underlying Discipline
       async function aiReorganizeLibraryDomains(cardsList, customPrompt = '') {
         const formatCardForPrompt = (c) => {
@@ -5643,6 +5676,142 @@ ${domainRule}
         setTimeout(() => document.getElementById('cap-anchor')?.focus(), 90);
       }
 
+      let quoteExplainReqSeq = 0;
+      function openQuoteExplainModal(q) {
+        if (!q || !q.quote) return;
+        const fp = quoteFingerprint(q);
+        const domLabel = (q.domain_tag && q.domain_tag !== UNCLASSIFIED_LABEL) ? q.domain_tag : '';
+        trackActivity('ignition', 'quote_explain', null, {
+          source: q.source || '',
+          domain_tag: domLabel
+        });
+
+        openModal(`
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <div style="display:flex;align-items:center;gap:7px;">
+                <h3 style="margin:0;font-size:15px;font-weight:600;color:var(--ink);">✦ 名言大白话解读</h3>
+                ${domLabel ? `<span style="font-size:11px;padding:1px 7px;border-radius:999px;background:var(--sage-soft);color:var(--sage);">${esc(domLabel)}</span>` : ''}
+              </div>
+              <button type="button" class="btn-ghost" id="m-close">${ICONS.close}</button>
+            </div>
+
+            <div class="card-soft" style="padding:12px 14px;border-left:3px solid var(--sage);">
+              <p style="margin:0;font-size:14px;line-height:1.65;color:var(--ink);font-weight:500;">「${esc(q.quote)}」</p>
+              <div style="margin-top:5px;font-size:12px;color:var(--ink-muted);">—— ${esc(q.source || '佚名')}</div>
+            </div>
+
+            <div id="quote-exp-body" style="display:flex;flex-direction:column;gap:9px;"></div>
+
+            ${renderAiExtraPromptHtml('quote-exp-extra', '例如：结合科研、职场或人际场景再举个例子（优先按此解读）', '')}
+
+            <div style="display:grid;grid-template-columns:1fr 1.25fr;gap:8px;padding-top:2px;">
+              <button type="button" class="btn btn-soft btn-sm" id="btn-quote-exp-regen">
+                ${ICONS.refresh}<span>换个例子</span>
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="btn-quote-exp-card">
+                ${ICONS.edit}<span>延伸记成保鲜卡</span>
+              </button>
+            </div>
+          </div>
+        `);
+
+        document.getElementById('m-close').onclick = closeModal;
+        document.getElementById('btn-quote-exp-card').onclick = () => {
+          closeModal();
+          openQuoteToCard(q);
+        };
+
+        const bodyEl = document.getElementById('quote-exp-body');
+        const regenBtn = document.getElementById('btn-quote-exp-regen');
+
+        const renderExplainContent = (res) => {
+          if (!bodyEl) return;
+          bodyEl.innerHTML = `
+            <div class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+              ${res.explanation ? `
+                <div>
+                  <div style="font-size:11px;font-weight:600;color:var(--sage);margin-bottom:4px;">一句话说透</div>
+                  <p id="quote-exp-plain" style="margin:0;font-size:13.5px;line-height:1.68;color:var(--ink);">${esc(res.explanation)}</p>
+                </div>
+              ` : ''}
+              ${res.example ? `
+                <div style="${res.explanation ? 'padding-top:9px;border-top:1px solid var(--border-soft);' : ''}">
+                  <div style="font-size:11px;font-weight:600;color:var(--terra);margin-bottom:4px;">举个例子</div>
+                  <p id="quote-exp-example" style="margin:0;font-size:13.5px;line-height:1.68;color:var(--ink-secondary);">${esc(res.example)}</p>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        };
+
+        const loadExplain = async (forceRefresh = false) => {
+          if (!bodyEl) return;
+          const customPrompt = readAiExtraPrompt('quote-exp-extra', '');
+          const cached = state.ignition.quoteExplainCache?.[fp];
+          if (!forceRefresh && !customPrompt && cached) {
+            renderExplainContent(cached);
+            return;
+          }
+
+          if (!isAiConfigured()) {
+            bodyEl.innerHTML = `
+              <div class="inline-notice" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                <span>配置 AI 接口后，即可用大白话帮你拆解并举生活例子。</span>
+                <button type="button" class="btn btn-sage-soft btn-xs" id="btn-quote-exp-go-ai">去配置 AI</button>
+              </div>
+            `;
+            const goAi = document.getElementById('btn-quote-exp-go-ai');
+            if (goAi) {
+              goAi.onclick = () => {
+                closeModal();
+                switchTab('settings');
+                setTimeout(() => {
+                  const det = document.getElementById('settings-ai-details');
+                  if (det) { det.open = true; det.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                }, 80);
+              };
+            }
+            return;
+          }
+
+          const token = ++quoteExplainReqSeq;
+          bodyEl.setAttribute('data-exp-token', String(token));
+          bodyEl.innerHTML = `
+            <div class="card-soft anim-pulse" style="padding:14px;font-size:13px;color:var(--sage);text-align:center;">
+              AI 正在用大白话拆解并举个简单例子...
+            </div>
+          `;
+          if (regenBtn) regenBtn.disabled = true;
+
+          try {
+            const prevExample = forceRefresh ? (cached?.example || '') : '';
+            const res = await aiExplainQuoteSimple(q, customPrompt, prevExample);
+            if (!document.getElementById('quote-exp-body') || bodyEl.getAttribute('data-exp-token') !== String(token)) return;
+            if (!state.ignition.quoteExplainCache) state.ignition.quoteExplainCache = {};
+            state.ignition.quoteExplainCache[fp] = res;
+            renderExplainContent(res);
+          } catch (err) {
+            if (!document.getElementById('quote-exp-body') || bodyEl.getAttribute('data-exp-token') !== String(token)) return;
+            bodyEl.innerHTML = `
+              <div class="inline-notice terra" role="alert" style="display:flex;flex-direction:column;gap:8px;">
+                <div>${esc(err.message || '名言解读失败')}</div>
+                <div><button type="button" class="btn btn-soft btn-xs" id="btn-quote-exp-retry">重试</button></div>
+              </div>
+            `;
+            const retryBtn = document.getElementById('btn-quote-exp-retry');
+            if (retryBtn) retryBtn.onclick = () => loadExplain(true);
+          } finally {
+            if (regenBtn && document.getElementById('btn-quote-exp-regen')) {
+              regenBtn.disabled = false;
+            }
+          }
+        };
+
+        if (regenBtn) regenBtn.onclick = () => loadExplain(true);
+        loadExplain(false);
+      }
+
       function renderIgnitionTab() {
         const container = document.getElementById('view-ignition');
         if (!container) return;
@@ -5794,12 +5963,12 @@ ${domainRule}
             </div>
           </div>
 
-          <!-- Appendix E: Lightweight Book-Margin Quote Bar (0ms Switch + 1-Tap Extend to Card) -->
+          <!-- Appendix E: Lightweight Book-Margin Quote Bar (Click Text -> Simple AI Explain Modal; 记卡 -> Extend to Card) -->
           ${activeQuote ? `
             <div class="ignition-quote-bar anim-up" id="ign-quote-bar">
-              <button type="button" class="ignition-quote-main" id="btn-ign-quote-text" title="点击将此句延伸为保鲜卡">
+              <button type="button" class="ignition-quote-main" id="btn-ign-quote-text" title="点击看 AI 简单解释与举例">
                 <p class="ignition-quote-text" id="ign-quote-text">「${esc(activeQuote.quote)}」</p>
-                <div class="ignition-quote-src" id="ign-quote-src">—— ${esc(activeQuote.source)}</div>
+                <div class="ignition-quote-src" id="ign-quote-src">—— ${esc(activeQuote.source)} <span style="opacity:0.75;margin-left:4px;">· 点此听解</span></div>
               </button>
               <div class="ignition-quote-actions">
                 <button type="button" class="ignition-quote-btn" id="btn-ign-quote-card" title="延伸记卡">
@@ -5848,7 +6017,7 @@ ${domainRule}
         const quoteTextBtn = document.getElementById('btn-ign-quote-text');
         const quoteCardBtn = document.getElementById('btn-ign-quote-card');
         const quoteRefreshBtn = document.getElementById('btn-ign-quote-refresh');
-        if (quoteTextBtn && activeQuote) quoteTextBtn.onclick = () => openQuoteToCard(activeQuote);
+        if (quoteTextBtn && activeQuote) quoteTextBtn.onclick = () => openQuoteExplainModal(activeQuote);
         if (quoteCardBtn && activeQuote) quoteCardBtn.onclick = () => openQuoteToCard(activeQuote);
         if (quoteRefreshBtn) quoteRefreshBtn.onclick = handleQuoteRefreshClick;
 
