@@ -5666,15 +5666,29 @@ ${domainRule}
         }
       }
 
-      function openQuoteToCard(q) {
+      function formatQuoteCardFields(q, explainRes = null) {
+        const baseQuote = `「${q.quote}」—— ${q.source || '佚名'}`;
+        const rawEx = String(explainRes?.example || '').trim();
+        const cleanEx = rawEx.replace(/^(?:举个?例子|例子|比如|例如)[，,：:\s]*/, '').trim();
+        const front_fact = cleanEx ? `${baseQuote}\n\n举例：${cleanEx}` : baseQuote;
+        const back_anchor = String(explainRes?.explanation || '').trim();
+        const domain_tag = (q.domain_tag && q.domain_tag !== UNCLASSIFIED_LABEL) ? q.domain_tag : '';
+        return { front_fact, back_anchor, domain_tag };
+      }
+
+      let quoteToCardFillSeq = 0;
+      function openQuoteToCard(q, explainOverride = null) {
         if (!q || !q.quote) return;
+        const fp = quoteFingerprint(q);
+        const cachedExplain = explainOverride || state.ignition.quoteExplainCache?.[fp] || null;
+
         trackActivity('ignition', 'quote_to_card', null, {
           source: q.source || '',
-          domain_tag: q.domain_tag || ''
+          domain_tag: q.domain_tag || '',
+          has_ai_explain: Boolean(cachedExplain)
         });
 
-        const formattedFront = `「${q.quote}」—— ${q.source || '佚名'}`;
-        const dom = (q.domain_tag && q.domain_tag !== UNCLASSIFIED_LABEL) ? q.domain_tag : '';
+        const { front_fact: formattedFront, back_anchor: formattedAnchor, domain_tag: dom } = formatQuoteCardFields(q, cachedExplain);
 
         const hasManualFormContent = Boolean(
           !state.capture.formFilledByAi &&
@@ -5684,7 +5698,7 @@ ${domainRule}
         if (hasManualFormContent) {
           state.capture.aiPendingOverwrite = {
             front_fact: formattedFront,
-            back_anchor: '',
+            back_anchor: formattedAnchor,
             domain_tag: dom || UNCLASSIFIED_LABEL,
             fromQuote: true
           };
@@ -5694,7 +5708,7 @@ ${domainRule}
         }
 
         state.capture.front = formattedFront;
-        state.capture.anchor = '';
+        state.capture.anchor = formattedAnchor;
         state.capture.domainTag = dom;
         state.capture.anchorMissingHint = false;
         state.capture.formFilledByAi = true;
@@ -5704,6 +5718,39 @@ ${domainRule}
         state.capture.aiSplitSnapshot = null;
         persistCaptureDraft();
         switchTab('capture-card');
+
+        if (cachedExplain && (formattedAnchor || formattedFront.includes('举例：'))) {
+          showToast('已填入名言与举例（正面）、一句话说透（最初感受）');
+          setTimeout(() => document.getElementById('cap-anchor')?.focus(), 90);
+          return;
+        }
+
+        if (!cachedExplain && isAiConfigured()) {
+          showToast('已预填名言，AI 正在补充举例与一句话说透...');
+          const fillToken = ++quoteToCardFillSeq;
+          const baseFront = formattedFront;
+          aiExplainQuoteSimple(q, '', '').then((res) => {
+            if (!state.ignition.quoteExplainCache) state.ignition.quoteExplainCache = {};
+            state.ignition.quoteExplainCache[fp] = res;
+            if (fillToken !== quoteToCardFillSeq) return;
+            // Only auto-populate if user has NOT started editing manually
+            if (!state.capture.formFilledByAi || state.capture.aiPendingOverwrite) return;
+            if (state.capture.front !== baseFront || state.capture.anchor.trim() !== '') return;
+            const filled = formatQuoteCardFields(q, res);
+            state.capture.front = filled.front_fact;
+            state.capture.anchor = filled.back_anchor;
+            persistCaptureDraft();
+            if (state.activeTab === 'capture-card') {
+              renderCardCaptureTab();
+              showToast('已补入举例（正面）与一句话说透（最初感受）');
+            }
+          }).catch(() => {
+            // Silent fallback: keep prefilled quote cleanly without disrupting manual writing
+          });
+          setTimeout(() => document.getElementById('cap-anchor')?.focus(), 90);
+          return;
+        }
+
         showToast('已预填名言，写下你此刻的延伸感悟吧');
         setTimeout(() => document.getElementById('cap-anchor')?.focus(), 90);
       }
@@ -5713,6 +5760,7 @@ ${domainRule}
         if (!q || !q.quote) return;
         const fp = quoteFingerprint(q);
         const domLabel = (q.domain_tag && q.domain_tag !== UNCLASSIFIED_LABEL) ? q.domain_tag : '';
+        let latestExplainRes = state.ignition.quoteExplainCache?.[fp] || null;
         trackActivity('ignition', 'quote_explain', null, {
           source: q.source || '',
           domain_tag: domLabel
@@ -5751,13 +5799,14 @@ ${domainRule}
         document.getElementById('m-close').onclick = closeModal;
         document.getElementById('btn-quote-exp-card').onclick = () => {
           closeModal();
-          openQuoteToCard(q);
+          openQuoteToCard(q, latestExplainRes);
         };
 
         const bodyEl = document.getElementById('quote-exp-body');
         const regenBtn = document.getElementById('btn-quote-exp-regen');
 
         const renderExplainContent = (res) => {
+          latestExplainRes = res;
           if (!bodyEl) return;
           bodyEl.innerHTML = `
             <div class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
