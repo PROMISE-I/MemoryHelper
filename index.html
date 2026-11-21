@@ -1870,19 +1870,39 @@
         { quote: '在没有充分理由之前，永远不要轻易拆除一道栅栏，直到你知道它为何而建。', source: '切斯特顿栅栏', domain_tag: '社会学' }
       ];
 
-      // Appendix F-3: Grouped Recommended AI Model List for Zero-Dependency Combo-Box
+      // Appendix F-3: Grouped Recommended AI Model List (2026-11 Latest Official API IDs)
       const AI_MODEL_GROUPS = [
         {
-          label: 'OpenAI 主力 / 旗舰',
-          models: ['gpt-6.1-terra', 'gpt-6-luna', 'gpt-5.2', 'gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o']
+          label: 'OpenAI 最新 GPT-6 系列',
+          models: [
+            { id: 'gpt-6.2-astra', tag: '顶配旗舰' },
+            { id: 'gpt-6.2-sol', tag: '全能主力' },
+            { id: 'gpt-6.1-sol', tag: '均衡备选' },
+            { id: 'gpt-6.1-terra', tag: '高性价比' },
+            { id: 'gpt-6-luna', tag: '极速低价' }
+          ]
         },
         {
-          label: 'OpenAI 推理系列',
-          models: ['o3', 'o4-mini', 'o3-mini']
+          label: 'OpenAI GPT-5.4 与推理系列',
+          models: [
+            { id: 'gpt-5.4-pro', tag: '5.4 顶配' },
+            { id: 'gpt-5.4', tag: '5.4 主力' },
+            { id: 'gpt-5.4-mini', tag: '5.4 轻量' },
+            { id: 'gpt-5.4-nano', tag: '5.4 极速' },
+            { id: 'o3', tag: '经典推理' },
+            { id: 'o4-mini', tag: '轻量推理' }
+          ]
         },
         {
-          label: '其他兼容备选',
-          models: ['deepseek-chat', 'deepseek-reasoner', 'gemini-2.5-flash', 'gemini-2.5-pro']
+          label: 'DeepSeek / Gemini 最新兼容',
+          models: [
+            { id: 'deepseek-v4-pro', tag: 'DeepSeek 旗舰' },
+            { id: 'deepseek-flash', tag: 'DeepSeek 极速' },
+            { id: 'gemini-4-carbon', tag: 'Gemini 顶配' },
+            { id: 'gemini-4-neon', tag: 'Gemini 旗舰' },
+            { id: 'gemini-4-hydrogen', tag: 'Gemini 日常' },
+            { id: 'gemini-3.5-flash-lite', tag: 'Gemini 极速' }
+          ]
         }
       ];
 
@@ -1946,11 +1966,11 @@
       };
 
       const AI_PRESETS = [
+        { id: 'openai_sol', label: 'OpenAI 旗舰', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6.2-sol' },
         { id: 'openai_terra', label: 'OpenAI 主力', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6.1-terra' },
         { id: 'openai_luna', label: 'OpenAI 轻量', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna' },
-        { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
-        { id: 'gemini', label: 'Gemini 兼容', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' },
-        { id: 'siliconflow', label: '硅基流动', baseUrl: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-7B-Instruct' },
+        { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-v4-pro' },
+        { id: 'gemini', label: 'Gemini 兼容', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-4-hydrogen' },
         { id: 'custom', label: '自定义', baseUrl: '', model: '' }
       ];
 
@@ -10823,7 +10843,7 @@ ${domainRule}
                   <div>
                     <label class="field-label" for="ai-model">Model Name（点选推荐或自由输入任意模型 ID）</label>
                     <div class="combo-wrap" id="ai-model-combo">
-                      <input id="ai-model" class="input" type="text" style="padding-right:40px;font-family:var(--font-mono);font-size:13px;" value="${esc(state.aiConfig.model)}" placeholder="如：gpt-6.1-terra / o4-mini / 自定义模型 ID" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="ai-model-dropdown" />
+                      <input id="ai-model" class="input" type="text" style="padding-right:40px;font-family:var(--font-mono);font-size:13px;" value="${esc(state.aiConfig.model)}" placeholder="如：gpt-6.2-sol / gpt-6.1-terra / 自定义模型 ID" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="ai-model-dropdown" />
                       <button type="button" class="combo-toggle-btn" id="btn-ai-model-toggle" aria-label="展开或收起推荐模型清单" title="展开推荐模型清单">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
@@ -10987,23 +11007,31 @@ ${domainRule}
           if (!modelDropdown || !modelInput) return;
           const q = String(filterText || '').trim().toLowerCase();
           const curVal = modelInput.value.trim();
-          const allKnown = AI_MODEL_GROUPS.flatMap(g => g.models);
+          const allKnown = AI_MODEL_GROUPS.flatMap(g => g.models.map(m => m.id));
           const isExactKnown = allKnown.includes(curVal);
 
           const groupHtmls = [];
           AI_MODEL_GROUPS.forEach(group => {
             const matched = q
-              ? group.models.filter(m => m.toLowerCase().includes(q) || group.label.toLowerCase().includes(q))
+              ? group.models.filter(m =>
+                  m.id.toLowerCase().includes(q) ||
+                  (m.tag && m.tag.toLowerCase().includes(q)) ||
+                  group.label.toLowerCase().includes(q)
+                )
               : group.models;
             if (!matched.length) return;
             groupHtmls.push(`
               <div class="combo-group-label">${esc(group.label)}</div>
-              ${matched.map(m => `
-                <button type="button" class="combo-option ${m === curVal ? 'active' : ''}" role="option" aria-selected="${m === curVal ? 'true' : 'false'}" data-model-opt="${esc(m)}">
-                  <span>${esc(m)}</span>
-                  ${m === curVal ? '<span style="font-size:11px;font-family:var(--font-sans);">当前</span>' : ''}
-                </button>
-              `).join('')}
+              ${matched.map(m => {
+                const isCur = m.id === curVal;
+                const badge = isCur ? '当前' : (m.tag || '');
+                return `
+                  <button type="button" class="combo-option ${isCur ? 'active' : ''}" role="option" aria-selected="${isCur ? 'true' : 'false'}" data-model-opt="${esc(m.id)}">
+                    <span>${esc(m.id)}</span>
+                    ${badge ? `<span style="font-size:11px;font-family:var(--font-sans);opacity:${isCur ? '1' : '0.68'};">${esc(badge)}</span>` : ''}
+                  </button>
+                `;
+              }).join('')}
             `);
           });
 
