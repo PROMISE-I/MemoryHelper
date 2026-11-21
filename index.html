@@ -4648,8 +4648,8 @@ ${domainRule}
 
         const baseSys = `你是“破局森林”的问题拆解参谋。请把用户输入的一段模糊难题、卡壳或想法，整理成 1 个清晰、可挂入破局森林的问题节点草稿。
 铁律：
-1. 【只做减法、严禁外推（refined_problem 最高铁律）】：用户写下的多句话往往是围绕【唯一核心】展开的解释、情绪与举例。refined_problem 只能剥离噪音、精准抽出那 1 条主心骨（严格 1–2 句话封顶）；严禁面面俱到罗列 1/2/3 点，严禁引入原文未提及的新维度、补充建议或外推出来的次生结论！
-2. 行动项隔离：若需要下一步动作，只能写入独立的 next_micro_step 字段，绝不允许混入 refined_problem 污染核心总结。
+1. 【只做减法、剥离举例噪音（short_title 与 refined_problem 最高铁律）】：严格区分用户的【唯一核心母题】与【随口举例/铺垫（如“举例来说”“比如”“包括……”“……等等”）】。refined_problem 只能剥离举例噪音、精准抽出那 1 条最上位的主心骨（严格 1–2 句话封顶）；严禁用随口提到的 1–2 个局部词缩窄母题范围，严禁列 1/2/3 点，严禁引入原文未提及的次生外推结论！
+2. 【行动项隔离、严禁文字游戏】：下一步动作只写入独立的 next_micro_step 字段，绝不混入 refined_problem；且抓手必须指向实质外部调研或行动（如查 1 套成熟分类框架、做 1 次最小验证），严禁建议“把原文例子改写成问题”这类原地倒腾文字的伪动作。
 3. 严禁过度润色或空洞说教，保留用户真实关切与具体场景；corrected_problem 仅做轻纠错断句。
 4. 允许独立或并列，绝不把毫不相关的想法硬塞到不合适的父节点下；严禁建议挂载到 is_meta 元问题节点下。
 5. 返回纯 JSON：
@@ -4658,9 +4658,9 @@ ${domainRule}
   "implicit_intent": "一句 25 字内简短提示：你可能真正在意的卡点或潜台词",
   "tree_label": "归属领域树名（优先复用已有树：${existingTrees.join('、') || '综合破局'}）",
   "parent_id": "若自然归属某已有父节点填其ID，否则填空字符串 \"\" 表示独立或并列节点",
-  "short_title": "8到16字折叠短语（用于在森林画布展示）",
-  "refined_problem": "严格 1–2 句直击主心骨的核心问题总结（只做减法、不列1/2/3、不外推、不含行动建议）",
-  "next_micro_step": "15分钟内立刻可动手的最小抓手（若暂不需要可填空字符串 \"\"）"
+  "short_title": "6到16字上位核心短语（绝不被随口举例缩窄）",
+  "refined_problem": "严格 1–2 句直击母题主心骨的核心总结（只做减法、剥离举例、不列1/2/3、不含行动建议）",
+  "next_micro_step": "15分钟内能带来外部新信息或实质推进的最小抓手（若暂不需要可填空字符串 \"\"）"
 }`;
 
         const baseUser = `用户原始输入：\n${rawText}\n\n当前破局森林已有节点：\n${forestContext}`;
@@ -4791,35 +4791,64 @@ ${domainRule}
         }, 1800);
       }
 
-      // AI 8: Forest Node — 具象化 + 拆子问题 (明朝内阁票拟)
+      // AI 8: Forest Node — 具象化 + 拆子问题 (明朝内阁票拟 · 反举例噪音、借成熟框架立骨架)
       async function aiRefineAndSplitForestNode(node, customPrompt = '') {
         const t0 = Date.now();
         const children = state.forestNodes.filter(n => n.parent_id === node.id);
         const histText = (node.analysis_history || []).slice(-6).map(h => `- [${formatTime(h.at)}] ${h.content}`).join('\n') || '暂无';
-        const baseSys = `你是破局森林的明朝内阁参谋。帮用户把一个模糊或推进中的节点做减法凝练，并按需草拟 2–3 个可拆解的子问题（如果有些思路本来就无法强行归为严格父子关系，允许标为 parallel 并列节点）。
-铁律：
-1. 【只做减法、严禁外推（refined_problem 最高铁律）】：用户的原始表述与历史记录往往是围绕【唯一核心】展开的多句解释与举例。refined_problem 只能剥离噪音，精准抽出那 1 条核心主心骨（严格 1–2 句话封顶）；严禁面面俱到罗列 1/2/3 点，严禁引入原文未提及的新维度、补充建议或外推出来的次生结论！
-2. 行动项隔离：所有行动动作只放入独立的 next_micro_step 字段，绝不混入 refined_problem 污染核心总结。
-3. 严禁替用户擅自定论或长篇说教。返回纯 JSON：
+        const baseSys = `你是破局森林的明朝内阁参谋。你的职责分成两个完全不同的动作：（A）把本节点的核心母题精准定锚；（B）站在本节点核心母题的正下方第一层，帮用户拆出 2–4 个真正能立住骨架的子问题（如果某些方向天然并列，允许标为 is_parallel: true）。
+
+【铁律 A：本节点定锚（short_title 与 refined_problem）—— 只做减法、剥离举例噪音、尊重已批红】
+1. 必须严格区分【核心母题】与【用户随口举的例子/铺垫（如“举例来说”“比如”“包括……”“……等等”）】。
+2. refined_problem 只能做减法剥离例子噪音，抽出那 1 条最核心的上位母题（1 句为主，最多 2 句）；严禁列 1/2/3 点，严禁用用户顺口提到的某两个词去缩窄整个母题范围！
+3. 【尊重已批红】：如果输入中「现有具象化」非空，说明用户已亲自锁定核心母题范围，必须以它为基准锚点直接沿用或仅极轻润色，严禁被原始表述里的随口举例重新拉窄或污染！
+
+【铁律 B：拆子问题（sub_nodes）—— 严禁按原文举例切片，必须借前人成熟研究/分类框架立骨架】
+1. 【反举例噪音铁律（最核心）】：绝对禁止把用户在原文中随口举的例子直接切碎当成子节点！用户的例子只是冰山一角的零散现象，层级远低于本节点应有的第一层子问题，绝不能作为分类依据！
+2. 【只往下拆一层 + 借他山之石】：必须跳出用户随口举例的局限，针对本节点真正的【核心母题】，动用成熟学科知识、学界/业界前人公认的分类体系或第一性原理，立出正下方第一层的 2–4 个同层级子问题：
+   - 若本节点是【规律 / 知识 / 原理探索型母题】（如“大脑运行有哪些规律？”）：子节点应优先指向【前人/成熟学科（如认知科学/心理学/神经科学）是如何对这一母题做顶层分类与分层的？】、【各核心模块如何交互与冲突？】、【哪些高杠杆规律最直接指导现实决策与行动？】，帮用户站在巨人肩膀上建骨架，而不是围着原文随口举的一两个现象打转！
+   - 若本节点是【具体任务 / 现实卡点破局型母题】（如“论文推进不动”）：子节点按达成目标的关键结构性环节（如核心定位、最小证据闭环、初稿结构）同层级拆解，同样严禁照抄原文某个局部细节凑数。
+3. 严格避开「已有子节点」中已经涵盖的方向，宁精勿滥。
+
+【铁律 C：15 分钟最小抓手（next_micro_step）—— 严禁原地文字游戏】
+1. 行动项只放进 next_micro_step，绝不混入 refined_problem。
+2. 抓手必须是 15 分钟内能带来【外部新信息、成熟框架或实质行动推进】的动作（如检索 1–2 套权威分类框架目录、找 1 篇经典综述提炼骨架、完成 1 个最小验证），严禁建议“把原文里的两个例子改写成问题/整理一下这段话”这类原地倒腾文字的伪动作！
+
+【正反校准标尺（务必严格对齐此抽象层级）】
+- 示例输入：原始表述“大脑的规律，认知规律、情感规律等等。举例来说，认知规律包括短时记忆容量有限；如果反复经历失败，大脑就会恐惧、逃避、拖延等。心理规律就更多了。”；现有具象化：“大脑的运行有哪些规律？”
+- ❌ 错误（被举例噪音带偏、缩窄母题、层级过细、原地打转）：
+  - short_title 缩窄成「大脑的认知与情感规律」
+  - refined_problem 退化成「大脑在认知与情感方面有哪些运行规律？」
+  - sub_nodes 机械切碎用户举例：「短时记忆的容量限制」、「反复失败后的情绪与回避」
+  - next_micro_step 原地倒腾文字：「把原文中的两个例子各改写成一个问题」
+- ✅ 正确（剥离举例噪音、借前人成熟分类框架立骨架、抓手指向外部破闭塞）：
+  - short_title：「大脑运行规律」
+  - refined_problem：「大脑的运行有哪些规律？」
+  - sub_nodes：
+    1. 「学界如何分类大脑运行规律」— 调研认知科学、心理学与神经科学对大脑运行机制的主流顶层分类框架，避免靠零散例子盲人摸象
+    2. 「核心系统间如何协同与冲突」— 理清理性决策、情绪奖惩、记忆与习惯等主要子系统之间如何互相影响和牵制
+    3. 「高杠杆规律如何指导日常行动」— 从成熟框架中筛出最直接决定行动力、决策质量与抗拖延的少数底层规律
+  - next_micro_step：「花 15 分钟检索 1–2 套认知科学或心理学公认的「大脑运行机制分类框架」目录，挑出一套作为本树拆解骨架」
+
+返回纯 JSON（严禁长篇说教）：
 {
-  "short_title": "8到16字精炼节点短语",
-  "refined_problem": "严格 1–2 句直击主心骨的核心总结（只做减法、不列1/2/3、不外推、不含行动建议）",
-  "next_micro_step": "15分钟内可立即开始的最小具体抓手",
+  "short_title": "6到16字上位核心短语",
+  "refined_problem": "严格 1–2 句直击母题主心骨的核心表述（尊重已批红、剥离举例噪音、不含行动建议）",
+  "next_micro_step": "15分钟内能带来外部新信息或实质推进的最小抓手（严禁原地倒腾原文文字）",
   "sub_nodes": [
-    {"short_title": "子问题1短语", "raw_problem": "具体一句话", "is_parallel": false},
-    {"short_title": "子问题2短语", "raw_problem": "具体一句话", "is_parallel": false}
+    {"short_title": "6到16字顶层子问题短语", "raw_problem": "清晰具体的一句话说明（站在母题正下方第一层，绝不照抄原文举例）", "is_parallel": false}
   ]
 }`;
-        const baseUser = `所属树：${node.tree_label}\n折叠短语：${node.short_title}\n原始模糊表述：${node.raw_problem}\n现有具象化：${node.refined_problem || '无'}\n已有子节点：${children.map(c => c.short_title).join('、') || '暂无'}\n完整分析历史：\n${histText}`;
+        const baseUser = `所属树：${node.tree_label}\n折叠短语：${node.short_title}\n${node.refined_problem ? `【用户已批红的核心母题（高优先级锚点）】：${node.refined_problem}\n` : ''}原始模糊表述（含随口举例噪音，注意剥离）：${node.raw_problem}\n已有子节点：${children.map(c => c.short_title).join('、') || '暂无'}\n完整分析历史：\n${histText}`;
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
         try {
           const res = await callOpenAiCompatible(sys, user, true);
           trackActivity('cabinet', 'ai_trigger', node.id, { feature: 'forest_split', ok: true }, Date.now() - t0);
           return {
             short_title: String(res.short_title || node.short_title).trim().slice(0, 32),
-            refined_problem: String(res.refined_problem || node.raw_problem).trim(),
+            refined_problem: String(res.refined_problem || node.refined_problem || node.raw_problem).trim(),
             next_micro_step: String(res.next_micro_step || '').trim(),
-            sub_nodes: Array.isArray(res.sub_nodes) ? res.sub_nodes.slice(0, 3).map(s => ({
+            sub_nodes: Array.isArray(res.sub_nodes) ? res.sub_nodes.slice(0, 4).map(s => ({
               short_title: String(s.short_title || '').trim().slice(0, 28),
               raw_problem: String(s.raw_problem || s.short_title || '').trim(),
               is_parallel: Boolean(s.is_parallel)
@@ -4835,9 +4864,12 @@ ${domainRule}
       async function aiSuggestForestNextStep(node, customPrompt = '') {
         const t0 = Date.now();
         const histText = (node.analysis_history || []).slice(-8).map(h => `- [${formatTime(h.at)}] ${h.content}`).join('\n') || '暂无';
-        const baseSys = `你是务实的行动拆解助手。基于该节点的全部历史分析，只草拟 1 个 15 分钟内就能动手的最小抓手，降低启动阻力。
-返回纯 JSON：{"next_micro_step": "具体可执行的一句话动作（<=32字）", "rationale": "18字内说明为何从这步切入最省力"}。严禁长篇说教。`;
-        const baseUser = `所属树：${node.tree_label}\n节点：${node.short_title}\n原始表述：${node.raw_problem}\n具象表述：${node.refined_problem || '无'}\n当前抓手：${node.next_micro_step || '无'}\n分析历史：\n${histText}`;
+        const baseSys = `你是务实的行动拆解助手。基于该节点真正的核心母题与推进历史，只草拟 1 个 15 分钟内就能动手的最小抓手，降低启动阻力。
+严格规则：
+1. 若存在「已批红具象表述」，以它为核心目标锚点，忽略原始表述里的随口举例噪音。
+2. 抓手必须指向实质外部输入或行动推进（例如查阅 1 套经典学科分类框架、做 1 次最小调研/实验、列出关键决策判据），严禁建议“把原文里的例子改写成问题/重新整理这段话”这类原地倒腾文字的伪动作！
+3. 返回纯 JSON：{"next_micro_step": "具体可执行的一句话动作（<=40字）", "rationale": "20字内说明为何从这步切入最省力"}。严禁长篇说教。`;
+        const baseUser = `所属树：${node.tree_label}\n节点：${node.short_title}\n${node.refined_problem ? `已批红具象表述（核心目标）：${node.refined_problem}\n` : ''}原始表述：${node.raw_problem}\n当前抓手：${node.next_micro_step || '无'}\n分析历史：\n${histText}`;
         const { sys, user } = applyUserPriorityPrompt(baseSys, baseUser, customPrompt);
         try {
           const res = await callOpenAiCompatible(sys, user, true);
@@ -9203,6 +9235,8 @@ ${domainRule}
 
         let aiSplitPreviewHtml = '';
         if (splitDraft) {
+          const hasExistingRefined = Boolean(node.refined_problem);
+          const updateParentChecked = typeof splitDraft.updateParent === 'boolean' ? splitDraft.updateParent : !hasExistingRefined;
           aiSplitPreviewHtml = `
             <div class="card anim-up" style="border-color:var(--sage-border);padding:14px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -9219,6 +9253,12 @@ ${domainRule}
                 <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;">${esc(splitDraft.short_title)}</div>
                 <p style="margin:0 0 6px;font-size:13px;color:var(--ink-secondary);line-height:1.6;">${esc(splitDraft.refined_problem)}</p>
                 ${splitDraft.next_micro_step ? `<div style="font-size:12px;color:var(--sage);margin-bottom:8px;">建议抓手：${esc(splitDraft.next_micro_step)}</div>` : ''}
+                ${hasExistingRefined ? `
+                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-muted);margin-bottom:4px;cursor:pointer;">
+                    <input type="checkbox" id="nd-sp-update-parent" ${updateParentChecked ? 'checked' : ''} style="accent-color:var(--sage);" />
+                    <span>同步覆盖本节点标题与已批红具象化表述（默认保留你原有批红）</span>
+                  </label>
+                ` : ''}
               `}
 
               ${splitDraft.sub_nodes?.length ? `
@@ -9510,6 +9550,7 @@ ${domainRule}
           try {
             const draft = await aiRefineAndSplitForestNode(node, extra);
             draft.sub_nodes = (draft.sub_nodes || []).map(sn => ({ ...sn, selected: true }));
+            draft.updateParent = !node.refined_problem;
             openForestNodeDrawer(node, { ...drawerState, _trackedOpen: true, extraPrompt: extra, loadingSplit: false, splitDraft: draft, splitEditMode: false });
           } catch (err) {
             showToast(err.message || '内阁拆解失败', 4000);
@@ -9529,8 +9570,15 @@ ${domainRule}
             };
           });
 
-          document.getElementById('nd-sp-edit').onclick = () =>
+          const updateParentCb = document.getElementById('nd-sp-update-parent');
+          if (updateParentCb) {
+            updateParentCb.onchange = () => { splitDraft.updateParent = updateParentCb.checked; };
+          }
+
+          document.getElementById('nd-sp-edit').onclick = () => {
+            if (!splitEditMode) splitDraft.updateParent = true;
             openForestNodeDrawer(node, { ...drawerState, _trackedOpen: true, splitDraft, splitEditMode: !splitEditMode });
+          };
 
           document.getElementById('nd-sp-keep').onclick = () => {
             trackActivity('cabinet', 'ai_decision', node.id, { feature: 'forest_split', decision: 'kept_raw' });
@@ -9539,8 +9587,13 @@ ${domainRule}
           };
 
           document.getElementById('nd-sp-approve').onclick = () => {
-            const nextTitle = (splitEditMode ? document.getElementById('nd-sp-title')?.value.trim() : splitDraft.short_title) || node.short_title;
-            const nextRefined = (splitEditMode ? document.getElementById('nd-sp-refined')?.value.trim() : splitDraft.refined_problem) || null;
+            const shouldUpdateParent = splitEditMode || splitDraft.updateParent !== false;
+            const nextTitle = shouldUpdateParent
+              ? ((splitEditMode ? document.getElementById('nd-sp-title')?.value.trim() : splitDraft.short_title) || node.short_title)
+              : node.short_title;
+            const nextRefined = shouldUpdateParent
+              ? ((splitEditMode ? document.getElementById('nd-sp-refined')?.value.trim() : splitDraft.refined_problem) || null)
+              : node.refined_problem;
             const nextStep = (splitEditMode ? document.getElementById('nd-sp-step')?.value.trim() : splitDraft.next_micro_step) || node.next_micro_step;
 
             const updated = updateForestNodeOptimistic(node.id, {
